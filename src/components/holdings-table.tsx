@@ -1,6 +1,8 @@
 import { getHoldingsLedger } from "@/lib/portfolio";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
-import { TrendingUp, TrendingDown, Info } from "lucide-react";
+import { TrendingUp, TrendingDown, Info, Plus } from "lucide-react";
+import { TransactionModal } from "./transaction-modal";
+import { Button } from "./ui/button";
 
 export async function HoldingsTable() {
   const holdings = await getHoldingsLedger();
@@ -12,7 +14,14 @@ export async function HoldingsTable() {
           <Info className="h-6 w-6" />
         </div>
         <h3 className="text-lg font-bold text-white">No active holdings</h3>
-        <p className="text-slate-400">Add a transaction to begin tracking your portfolio ledger.</p>
+        <p className="mb-6 text-slate-400">Add a transaction to begin tracking your portfolio ledger.</p>
+        <TransactionModal 
+          trigger={
+            <Button variant="premium">
+              <Plus className="mr-2 h-4 w-4" /> Add your first transaction
+            </Button>
+          } 
+        />
       </div>
     );
   }

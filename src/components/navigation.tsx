@@ -1,6 +1,7 @@
 "use client"
 
 import { PieChart, User } from 'lucide-react'
+import { TransactionModal } from './transaction-modal'
 
 export function Navigation() {
   return (
@@ -18,11 +19,14 @@ export function Navigation() {
 
         {/* Right: User Avatar / Actions */}
         <div className="flex items-center gap-6">
-          <div className="hidden md:flex items-center gap-6 mr-6 border-r border-white/10 pr-6">
+          <div className="hidden md:flex items-center gap-6 border-r border-white/10 pr-6">
             <span className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Insights</span>
             <span className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Assets</span>
             <span className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Reports</span>
           </div>
+          
+          <TransactionModal />
+
           <div className="h-10 w-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center cursor-pointer hover:border-emerald-500/50 transition-colors">
             <User className="h-5 w-5 text-slate-400" />
           </div>
