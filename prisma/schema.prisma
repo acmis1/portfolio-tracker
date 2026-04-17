@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Asset {
+  id           String         @id @default(cuid())
+  symbol       String         // e.g., 'BTC', 'VESAF', 'VNINDEX', 'SJC'
+  name         String
+  assetClass   String         // 'CRYPTO', 'MUTUAL_FUND', 'STOCK', 'GOLD', 'TERM_DEPOSIT', 'REAL_ESTATE'
+  
+  prices       DailyPrice[]
+  transactions Transaction[]
+  termDeposits TermDeposit[]  
+}
+
+model DailyPrice {
+  id         String   @id @default(cuid())
+  assetId    String
+  date       DateTime
+  closePrice Float    // Strictly VND
+  source     String   // 'coingecko', 'fmarket', 'vndirect', 'vnappmob'
+  
+  asset      Asset    @relation(fields: [assetId], references: [id])
+
+  // Prevents n8n from creating duplicate rows if run twice in one day
+  @@unique([assetId, date]) 
+}
+
+model Transaction {
+  id           String   @id @default(cuid())
+  assetId      String
+  date         DateTime // Required for the XIRR calculation
+  type         String   // 'BUY', 'SELL', 'DIVIDEND', 'INTEREST'
+  quantity     Float
+  pricePerUnit Float    // Strictly VND
+  grossAmount  Float    // Negative for cash flowing OUT (Buy), Positive for cash flowing IN (Sell)
+  
+  asset        Asset    @relation(fields: [assetId], references: [id])
+}
+
+// Specialized table for deterministically calculating offline bank savings
+model TermDeposit {
+  id           String   @id @default(cuid())
+  assetId      String
+  bankName     String
+  principal    Float    // VND
+  startDate    DateTime
+  maturityDate DateTime
+  interestRate Float    // Annual percentage
+  
+  asset        Asset    @relation(fields: [assetId], references: [id])
+}
