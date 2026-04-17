@@ -5,11 +5,11 @@ import { getPortfolioSummary } from '@/lib/portfolio'
 import { formatCurrency, formatPercentage } from '@/lib/formatters'
 
 export async function OverviewCards() {
-  const { totalValue, xirr, assetCount } = await getPortfolioSummary()
+  const { totalValue, totalInvested, xirr } = await getPortfolioSummary()
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
-      {/* Card 1: Total Net Worth */}
+      {/* ... Card 1 and 2 ... */}
       <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300">
         <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-emerald-500/10 blur-3xl" />
         <CardHeader className="pb-2">
@@ -42,7 +42,6 @@ export async function OverviewCards() {
         </CardContent>
       </Card>
 
-      {/* Card 2: Portfolio XIRR */}
       <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300">
         <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-500/10 blur-3xl" />
         <CardHeader className="pb-2">
@@ -65,24 +64,24 @@ export async function OverviewCards() {
         </CardContent>
       </Card>
 
-      {/* Card 3: Active Assets */}
+      {/* Card 3: Total Invested (REPLACED) */}
       <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300">
         <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-violet-500/10 blur-3xl" />
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
-              Active Holdings
+              Total Invested
             </CardDescription>
             <PieChart className="h-4 w-4 text-violet-500/50" />
           </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4 text-4xl font-black tracking-tight text-white">
-            {assetCount}
+            {formatCurrency(totalInvested)}
           </div>
           <div className="text-sm font-medium text-slate-500 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Live Positions
+            <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+            Net Capital Deployed
           </div>
         </CardContent>
       </Card>
