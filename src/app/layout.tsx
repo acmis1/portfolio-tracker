@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Track and manage your personal financial portfolio",
 };
 
+import { Navigation } from "@/components/navigation";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,8 +28,12 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-slate-950">
+        <Navigation />
+        <div className="flex-1">{children}</div>
+      </body>
     </html>
   );
 }
