@@ -1,6 +1,6 @@
 "use client"
 
-import { CircleChart } from 'lucide-react'
+import { PieChart } from 'lucide-react'
 
 export function Navigation() {
   return (
@@ -9,7 +9,7 @@ export function Navigation() {
         {/* Left: Logo and Title */}
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-slate-900 p-2 dark:bg-slate-50">
-            <CircleChart className="h-5 w-5 text-white dark:text-slate-900" />
+            <PieChart className="h-5 w-5 text-white dark:text-slate-900" />
           </div>
           <span className="text-lg font-semibold text-slate-900 dark:text-white">
             Portfolio
