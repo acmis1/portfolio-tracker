@@ -3,8 +3,49 @@ import { GrowthChart } from '@/components/charts/growth-chart'
 import { AllocationChart } from '@/components/charts/allocation-chart'
 import { Suspense } from 'react'
 import { HoldingsTable } from '@/components/holdings-table'
+import { getHoldingsLedger, getPortfolioHistory, getPortfolioSummary } from "@/lib/portfolio"
+import { cn } from '@/lib/utils'
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [holdings, historyData, summary] = await Promise.all([
+    getHoldingsLedger(),
+    getPortfolioHistory(),
+    getPortfolioSummary()
+  ]);
+
+  const lastPriceDate = summary.lastPriceDate;
+  const isDataFresh = lastPriceDate ? new Date(lastPriceDate).toDateString() === new Date().toDateString() : false;
+  
+  // Transform holdings into chart data
+  const totalMarketValue = holdings.reduce((sum, h) => sum + (h.marketValue || 0), 0);
+  
+  const allocation = holdings.reduce((acc, h) => {
+    const existing = acc.find(a => a.name === h.assetClass);
+    if (existing) {
+      existing.value += (h.marketValue || 0);
+    } else {
+      const colors: Record<string, string> = {
+        'CRYPTO': '#3b82f6',
+        'STOCK': '#10b981',
+        'MUTUAL_FUND': '#8b5cf6',
+        'GOLD': '#fbbf24',
+        'TERM_DEPOSIT': '#f472b6',
+        'REAL_ESTATE': '#64748b'
+      };
+      acc.push({ 
+        name: h.assetClass, 
+        value: h.marketValue || 0,
+        color: colors[h.assetClass] || '#94a3b8'
+      });
+    }
+    return acc;
+  }, [] as { name: string; value: number; color: string }[]);
+
+  const allocationData = allocation.map(a => ({
+    ...a,
+    value: totalMarketValue > 0 ? (a.value / totalMarketValue) * 100 : 0
+  })).filter(a => a.value > 0);
+
   return (
     <main className="min-h-screen bg-slate-950 p-6 lg:p-10">
       {/* Background Atmosphere */}
@@ -13,7 +54,7 @@ export default function DashboardPage() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl space-y-8">
+      <div className="relative z-10 mx-auto max-w-7xl space-y-10">
         {/* Header section */}
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
@@ -25,40 +66,45 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-widest text-emerald-500/80">
-              Live System Status
+            <div className={cn(
+              "h-2 w-2 rounded-full animate-pulse",
+              isDataFresh ? "bg-emerald-500" : "bg-amber-500"
+            )} />
+            <span className={cn(
+              "text-xs font-bold uppercase tracking-widest",
+              isDataFresh ? "text-emerald-500/80" : "text-amber-500/80"
+            )}>
+              {isDataFresh ? "Data Fresh" : `Prices Stale (Last: ${lastPriceDate ? new Date(lastPriceDate).toLocaleDateString() : 'N/A'})`}
             </span>
           </div>
         </div>
 
-        {/* Charts Grid */}
+        {/* 1. KPI Overview (Prioritized) */}
+        <div className="space-y-4">
+          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+            Performance Overview
+          </h2>
+          <Suspense fallback={<div className="h-48 w-full animate-pulse rounded-2xl glass-premium" />}>
+            <OverviewCards />
+          </Suspense>
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <GrowthChart />
+            <GrowthChart data={historyData} />
           </div>
           <div>
-            <AllocationChart />
+            <AllocationChart data={allocationData} />
           </div>
         </div>
 
-        {/* Holdings Ledger */}
-        <div className="space-y-4">
+        {/* 3. Holdings Ledger */}
+        <div className="space-y-4 pb-12">
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
             Holdings Ledger
           </h2>
           <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
             <HoldingsTable />
-          </Suspense>
-        </div>
-
-        {/* Overview cards */}
-        <div>
-          <h2 className="mb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-            Performance Overview
-          </h2>
-          <Suspense fallback={<div className="h-48 w-full animate-pulse rounded-2xl glass-premium" />}>
-            <OverviewCards />
           </Suspense>
         </div>
       </div>
