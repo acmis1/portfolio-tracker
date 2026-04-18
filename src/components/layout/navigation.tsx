@@ -2,27 +2,28 @@
 
 import { PieChart, User } from 'lucide-react'
 import { TransactionModal } from '@/features/transactions/components/transaction-modal'
+import Link from 'next/link'
 
 export function Navigation() {
   return (
     <nav className="sticky top-0 z-50 glass border-b border-white/5">
       <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
         {/* Left: Logo and Title */}
-        <div className="flex items-center gap-3 group cursor-pointer">
+        <Link href="/" className="flex items-center gap-3 group cursor-pointer">
           <div className="rounded-xl bg-emerald-500 p-2 shadow-lg shadow-emerald-500/20 transition-transform group-hover:scale-110">
             <PieChart className="h-5 w-5 text-white" />
           </div>
           <span className="text-xl font-black tracking-tighter text-white">
             ANTIGRAVITY<span className="text-emerald-500">.</span>CAPITAL
           </span>
-        </div>
+        </Link>
 
         {/* Right: User Avatar / Actions */}
         <div className="flex items-center gap-6">
           <div className="hidden md:flex items-center gap-6 border-r border-white/10 pr-6">
+            <Link href="/" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Dashboard</Link>
+            <Link href="/rebalance" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Rebalance</Link>
             <span className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Insights</span>
-            <span className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Assets</span>
-            <span className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Reports</span>
           </div>
           
           <TransactionModal />

@@ -8,10 +8,11 @@ datasource db {
 }
 
 model Asset {
-  id         String @id @default(cuid())
-  symbol     String // e.g., 'BTC', 'VESAF', 'VNINDEX', 'SJC'
-  name       String
-  assetClass String // 'CRYPTO', 'MUTUAL_FUND', 'STOCK', 'GOLD', 'TERM_DEPOSIT', 'REAL_ESTATE'
+  id           String @id @default(cuid())
+  symbol       String // e.g., 'BTC', 'VESAF', 'VNINDEX', 'SJC'
+  name         String
+  assetClass   String // 'CRYPTO', 'MUTUAL_FUND', 'STOCK', 'GOLD', 'TERM_DEPOSIT', 'REAL_ESTATE'
+  targetWeight Float  @default(0)
 
   prices       DailyPrice[]
   transactions Transaction[]
