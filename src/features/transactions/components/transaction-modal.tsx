@@ -9,14 +9,14 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger 
+  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { transactionSchema, type TransactionFormValues } from "@/lib/validations"
-import { addTransaction } from "../actions"
+import { addTransaction } from "@/features/transactions/actions"
 import { cn } from "@/lib/utils"
 
 interface TransactionModalProps {
