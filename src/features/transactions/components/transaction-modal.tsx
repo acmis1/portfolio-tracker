@@ -37,6 +37,7 @@ export function TransactionModal({ trigger }: TransactionModalProps) {
       quantity: 1,
       price: 0,
       fees: 0,
+      currency: "VND",
       date: new Date().toISOString().split('T')[0],
     },
   })
@@ -167,7 +168,21 @@ export function TransactionModal({ trigger }: TransactionModalProps) {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price">Price per Unit (VND)</Label>
+              <Label htmlFor="currency">Currency</Label>
+              <Select 
+                id="currency" 
+                className={cn(errors.currency && "border-red-500/50")}
+                {...form.register("currency")}
+              >
+                <option value="VND">VND</option>
+                <option value="USD">USD</option>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="price">Price per Unit ({form.watch("currency")})</Label>
               <Input 
                 id="price" 
                 type="number" 
@@ -179,20 +194,19 @@ export function TransactionModal({ trigger }: TransactionModalProps) {
                 <p className="text-[10px] font-medium text-red-400">{errors.price.message}</p>
               )}
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="fees">Fees (VND)</Label>
-            <Input 
-              id="fees" 
-              type="number" 
-              step="any"
-              className={cn(errors.fees && "border-red-500/50")}
-              {...form.register("fees", { valueAsNumber: true })}
-            />
-            {errors.fees && (
-              <p className="text-[10px] font-medium text-red-400">{errors.fees.message}</p>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="fees">Fees ({form.watch("currency")})</Label>
+              <Input 
+                id="fees" 
+                type="number" 
+                step="any"
+                className={cn(errors.fees && "border-red-500/50")}
+                {...form.register("fees", { valueAsNumber: true })}
+              />
+              {errors.fees && (
+                <p className="text-[10px] font-medium text-red-400">{errors.fees.message}</p>
+              )}
+            </div>
           </div>
 
           <Button 

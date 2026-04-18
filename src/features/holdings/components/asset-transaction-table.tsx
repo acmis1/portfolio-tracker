@@ -3,9 +3,13 @@ import { cn } from "@/lib/utils"
 
 interface AssetTransactionTableProps {
   transactions: any[]
+  assetCurrency: string
 }
 
-export function AssetTransactionTable({ transactions }: AssetTransactionTableProps) {
+export function AssetTransactionTable({ transactions, assetCurrency }: AssetTransactionTableProps) {
+  const rate = 25400;
+  const isUSD = assetCurrency === 'USD';
+
   return (
     <div className="space-y-4">
       <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Transaction History</h2>
@@ -23,35 +27,41 @@ export function AssetTransactionTable({ transactions }: AssetTransactionTablePro
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
-                  <td className="px-6 py-4 text-slate-300">
-                    {new Date(tx.date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={cn(
-                      "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest",
-                      tx.type === 'BUY' ? "bg-emerald-500/10 text-emerald-400" : 
-                      tx.type === 'SELL' ? "bg-red-500/10 text-red-500" : 
-                      "bg-slate-800 text-slate-400"
-                    )}>
-                      {tx.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-300 tabular-nums">
-                    {tx.quantity.toLocaleString(undefined, { maximumFractionDigits: 8 })}
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-300 tabular-nums">
-                    {formatCurrency(tx.pricePerUnit)}
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-500 tabular-nums">
-                    {formatCurrency(tx.fees)}
-                  </td>
-                  <td className="px-6 py-4 text-right font-bold text-white tabular-nums">
-                    {formatCurrency(tx.grossAmount)}
-                  </td>
-                </tr>
-              ))}
+              {transactions.map((tx) => {
+                const displayPrice = isUSD ? tx.pricePerUnit / rate : tx.pricePerUnit;
+                const displayFees = isUSD ? tx.fees / rate : tx.fees;
+                const displayTotal = isUSD ? tx.grossAmount / rate : tx.grossAmount;
+                
+                return (
+                  <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
+                    <td className="px-6 py-4 text-slate-300">
+                      {new Date(tx.date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={cn(
+                        "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest",
+                        tx.type === 'BUY' ? "bg-emerald-500/10 text-emerald-400" : 
+                        tx.type === 'SELL' ? "bg-red-500/10 text-red-500" : 
+                        "bg-slate-800 text-slate-400"
+                      )}>
+                        {tx.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right font-medium text-slate-300 tabular-nums">
+                      {tx.quantity.toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                    </td>
+                    <td className="px-6 py-4 text-right font-medium text-slate-300 tabular-nums">
+                      {formatCurrency(displayPrice, assetCurrency)}
+                    </td>
+                    <td className="px-6 py-4 text-right font-medium text-slate-500 tabular-nums">
+                      {formatCurrency(displayFees, assetCurrency)}
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-white tabular-nums">
+                      {formatCurrency(displayTotal, assetCurrency)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

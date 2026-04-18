@@ -14,12 +14,17 @@ export async function addTransaction(formData: TransactionFormValues) {
     return { success: false, error: "Invalid transaction data" }
   }
 
-  const { symbol, name, assetClass, type, quantity, price, fees, date } = result.data
+  const { symbol, name, assetClass, type, quantity, price: rawPrice, fees: rawFees, date, currency } = result.data
   const dateObj = new Date(date)
 
+  const { USD_VND_RATE } = await import("@/lib/constants")
+  const isUSD = currency === 'USD'
+  
+  // Convert to VND if input is USD
+  const price = isUSD ? rawPrice * USD_VND_RATE : rawPrice
+  const fees = isUSD ? rawFees * USD_VND_RATE : rawFees
+
   // Calculate grossAmount for the ledger
-  // BUY: cash flow OUT (negative)
-  // SELL: cash flow IN (positive)
   let grossAmount = 0
   if (type === 'BUY') {
     grossAmount = -(quantity * price + fees)
@@ -41,6 +46,7 @@ export async function addTransaction(formData: TransactionFormValues) {
             symbol,
             name,
             assetClass,
+            currency,
           }
         })
       }

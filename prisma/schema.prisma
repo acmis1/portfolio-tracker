@@ -13,6 +13,7 @@ model Asset {
   name         String
   assetClass   String // 'CRYPTO', 'MUTUAL_FUND', 'STOCK', 'GOLD', 'TERM_DEPOSIT', 'REAL_ESTATE'
   targetWeight Float  @default(0)
+  currency     String @default("VND")
 
   prices       DailyPrice[]
   transactions Transaction[]

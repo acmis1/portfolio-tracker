@@ -40,7 +40,10 @@ export default async function AssetPage({ params }: AssetPageProps) {
         </Suspense>
 
         <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
-          <AssetTransactionTable transactions={assetData.transactions} />
+          <AssetTransactionTable 
+            transactions={assetData.transactions} 
+            assetCurrency={assetData.currency}
+          />
         </Suspense>
       </div>
     </main>

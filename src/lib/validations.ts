@@ -8,7 +8,8 @@ export const transactionSchema = z.object({
   quantity: z.number().positive("Quantity must be positive"),
   price: z.number().positive("Price must be positive"),
   fees: z.number().min(0, "Fees cannot be negative"),
-  date: z.string().min(1, "Date is required"), // Use string for easier form handling with <input type="date">
+  currency: z.enum(['VND', 'USD']).default('VND'),
+  date: z.string().min(1, "Date is required"),
 })
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>

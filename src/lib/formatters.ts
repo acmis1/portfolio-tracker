@@ -1,4 +1,13 @@
-export const formatCurrency = (value: number): string => {
+export const formatCurrency = (value: number, currency = 'VND'): string => {
+  if (currency === 'USD') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  }
+  
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',

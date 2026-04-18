@@ -125,6 +125,7 @@ export async function getHoldingsLedger() {
         id: asset.id,
         symbol: asset.symbol,
         name: asset.name,
+        currency: asset.currency,
         assetClass: asset.assetClass,
         quantity: currentQty,
         avgCost,

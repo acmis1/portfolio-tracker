@@ -89,3 +89,46 @@ export async function getAssetDetails(id: string) {
     }
   };
 }
+export async function addPriceUpdate(data: { symbol: string; date: string; price: number; currency: string }) {
+  const { symbol, date, price: rawPrice, currency } = data;
+  const dateObj = new Date(date);
+  dateObj.setHours(0, 0, 0, 0);
+
+  const { USD_VND_RATE } = await import("@/lib/constants");
+  const price = currency === 'USD' ? rawPrice * USD_VND_RATE : rawPrice;
+
+  try {
+    const asset = await prisma.asset.findFirst({
+      where: { symbol: symbol.toUpperCase() }
+    });
+
+    if (!asset) {
+      return { success: false, error: `Asset ${symbol} not found. Add a transaction first.` };
+    }
+
+    await prisma.dailyPrice.upsert({
+      where: {
+        assetId_date: {
+          assetId: asset.id,
+          date: dateObj
+        }
+      },
+      update: {
+        closePrice: price,
+        source: 'manual'
+      },
+      create: {
+        assetId: asset.id,
+        date: dateObj,
+        closePrice: price,
+        source: 'manual'
+      }
+    });
+
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update price:", error);
+    return { success: false, error: "Database operation failed" };
+  }
+}

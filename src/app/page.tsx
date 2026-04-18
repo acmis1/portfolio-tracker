@@ -7,8 +7,12 @@ import { getHoldingsLedger, getPortfolioSummary } from "@/features/portfolio/uti
 import { getPortfolioSnapshots } from "@/features/portfolio/actions/rebalancing"
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { CashLedgerTable } from '@/features/cash/components/cash-ledger-table'
 import { AddCashModal } from '@/features/cash/components/add-cash-modal'
+import { PriceUpdateModal } from '@/features/holdings/components/price-update-modal'
+import { TransactionModal } from '@/features/transactions/components/transaction-modal'
 
 export default async function DashboardPage() {
   const [holdings, historyData, summary] = await Promise.all([
@@ -89,6 +93,18 @@ export default async function DashboardPage() {
                 <p>Last successful sync: {lastPriceDate ? new Date(lastPriceDate).toLocaleString() : 'Never'}</p>
               </TooltipContent>
             </Tooltip>
+            
+            <div className="h-4 w-px bg-white/10 mx-1" />
+            
+            <PriceUpdateModal />
+            
+            <TransactionModal 
+              trigger={
+                <Button variant="premium" size="sm">
+                  <Plus className="mr-2 h-4 w-4" /> Add Transaction
+                </Button>
+              } 
+            />
           </div>
         </div>
 
