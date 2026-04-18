@@ -19,3 +19,10 @@ export const formatPercentage = (value: number, includeSign = true): string => {
   }
   return formatted;
 };
+
+export const formatNumber = (value: number, decimals = 2): string => {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+};

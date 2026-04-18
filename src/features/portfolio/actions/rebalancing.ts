@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCashBalance } from "@/features/cash/actions";
 import { AssetDrift, RebalancingSummary } from "../types";
 import { revalidatePath } from "next/cache";
+import { CashTransactionType } from "@prisma/client";
 
 /**
  * Calculates the deviation between current portfolio weights and target allocations.
@@ -98,5 +99,89 @@ export async function updateTargetWeight(assetId: string, newWeight: number) {
   } catch (error) {
     console.error("Failed to update target weight:", error);
     return { success: false, error: "Database update failed" };
+  }
+}
+
+/**
+ * Bulk settles planned trades.
+ * - Filters for actions > 1000 VND.
+ * - Atomic transaction ensures Asset and Cash ledgers stay in sync.
+ * - Derived quantities use the provided currentPrice (latest known).
+ */
+export async function executeRebalancePlan(plan: AssetDrift[]) {
+  const actionable = plan.filter(d => Math.abs(d.actionAmount) >= 1000);
+  
+  if (actionable.length === 0) {
+    return { success: false, error: "No actionable trades found (threshold: 1000 VND)" };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const drift of actionable) {
+        // We use the price provided in the drift (latest price from getRebalancingDrift)
+        const price = drift.currentPrice;
+        if (price <= 0) {
+          throw new Error(`Execution failed: Missing or invalid price for ${drift.symbol}`);
+        }
+
+        const actionAmount = drift.actionAmount;
+        const absAmount = Math.abs(actionAmount);
+        const quantity = absAmount / price;
+        const date = new Date();
+
+        if (actionAmount > 0) {
+          // BUY: Asset qty increases, Cash decreases
+          await tx.transaction.create({
+            data: {
+              assetId: drift.assetId,
+              type: 'BUY',
+              quantity,
+              pricePerUnit: price,
+              grossAmount: -absAmount,
+              date
+            }
+          });
+
+          await tx.cashTransaction.create({
+            data: {
+              amount: absAmount,
+              type: CashTransactionType.BUY_ASSET,
+              date,
+              description: `Rebalance: Buy ${drift.symbol}`,
+              referenceId: drift.assetId
+            }
+          });
+        } else {
+          // SELL: Asset qty decreases, Cash increases
+          await tx.transaction.create({
+            data: {
+              assetId: drift.assetId,
+              type: 'SELL',
+              quantity,
+              pricePerUnit: price,
+              grossAmount: absAmount,
+              date
+            }
+          });
+
+          await tx.cashTransaction.create({
+            data: {
+              amount: absAmount,
+              type: CashTransactionType.SELL_ASSET,
+              date,
+              description: `Rebalance: Sell ${drift.symbol}`,
+              referenceId: drift.assetId
+            }
+          });
+        }
+      }
+    });
+
+    revalidatePath('/');
+    revalidatePath('/rebalance');
+    return { success: true };
+  } catch (error: any) {
+    console.error("Settlement failed:", error);
+    return { success: false, error: error.message || "Failed to settle rebalancing plan" };
   }
 }

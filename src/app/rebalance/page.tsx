@@ -1,6 +1,7 @@
 import { getRebalancingDrift } from "@/features/portfolio/actions/rebalancing";
 import { AllocationSummary } from "@/features/portfolio/components/allocation-summary";
 import { DriftTable } from "@/features/portfolio/components/drift-table";
+import { ExecutionModal } from "@/features/portfolio/components/execution-modal";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,10 @@ export default async function RebalancePage() {
             <p className="mt-2 text-lg text-slate-400">
               Align holdings with target weights to optimize risk-adjusted returns.
             </p>
+          </div>
+
+          <div className="flex shrink-0">
+            <ExecutionModal drifts={summary.drifts} cashBalance={summary.cashBalance} />
           </div>
         </div>
 
