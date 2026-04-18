@@ -1,10 +1,11 @@
-import { OverviewCards } from '@/components/overview-cards'
-import { GrowthChart } from '@/components/charts/growth-chart'
-import { AllocationChart } from '@/components/charts/allocation-chart'
+import { OverviewCards } from '@/features/portfolio/components/overview-cards'
+import { GrowthChart } from '@/features/portfolio/components/growth-chart'
+import { AllocationChart } from '@/features/portfolio/components/allocation-chart'
 import { Suspense } from 'react'
-import { HoldingsTable } from '@/components/holdings-table'
-import { getHoldingsLedger, getPortfolioHistory, getPortfolioSummary } from "@/lib/portfolio"
+import { HoldingsTable } from '@/features/holdings/components/holdings-table'
+import { getHoldingsLedger, getPortfolioHistory, getPortfolioSummary } from "@/features/portfolio/utils"
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export default async function DashboardPage() {
   const [holdings, historyData, summary] = await Promise.all([
@@ -66,16 +67,25 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className={cn(
-              "h-2 w-2 rounded-full animate-pulse",
-              isDataFresh ? "bg-emerald-500" : "bg-amber-500"
-            )} />
-            <span className={cn(
-              "text-xs font-bold uppercase tracking-widest",
-              isDataFresh ? "text-emerald-500/80" : "text-amber-500/80"
-            )}>
-              {isDataFresh ? "Data Fresh" : `Prices Stale (Last: ${lastPriceDate ? new Date(lastPriceDate).toLocaleDateString() : 'N/A'})`}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-3 cursor-help">
+                  <div className={cn(
+                    "h-2 w-2 rounded-full animate-pulse",
+                    isDataFresh ? "bg-emerald-500" : "bg-amber-500"
+                  )} />
+                  <span className={cn(
+                    "text-xs font-bold uppercase tracking-widest",
+                    isDataFresh ? "text-emerald-500/80" : "text-amber-500/80"
+                  )}>
+                    {isDataFresh ? "Data Fresh" : "Prices Stale"}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Last successful sync: {lastPriceDate ? new Date(lastPriceDate).toLocaleString() : 'Never'}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 

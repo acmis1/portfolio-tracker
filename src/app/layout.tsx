@@ -17,7 +17,8 @@ export const metadata: Metadata = {
   description: "Track and manage your personal financial portfolio",
 };
 
-import { Navigation } from "@/components/navigation";
+import { Navigation } from "@/components/layout/navigation";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function RootLayout({
   children,
@@ -31,8 +32,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-slate-950">
-        <Navigation />
-        <div className="flex-1">{children}</div>
+        <TooltipProvider>
+          <Navigation />
+          <div className="flex-1">{children}</div>
+        </TooltipProvider>
       </body>
     </html>
   );
