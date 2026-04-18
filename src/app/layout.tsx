@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Antigravity Capital",
+  title: "Antigravity Capital | Institutional Tracker",
   description: "Institutional-grade wealth management and portfolio intelligence",
 };
 

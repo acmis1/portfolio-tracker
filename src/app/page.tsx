@@ -3,7 +3,8 @@ import { GrowthChart } from '@/features/portfolio/components/growth-chart'
 import { AllocationChart } from '@/features/portfolio/components/allocation-chart'
 import { Suspense } from 'react'
 import { HoldingsTable } from '@/features/holdings/components/holdings-table'
-import { getHoldingsLedger, getPortfolioHistory, getPortfolioSummary } from "@/features/portfolio/utils"
+import { getHoldingsLedger, getPortfolioSummary } from "@/features/portfolio/utils"
+import { getPortfolioSnapshots } from "@/features/portfolio/actions/rebalancing"
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { CashLedgerTable } from '@/features/cash/components/cash-ledger-table'
@@ -12,7 +13,7 @@ import { AddCashModal } from '@/features/cash/components/add-cash-modal'
 export default async function DashboardPage() {
   const [holdings, historyData, summary] = await Promise.all([
     getHoldingsLedger(),
-    getPortfolioHistory(),
+    getPortfolioSnapshots(),
     getPortfolioSummary()
   ]);
 

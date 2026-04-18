@@ -185,3 +185,65 @@ export async function executeRebalancePlan(plan: AssetDrift[]) {
     return { success: false, error: error.message || "Failed to settle rebalancing plan" };
   }
 }
+
+import { getPortfolioSummary } from "../utils";
+
+/**
+ * Fetches historical portfolio snapshots for charting.
+ * Includes Net Invested (Cost Basis) and Total Value.
+ */
+export async function getPortfolioSnapshots() {
+  try {
+    const snapshots = await prisma.portfolioSnapshot.findMany({
+      orderBy: { date: 'asc' }
+    });
+    
+    return snapshots.map(s => ({
+      date: s.date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
+      value: s.totalValue,
+      invested: s.costBasis, // Net Invested Capital (Cost Basis)
+      marketValue: s.investedValue, // Current Market Value of assets
+      fullDate: s.date
+    }));
+  } catch (error) {
+    console.error("Failed to fetch portfolio snapshots:", error);
+    return [];
+  }
+}
+
+/**
+ * Manually triggers a portfolio snapshot capture.
+ * Reuses the same valuation logic as the summary and cron route.
+ */
+export async function forcePortfolioSnapshot() {
+  try {
+    const summary = await getPortfolioSummary();
+    const drift = await getRebalancingDrift();
+
+    const now = new Date();
+    const todayMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+    await prisma.portfolioSnapshot.upsert({
+      where: { date: todayMidnight },
+      update: {
+        totalValue: drift.totalPortfolioValue,
+        investedValue: drift.investedValue,
+        cashBalance: drift.cashBalance,
+        costBasis: summary.totalInvested,
+      },
+      create: {
+        date: todayMidnight,
+        totalValue: drift.totalPortfolioValue,
+        investedValue: drift.investedValue,
+        cashBalance: drift.cashBalance,
+        costBasis: summary.totalInvested,
+      },
+    });
+
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    console.error("Manual snapshot failed:", error);
+    return { success: false, error: error.message || "Failed to capture snapshot" };
+  }
+}

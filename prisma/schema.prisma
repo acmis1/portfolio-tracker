@@ -77,3 +77,14 @@ model TermDeposit {
 
   asset Asset @relation(fields: [assetId], references: [id])
 }
+
+model PortfolioSnapshot {
+  id            String   @id @default(cuid())
+  date          DateTime @unique // Normalized to midnight
+  totalValue    Float
+  investedValue Float    // Current Market Value of assets
+  cashBalance   Float
+  costBasis     Float    @default(0) // Total Net Capital Deployed
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
