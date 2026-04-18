@@ -6,6 +6,8 @@ import { HoldingsTable } from '@/features/holdings/components/holdings-table'
 import { getHoldingsLedger, getPortfolioHistory, getPortfolioSummary } from "@/features/portfolio/utils"
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { CashLedgerTable } from '@/features/cash/components/cash-ledger-table'
+import { AddCashModal } from '@/features/cash/components/add-cash-modal'
 
 export default async function DashboardPage() {
   const [holdings, historyData, summary] = await Promise.all([
@@ -109,12 +111,25 @@ export default async function DashboardPage() {
         </div>
 
         {/* 3. Holdings Ledger */}
-        <div className="space-y-4 pb-12">
+        <div className="space-y-4">
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
             Holdings Ledger
           </h2>
           <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
             <HoldingsTable />
+          </Suspense>
+        </div>
+
+        {/* 4. Cash Ledger */}
+        <div className="space-y-4 pb-12">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              Cash Ledger
+            </h2>
+            <AddCashModal />
+          </div>
+          <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
+            <CashLedgerTable />
           </Suspense>
         </div>
       </div>
