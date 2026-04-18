@@ -4,6 +4,7 @@ import { getAssetDetails } from "@/features/holdings/actions"
 import { AssetHeader } from "@/features/holdings/components/asset-header"
 import { AssetTransactionTable } from "@/features/holdings/components/asset-transaction-table"
 import { AssetPriceChart } from "@/features/holdings/components/asset-price-chart"
+import { BenchmarkCards } from "@/features/holdings/components/benchmark-cards"
 
 interface AssetPageProps {
   params: Promise<{ id: string }>
@@ -32,6 +33,10 @@ export default async function AssetPage({ params }: AssetPageProps) {
 
         <Suspense fallback={<div className="h-[400px] w-full animate-pulse rounded-2xl glass-premium" />}>
           <AssetPriceChart prices={assetData.prices} />
+        </Suspense>
+
+        <Suspense fallback={<div className="h-24 w-full animate-pulse rounded-2xl glass-premium" />}>
+          <BenchmarkCards assetXirr={assetData.holding.xirr} />
         </Suspense>
 
         <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
