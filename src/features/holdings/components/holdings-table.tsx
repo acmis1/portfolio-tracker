@@ -1,8 +1,8 @@
-import { getHoldingsLedger } from "@/lib/portfolio";
+import { getHoldingsLedger } from "@/features/portfolio/utils";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
 import { TrendingUp, TrendingDown, Info, Plus } from "lucide-react";
-import { TransactionModal } from "./transaction-modal";
-import { Button } from "./ui/button";
+import { TransactionModal } from "@/features/transactions/components/transaction-modal";
+import { Button } from "@/components/ui/button";
 
 export async function HoldingsTable() {
   const holdings = await getHoldingsLedger();

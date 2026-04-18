@@ -1,4 +1,4 @@
-import { getPortfolioSummary } from '../src/lib/portfolio';
+import { getPortfolioSummary } from '../src/features/portfolio/utils';
 
 async function test() {
   try {

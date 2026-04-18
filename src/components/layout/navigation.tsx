@@ -1,7 +1,7 @@
 "use client"
 
 import { PieChart, User } from 'lucide-react'
-import { TransactionModal } from './transaction-modal'
+import { TransactionModal } from '@/features/transactions/components/transaction-modal'
 
 export function Navigation() {
   return (
