@@ -7,7 +7,7 @@ export const transactionSchema = z.object({
   type: z.enum(['BUY', 'SELL', 'DIVIDEND', 'INTEREST']),
   quantity: z.number().positive("Quantity must be positive"),
   price: z.number().positive("Price must be positive"),
-  fees: z.number().min(0, "Fees cannot be negative").default(0),
+  fees: z.number().min(0, "Fees cannot be negative"),
   date: z.string().min(1, "Date is required"), // Use string for easier form handling with <input type="date">
 })
 

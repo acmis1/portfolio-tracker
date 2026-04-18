@@ -11,6 +11,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { cn } from '@/lib/utils'
+import { TrendingUp } from 'lucide-react'
 
 interface GrowthChartProps {
   data?: { date: string; value: number }[]
@@ -81,16 +82,10 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
       </div>
 
       {!hasData ? (
-        <div className="flex h-full flex-col items-center justify-center space-y-3 pb-10">
-          <div className="flex h-32 w-full items-end justify-around px-10 opacity-10">
-            <div className="h-[20%] w-4 rounded-t-sm bg-emerald-500" />
-            <div className="h-[40%] w-4 rounded-t-sm bg-emerald-500" />
-            <div className="h-[35%] w-4 rounded-t-sm bg-emerald-500" />
-            <div className="h-[60%] w-4 rounded-t-sm bg-emerald-500" />
-            <div className="h-[55%] w-4 rounded-t-sm bg-emerald-500" />
-            <div className="h-[80%] w-4 rounded-t-sm bg-emerald-500" />
-          </div>
-          <p className="text-sm font-medium text-slate-500">Waiting for historical data...</p>
+        <div className="flex flex-col items-center justify-center h-full space-y-4 opacity-50">
+          <TrendingUp className="w-12 h-12 text-slate-700" />
+          <p className="text-slate-400 font-medium">No historical data available</p>
+          <p className="text-xs text-slate-500">Record your first transaction to see growth over time</p>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height="80%">
