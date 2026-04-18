@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "Rebalancing & Drift Analysis | Antigravity Capital",
+  title: "Rebalancing & Drift Analysis | Aegis Ledger",
   description: "Institutional-grade portfolio rebalancing and allocation control.",
 };
 
@@ -61,7 +61,7 @@ export default async function RebalancePage() {
 
         {/* Footer Audit Trail Notice */}
         <div className="mt-12 border-t border-white/5 pt-8 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-slate-600">
-          Antigravity Capital &middot; Portfolio Drift Analysis &middot; Institutional Grade Verification
+          Aegis Ledger &middot; Portfolio Drift Analysis &middot; Institutional Grade Verification
         </div>
       </div>
     </main>

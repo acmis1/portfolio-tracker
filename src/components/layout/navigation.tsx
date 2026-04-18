@@ -14,7 +14,7 @@ export function Navigation() {
             <PieChart className="h-5 w-5 text-white" />
           </div>
           <span className="text-xl font-black tracking-tighter text-white">
-            ANTIGRAVITY<span className="text-emerald-500">.</span>CAPITAL
+            AEGIS<span className="text-emerald-500">.</span>LEDGER
           </span>
         </Link>
 
@@ -22,8 +22,9 @@ export function Navigation() {
         <div className="flex items-center gap-6">
           <div className="hidden md:flex items-center gap-6 border-r border-white/10 pr-6">
             <Link href="/" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Dashboard</Link>
+            <Link href="/holdings" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Holdings</Link>
             <Link href="/rebalance" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Rebalance</Link>
-            <span className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Insights</span>
+            <Link href="/income" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Income</Link>
           </div>
           
           <TransactionModal />

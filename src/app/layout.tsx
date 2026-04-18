@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Navigation } from "@/components/layout/navigation";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,12 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Antigravity Capital | Institutional Tracker",
+  title: "Aegis Ledger | Institutional Wealth Tracker",
   description: "Institutional-grade wealth management and portfolio intelligence",
 };
-
-import { Navigation } from "@/components/layout/navigation";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function RootLayout({
   children,
