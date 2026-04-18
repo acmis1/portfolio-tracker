@@ -3,6 +3,7 @@ import { formatCurrency, formatPercentage } from "@/lib/formatters";
 import { TrendingUp, TrendingDown, Info, Plus } from "lucide-react";
 import { TransactionModal } from "@/features/transactions/components/transaction-modal";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export async function HoldingsTable() {
   const holdings = await getHoldingsLedger();
@@ -46,7 +47,9 @@ export async function HoldingsTable() {
               <tr key={holding.id} className="hover:bg-white/5 transition-colors group">
                 <td className="px-6 py-4">
                   <div className="flex flex-col">
-                    <span className="font-bold text-white group-hover:text-emerald-400 transition-colors">{holding.symbol}</span>
+                    <Link href={`/holdings/${holding.id}`} className="font-bold text-white hover:text-emerald-400 transition-colors">
+                      {holding.symbol}
+                    </Link>
                     <span className="text-xs text-slate-500">{holding.name}</span>
                   </div>
                 </td>
