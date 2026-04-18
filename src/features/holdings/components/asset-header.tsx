@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCurrency, formatPercentage } from "@/lib/formatters"
 import { TrendingUp, TrendingDown, LayoutDashboard } from "lucide-react"
+import { USD_VND_RATE } from "@/lib/constants"
 import Link from "next/link"
 
 interface AssetHeaderProps {
@@ -8,6 +9,7 @@ interface AssetHeaderProps {
     symbol: string;
     name: string;
     assetClass: string;
+    currency: string;
     holding: {
       quantity: number;
       avgCost: number;
@@ -23,12 +25,13 @@ interface AssetHeaderProps {
 export function AssetHeader({ asset }: AssetHeaderProps) {
     const { holding } = asset;
     const isUSD = asset.currency === 'USD';
-    const rate = 25400;
 
-    const displayLivePrice = isUSD && holding.livePrice !== null ? holding.livePrice / rate : holding.livePrice;
-    const displayMarketValue = isUSD ? holding.marketValue / rate : holding.marketValue;
-    const displayAvgCost = isUSD ? holding.avgCost / rate : holding.avgCost;
-    const displayPnL = isUSD && holding.unrealizedPnL !== null ? holding.unrealizedPnL / rate : holding.unrealizedPnL;
+    const displayLivePrice = isUSD && holding.livePrice !== null ? holding.livePrice / USD_VND_RATE : holding.livePrice;
+    const displayAvgCost = isUSD ? holding.avgCost / USD_VND_RATE : holding.avgCost;
+    
+    // Valuation and performance in base currency VND
+    const displayMarketValue = holding.marketValue;
+    const displayPnL = holding.unrealizedPnL;
     
     const isProfit = (holding.unrealizedPnL || 0) >= 0;
 
@@ -56,7 +59,7 @@ export function AssetHeader({ asset }: AssetHeaderProps) {
       <div className="grid gap-6 md:grid-cols-5">
         <Card className="glass-premium border-white/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Live Price</CardTitle>
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Live Price ({asset.currency})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-black text-white">
@@ -67,11 +70,11 @@ export function AssetHeader({ asset }: AssetHeaderProps) {
 
         <Card className="glass-premium border-white/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Market Value</CardTitle>
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Market Value (VND)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-black text-white">
-              {formatCurrency(displayMarketValue, asset.currency)}
+              {formatCurrency(displayMarketValue, 'VND')}
             </div>
             <div className="text-xs text-slate-500 mt-1">
               {holding.quantity.toLocaleString()} units
@@ -81,7 +84,7 @@ export function AssetHeader({ asset }: AssetHeaderProps) {
 
         <Card className="glass-premium border-white/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Average Cost</CardTitle>
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Average Cost ({asset.currency})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-black text-white">
@@ -92,13 +95,13 @@ export function AssetHeader({ asset }: AssetHeaderProps) {
 
         <Card className={holding.unrealizedPnL !== null ? (isProfit ? "bg-emerald-500/5 border-emerald-500/10" : "bg-red-500/5 border-red-500/10") : "glass-premium border-white/5"}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Unrealized P&L</CardTitle>
+            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Unrealized P&L (VND)</CardTitle>
           </CardHeader>
           <CardContent>
             {displayPnL !== null ? (
               <>
                 <div className={`text-2xl font-black ${isProfit ? "text-emerald-400" : "text-red-400"}`}>
-                  {isProfit ? "+" : ""}{formatCurrency(displayPnL, asset.currency)}
+                  {isProfit ? "+" : ""}{formatCurrency(displayPnL, 'VND')}
                 </div>
                 <div className={`flex items-center gap-1 text-xs font-bold mt-1 ${isProfit ? "text-emerald-500/70" : "text-red-500/70"}`}>
                   {isProfit ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}

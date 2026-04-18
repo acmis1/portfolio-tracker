@@ -3,6 +3,7 @@ import { formatCurrency, formatPercentage } from "@/lib/formatters";
 import { TrendingUp, TrendingDown, Info, Plus } from "lucide-react";
 import { TransactionModal } from "@/features/transactions/components/transaction-modal";
 import { Button } from "@/components/ui/button";
+import { USD_VND_RATE } from "@/lib/constants";
 import Link from "next/link";
 
 export async function HoldingsTable() {
@@ -38,19 +39,20 @@ export async function HoldingsTable() {
               <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Quantity</th>
               <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Avg Cost</th>
               <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Live Price</th>
-              <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Market Value</th>
-              <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Unrealized P&L</th>
+              <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Market Value (VND)</th>
+              <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Unrealized P&L (VND)</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
             {holdings.map((holding) => {
               const isUSD = holding.currency === 'USD';
-              const rate = 25400; // Hardcoded fallback or import
               
-              const displayAvgCost = isUSD ? holding.avgCost / rate : holding.avgCost;
-              const displayLivePrice = isUSD && holding.livePrice !== null ? holding.livePrice / rate : holding.livePrice;
-              const displayMarketValue = isUSD ? holding.marketValue / rate : holding.marketValue;
-              const displayPnL = isUSD && holding.unrealizedPnL !== null ? holding.unrealizedPnL / rate : holding.unrealizedPnL;
+              const displayAvgCost = isUSD ? holding.avgCost / USD_VND_RATE : holding.avgCost;
+              const displayLivePrice = isUSD && holding.livePrice !== null ? holding.livePrice / USD_VND_RATE : holding.livePrice;
+              
+              // Market Value and P&L remain in VND as per accounting truth
+              const displayMarketValue = holding.marketValue;
+              const displayPnL = holding.unrealizedPnL;
 
               return (
                 <tr key={holding.id} className="hover:bg-white/5 transition-colors group">
@@ -77,14 +79,14 @@ export async function HoldingsTable() {
                     {displayLivePrice !== null ? formatCurrency(displayLivePrice, holding.currency) : "N/A"}
                   </td>
                   <td className="px-6 py-4 text-right font-bold text-white">
-                    {formatCurrency(displayMarketValue, holding.currency)}
+                    {formatCurrency(displayMarketValue, 'VND')}
                   </td>
                   <td className="px-6 py-4 text-right">
                     {displayPnL !== null ? (
                       <div className="flex flex-col items-end">
                         <div className={`flex items-center gap-1 font-bold ${displayPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                           {displayPnL >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                          {formatCurrency(displayPnL, holding.currency)}
+                          {formatCurrency(displayPnL, 'VND')}
                         </div>
                         <span className={`text-[10px] font-black ${displayPnL >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
                           {formatPercentage(holding.unrealizedPnLPctg!)}

@@ -1,5 +1,6 @@
 import { formatCurrency } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
+import { USD_VND_RATE } from "@/lib/constants"
 
 interface AssetTransactionTableProps {
   transactions: any[]
@@ -7,7 +8,6 @@ interface AssetTransactionTableProps {
 }
 
 export function AssetTransactionTable({ transactions, assetCurrency }: AssetTransactionTableProps) {
-  const rate = 25400;
   const isUSD = assetCurrency === 'USD';
 
   return (
@@ -21,16 +21,18 @@ export function AssetTransactionTable({ transactions, assetCurrency }: AssetTran
                 <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Date</th>
                 <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Type</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Quantity</th>
-                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Price</th>
-                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Fees</th>
-                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Total</th>
+                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Price ({assetCurrency})</th>
+                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Fees ({assetCurrency})</th>
+                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Total (VND)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {transactions.map((tx) => {
-                const displayPrice = isUSD ? tx.pricePerUnit / rate : tx.pricePerUnit;
-                const displayFees = isUSD ? tx.fees / rate : tx.fees;
-                const displayTotal = isUSD ? tx.grossAmount / rate : tx.grossAmount;
+                const displayPrice = isUSD ? tx.pricePerUnit / USD_VND_RATE : tx.pricePerUnit;
+                const displayFees = isUSD ? tx.fees / USD_VND_RATE : tx.fees;
+                
+                // Total (Gross Amount) is the wealth/cash impact, strictly VND
+                const displayTotal = tx.grossAmount;
                 
                 return (
                   <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
@@ -57,7 +59,7 @@ export function AssetTransactionTable({ transactions, assetCurrency }: AssetTran
                       {formatCurrency(displayFees, assetCurrency)}
                     </td>
                     <td className="px-6 py-4 text-right font-bold text-white tabular-nums">
-                      {formatCurrency(displayTotal, assetCurrency)}
+                      {formatCurrency(displayTotal, 'VND')}
                     </td>
                   </tr>
                 );
