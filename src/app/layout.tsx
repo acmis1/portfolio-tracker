@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Portfolio Tracker",
-  description: "Track and manage your personal financial portfolio",
+  title: "Antigravity Capital",
+  description: "Institutional-grade wealth management and portfolio intelligence",
 };
 
 import { Navigation } from "@/components/layout/navigation";
