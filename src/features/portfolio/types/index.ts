@@ -13,11 +13,11 @@ export interface AssetDrift {
 }
 
 export interface RebalancingSummary {
-  totalValue: number;
-  totalPortfolioValue: number;
-  cashBalance: number;
-  investedValue: number;
   drifts: AssetDrift[];
-  currentYield: number;
-  targetYield: number;
+  cashBalance: number;
+  totalValue?: number;
+  currentYield?: number;
+  targetYield?: number;
+  totalPortfolioValue?: number;
+  investedValue?: number;
 }
