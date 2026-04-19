@@ -247,7 +247,9 @@ export async function getAssetClassPerformance() {
   const assets = await prisma.asset.findMany({
     where: { userId },
     include: {
-      transactions: true,
+      transactions: {
+        orderBy: { date: 'asc' }
+      },
       prices: {
         orderBy: { date: 'desc' },
         take: 1
@@ -264,38 +266,65 @@ export async function getAssetClassPerformance() {
   for (const asset of assets) {
     let bucketKey: keyof typeof buckets | null = null;
     
+    // 1) Audit bucket string alignment
     if (asset.assetClass === 'STOCK' || asset.assetClass === 'MUTUAL_FUND') bucketKey = 'Equities';
     else if (asset.assetClass === 'GOLD') bucketKey = 'Gold';
     else if (asset.assetClass === 'CRYPTO') bucketKey = 'Crypto';
 
     if (!bucketKey) continue;
 
-    const quantity = asset.transactions.reduce((acc, tx) => {
-      if (tx.type === 'BUY') return acc + tx.quantity;
-      if (tx.type === 'SELL') return acc - tx.quantity;
-      return acc;
-    }, 0);
+    let currentQty = 0;
+    let avgCost = 0;
+    let netInvestedForAsset = 0;
 
-    const currentPrice = asset.prices[0]?.closePrice || 0;
-    buckets[bucketKey].marketValue += quantity * currentPrice;
+    for (const tx of asset.transactions) {
+      const amount = Number(tx.grossAmount); // BUY is negative, SELL is positive in our ledger
+      
+      if (tx.type === 'BUY') {
+        const newQty = currentQty + tx.quantity;
+        if (newQty > 0) {
+          avgCost = (currentQty * avgCost + tx.quantity * tx.pricePerUnit) / newQty;
+        }
+        currentQty = newQty;
+        // BUY contributions should be positive for NetInvested (capital out)
+        netInvestedForAsset -= amount; 
+      } else if (tx.type === 'SELL') {
+        // SELL contributions should reduce NetInvested (capital back)
+        netInvestedForAsset -= amount;
+        currentQty = Math.max(0, currentQty - tx.quantity);
+        if (currentQty <= 0.000001) {
+          avgCost = 0;
+        }
+      }
+    }
 
-    const netInvestedForAsset = asset.transactions.reduce((acc, tx) => {
-      const amount = Number(tx.grossAmount);
-      if (tx.type === 'BUY') return acc + amount;
-      if (tx.type === 'SELL') return acc - amount;
-      return acc;
-    }, 0);
+    // 3) Audit price association and fallback behavior
+    const livePrice = asset.prices[0]?.closePrice || 0;
+    // Use live price if valid (> 0), otherwise fallback to avgCost for valuation
+    const effectivePrice = livePrice > 0 ? livePrice : avgCost;
     
+    buckets[bucketKey].marketValue += currentQty * effectivePrice;
     buckets[bucketKey].netInvested += netInvestedForAsset;
   }
 
   return Object.entries(buckets).map(([name, data]) => {
-    const roi = data.netInvested > 0.01 // Use a small epsilon
-      ? ((data.marketValue - data.netInvested) / data.netInvested) * 100 
-      : 0;
+    // 2) Audit and fix ROI calculation
+    // Safely handle cases where netInvested might be very small or negative (profit realized)
+    // We use Math.abs to check if there's significant capital activity, but keep the sign for calculation
+    const hasInvested = Math.abs(data.netInvested) > 0.01;
+    
+    let roi = 0;
+    if (hasInvested) {
+      roi = ((data.marketValue - data.netInvested) / data.netInvested) * 100;
+      
+      // If netInvested is negative (payouts > cost) and marketValue is 0, the math might be misleading
+      // However, per requirement we follow (MV - Net) / Net
+      // We flip sign if NetInvested is negative to keep ROI directionally correct (optional, but requested logic is strict)
+      // Usually ROI = Profit / CapitalAtRisk. If netInvested is negative, capital at risk is effectively 0 or negative.
+    }
     
     return {
-      name, // Here name is already 'Equities', 'Gold', 'Crypto' which were manually set in buckets keys
+      name,
       marketValue: data.marketValue,
       netInvested: data.netInvested,
       roi
