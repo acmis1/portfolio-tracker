@@ -37,10 +37,25 @@ async function fetchStockPrice(symbol: string) {
       "Referer": "https://dnse.com.vn/"
     }
   });
-  
-  if (!res.ok) throw new Error(`DNSE API failed: ${res.status}`);
-  const data: any = await res.json();
-  
+
+  const rawText = await res.text();
+
+  if (!res.ok) {
+    console.error(`🚨 [DNSE WAF DEBUG] HTTP Status: ${res.status} ${res.statusText}`);
+    console.error(`🚨 [DNSE WAF DEBUG] Headers:`, Object.fromEntries(res.headers.entries()));
+    console.error(`🚨 [DNSE WAF DEBUG] Body Snippet: ${rawText.substring(0, 500)}`);
+    throw new Error(`DNSE rejected the request with status ${res.status}`);
+  }
+
+  let data;
+  try {
+    data = JSON.parse(rawText);
+  } catch (e) {
+    console.error(`🚨 [DNSE JSON DEBUG] Failed to parse response as JSON.`);
+    console.error(`🚨 [DNSE JSON DEBUG] Raw Response: ${rawText.substring(0, 500)}`);
+    throw new Error("DNSE returned non-JSON data (likely an HTML firewall page).");
+  }
+
   if (!data?.c || !Array.isArray(data.c) || data.c.length === 0) {
     throw new Error(`Invalid data from DNSE for ${symbol}`);
   }
