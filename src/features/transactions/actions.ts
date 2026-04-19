@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { TransactionFormValues, transactionSchema } from "@/lib/validations"
 import { auth } from "@clerk/nextjs/server"
+import { recalculateAssetPnL, recalculateHistoricalSnapshots } from "../portfolio/actions/recalculate"
 
 export async function addTransaction(formData: TransactionFormValues) {
   const { userId } = await auth()
@@ -38,10 +39,10 @@ export async function addTransaction(formData: TransactionFormValues) {
     grossAmount = (quantity * price)
   }
   try {
-    await prisma.$transaction(async (tx: any) => {
-      // 1. Ensure Asset exists (safe finding by symbol)
+    const result = await prisma.$transaction(async (tx: any) => {
+      // 1. Ensure Asset exists (safe finding by symbol AND userId)
       let asset = await tx.asset.findFirst({
-        where: { symbol }
+        where: { symbol, userId }
       })
 
       if (!asset) {
@@ -51,38 +52,25 @@ export async function addTransaction(formData: TransactionFormValues) {
             name,
             assetClass,
             currency,
+            userId,
           }
         })
       }
 
-      // 2. Calculate Realized P&L if this is a SELL transaction
-      let realizedPnL = null
-      if (type === 'SELL') {
-        // Fetch historical transactions to compute cost basis
-        const history = await tx.transaction.findMany({
-          where: { assetId: asset.id },
-          orderBy: { date: 'asc' }
-        })
-
-        let currentQty = 0
-        let currentAvgCost = 0
-        for (const t of history) {
-          if (t.type === 'BUY') {
-            const newQty = currentQty + t.quantity
-            currentAvgCost = (currentQty * currentAvgCost + t.quantity * t.pricePerUnit) / newQty
-            currentQty = newQty
-          } else if (t.type === 'SELL') {
-            currentQty = Math.max(0, currentQty - t.quantity)
-            if (currentQty === 0) currentAvgCost = 0
-          }
+      // 2. Create associated CashTransaction for accurate cash ledger
+      const cashTx = await tx.cashTransaction.create({
+        data: {
+          amount: Math.abs(grossAmount),
+          date: dateObj,
+          type: type === 'BUY' ? 'BUY_ASSET' : 'SELL_ASSET',
+          description: `${type} ${quantity} ${symbol} @ ${price}`,
+          currency: 'VND',
+          userId,
         }
-        
-        // realizedPnL = ((sellPrice - avgCost) * quantity) - fees
-        realizedPnL = ((price - currentAvgCost) * quantity) - fees
-      }
+      })
 
-      // 3. Create Transaction
-      await tx.transaction.create({
+      // 3. Create Transaction linked to the cash entry
+      const transaction = await tx.transaction.create({
         data: {
           assetId: asset.id,
           type,
@@ -90,15 +78,140 @@ export async function addTransaction(formData: TransactionFormValues) {
           pricePerUnit: price,
           grossAmount,
           date: dateObj,
-          realizedPnL: realizedPnL ?? undefined,
+          cashTransactionId: cashTx.id,
+          userId,
+          // Realized P&L will be calculated by the engine in the next step
         }
       })
+
+      return { transaction, assetId: asset.id }
     })
+
+    // 4. Trigger Recalculation Engine
+    await recalculateAssetPnL(result.assetId, userId)
+    await recalculateHistoricalSnapshots(dateObj, userId)
 
     revalidatePath('/')
     return { success: true }
   } catch (error: any) {
     console.error("Failed to add transaction:", error)
     return { success: false, error: "Database operation failed" }
+  }
+}
+
+export async function deleteTransaction(id: string) {
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: "Unauthorized" }
+
+  try {
+    const transaction = await prisma.transaction.findFirst({
+      where: { id, userId },
+      include: { cashTransaction: true }
+    })
+
+    if (!transaction) return { success: false, error: "Transaction not found" }
+
+    const assetId = transaction.assetId
+    const date = transaction.date
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete linked cash transaction first
+      if (transaction.cashTransactionId) {
+        await tx.cashTransaction.delete({
+          where: { id: transaction.cashTransactionId }
+        })
+      }
+
+      // 2. Delete the ledger entry
+      await tx.transaction.delete({
+        where: { id }
+      })
+    })
+
+    // 3. Recalculate historical chain
+    await recalculateAssetPnL(assetId, userId)
+    await recalculateHistoricalSnapshots(date, userId)
+
+    revalidatePath('/')
+    return { success: true }
+  } catch (error: any) {
+    console.error("Failed to delete transaction:", error)
+    return { success: false, error: "Deletion failed" }
+  }
+}
+
+export async function editTransaction(id: string, formData: TransactionFormValues) {
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: "Unauthorized" }
+
+  const result = transactionSchema.safeParse(formData)
+  if (!result.success) return { success: false, error: "Invalid data" }
+
+  const { symbol, type, quantity, price: rawPrice, fees: rawFees, date, currency } = result.data
+  const dateObj = new Date(date)
+
+  const { getLiveExchangeRate } = await import("@/lib/fx")
+  const USD_VND_RATE = await getLiveExchangeRate()
+  const isUSD = currency === 'USD'
+  
+  const price = isUSD ? rawPrice * USD_VND_RATE : rawPrice
+  const fees = isUSD ? rawFees * USD_VND_RATE : rawFees
+
+  let grossAmount = 0
+  if (type === 'BUY') {
+    grossAmount = -(quantity * price + fees)
+  } else if (type === 'SELL') {
+    grossAmount = (quantity * price - fees)
+  } else {
+    grossAmount = (quantity * price)
+  }
+
+  try {
+    const existing = await prisma.transaction.findFirst({
+      where: { id, userId },
+      include: { cashTransaction: true }
+    })
+
+    if (!existing) return { success: false, error: "Transaction not found" }
+
+    // Find the earliest date impacted to start recalculation
+    const earliestDate = existing.date < dateObj ? existing.date : dateObj
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Update cash transaction if it exists
+      if (existing.cashTransactionId) {
+        await tx.cashTransaction.update({
+          where: { id: existing.cashTransactionId },
+          data: {
+            amount: Math.abs(grossAmount),
+            date: dateObj,
+            type: type === 'BUY' ? 'BUY_ASSET' : 'SELL_ASSET',
+            description: `${type} ${quantity} ${symbol} @ ${price}`,
+          }
+        })
+      }
+
+      // 2. Update the asset transaction
+      await tx.transaction.update({
+        where: { id },
+        data: {
+          type,
+          quantity,
+          pricePerUnit: price,
+          grossAmount,
+          date: dateObj,
+        }
+      })
+    })
+
+    // 3. Chain recalculation
+    await recalculateAssetPnL(existing.assetId, userId)
+    await recalculateHistoricalSnapshots(earliestDate, userId)
+
+    revalidatePath('/')
+    return { success: true }
+  } catch (error: any) {
+    console.error("Failed to edit transaction:", error)
+    return { success: false, error: "Update failed" }
   }
 }

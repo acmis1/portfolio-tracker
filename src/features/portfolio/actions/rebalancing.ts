@@ -28,8 +28,9 @@ export async function getRebalancingDrift(): Promise<RebalancingSummary> {
     targetYield: 0
   }
 
-  // 1. Fetch assets with their holdings data
+  // 1. Fetch assets for this user with their holdings data
   const assets = await prisma.asset.findMany({
+    where: { userId },
     include: {
       transactions: true,
       prices: {
@@ -107,8 +108,8 @@ export async function updateTargetWeight(assetId: string, newWeight: number) {
   if (!userId) return { success: false, error: "Unauthorized" }
 
   try {
-    await prisma.asset.update({
-      where: { id: assetId },
+    await prisma.asset.updateMany({
+      where: { id: assetId, userId },
       data: { targetWeight: newWeight }
     });
 
@@ -155,6 +156,7 @@ export async function executeRebalancePlan(plan: AssetDrift[]) {
           await tx.transaction.create({
             data: {
               assetId: drift.assetId,
+              userId,
               type: 'BUY',
               quantity,
               pricePerUnit: price,
@@ -165,6 +167,7 @@ export async function executeRebalancePlan(plan: AssetDrift[]) {
 
           await tx.cashTransaction.create({
             data: {
+              userId,
               amount: absAmount,
               type: 'BUY_ASSET',
               date,
@@ -177,6 +180,7 @@ export async function executeRebalancePlan(plan: AssetDrift[]) {
           await tx.transaction.create({
             data: {
               assetId: drift.assetId,
+              userId,
               type: 'SELL',
               quantity,
               pricePerUnit: price,
@@ -187,6 +191,7 @@ export async function executeRebalancePlan(plan: AssetDrift[]) {
 
           await tx.cashTransaction.create({
             data: {
+              userId,
               amount: absAmount,
               type: 'SELL_ASSET',
               date,
@@ -219,6 +224,7 @@ export async function getPortfolioSnapshots() {
 
   try {
     const snapshots = await prisma.portfolioSnapshot.findMany({
+      where: { userId },
       orderBy: { date: 'asc' }
     });
     
@@ -239,15 +245,21 @@ export async function getPortfolioSnapshots() {
  * Internal logic for capturing a portfolio snapshot.
  * Used by both secured server actions and public webhooks (with their own auth).
  */
-export async function capturePortfolioSnapshot() {
-  const summary = await getPortfolioSummary();
-  const drift = await getRebalancingDriftInternal(); // We need a non-auth version of this too
+export async function capturePortfolioSnapshot(userId: string) {
+  const { getPortfolioSummaryInternal } = await import("../utils");
+  const summary = await getPortfolioSummaryInternal(userId);
+  const drift = await getRebalancingDriftInternal(userId);
 
   const now = new Date();
   const todayMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
   await prisma.portfolioSnapshot.upsert({
-    where: { date: todayMidnight },
+    where: { 
+      userId_date: {
+        userId,
+        date: todayMidnight 
+      }
+    },
     update: {
       totalValue: drift.totalPortfolioValue || 0,
       investedValue: drift.investedValue || 0,
@@ -255,6 +267,7 @@ export async function capturePortfolioSnapshot() {
       costBasis: summary.totalInvested,
     },
     create: {
+      userId,
       date: todayMidnight,
       totalValue: drift.totalPortfolioValue || 0,
       investedValue: drift.investedValue || 0,
@@ -273,7 +286,7 @@ export async function forcePortfolioSnapshot() {
   if (!userId) return { success: false, error: "Unauthorized" }
 
   try {
-    await capturePortfolioSnapshot();
+    await capturePortfolioSnapshot(userId);
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
@@ -286,9 +299,10 @@ export async function forcePortfolioSnapshot() {
  * Internal version of getRebalancingDrift that skips Clerk auth.
  * Used by system processes (webhooks) that have their own security.
  */
-export async function getRebalancingDriftInternal(): Promise<RebalancingSummary> {
-  // 1. Fetch assets with their holdings data
+export async function getRebalancingDriftInternal(userId: string): Promise<RebalancingSummary> {
+  // 1. Fetch assets for this user with their holdings data
   const assets = await prisma.asset.findMany({
+    where: { userId },
     include: {
       transactions: true,
       prices: {
@@ -299,9 +313,8 @@ export async function getRebalancingDriftInternal(): Promise<RebalancingSummary>
   });
 
   // 2. Fetch unallocated cash balance
-  // We need an internal version of getCashBalance too if it checks auth
   const { getCashBalanceInternal } = await import("@/features/cash/actions");
-  const cashBalance = await getCashBalanceInternal();
+  const cashBalance = await getCashBalanceInternal(userId);
 
   // 3. Process asset holdings and market values
   let totalInvestedValue = 0;
@@ -353,9 +366,12 @@ export async function getRebalancingDriftInternal(): Promise<RebalancingSummary>
   drifts.sort((a: any, b: any) => Math.abs(b.drift) - Math.abs(a.drift));
 
   return {
+    totalValue: totalPortfolioValue,
     totalPortfolioValue,
     cashBalance,
     investedValue: totalInvestedValue,
-    drifts
+    drifts,
+    currentYield: 0,
+    targetYield: 0,
   };
 }

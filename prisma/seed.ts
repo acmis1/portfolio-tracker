@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
+const SEED_USER_ID = "user_2p5t8J3XkK8mN1q0v6S4H2L9R6A" // Example Clerk ID for dev seeding
+
 async function main() {
   console.log('Clearing existing data...')
   await prisma.transaction.deleteMany({})
@@ -13,6 +15,7 @@ async function main() {
       symbol: 'BTC',
       name: 'Bitcoin',
       assetClass: 'CRYPTO',
+      userId: SEED_USER_ID
     },
   })
 
@@ -21,6 +24,7 @@ async function main() {
       symbol: 'FPT',
       name: 'FPT Corporation',
       assetClass: 'STOCK',
+      userId: SEED_USER_ID
     },
   })
 
@@ -29,6 +33,7 @@ async function main() {
       symbol: 'VCB',
       name: 'Vietcombank',
       assetClass: 'STOCK',
+      userId: SEED_USER_ID
     },
   })
 
@@ -71,6 +76,7 @@ async function main() {
   await prisma.transaction.create({
     data: {
       assetId: btc.id,
+      userId: SEED_USER_ID,
       type: 'BUY',
       quantity: 0.05,
       pricePerUnit: btcPrice30?.closePrice || 1500000000,
@@ -87,6 +93,7 @@ async function main() {
   await prisma.transaction.create({
     data: {
       assetId: fpt.id,
+      userId: SEED_USER_ID,
       type: 'BUY',
       quantity: 1000,
       pricePerUnit: fptPrice25?.closePrice || 135000,
@@ -103,6 +110,7 @@ async function main() {
   await prisma.transaction.create({
     data: {
       assetId: vcb.id,
+      userId: SEED_USER_ID,
       type: 'BUY',
       quantity: 500,
       pricePerUnit: vcbPrice20?.closePrice || 92000,
@@ -119,6 +127,7 @@ async function main() {
   await prisma.transaction.create({
     data: {
       assetId: btc.id,
+      userId: SEED_USER_ID,
       type: 'SELL',
       quantity: 0.025,
       pricePerUnit: btcPrice10?.closePrice || 1600000000,
@@ -135,6 +144,7 @@ async function main() {
   await prisma.transaction.create({
     data: {
       assetId: btc.id,
+      userId: SEED_USER_ID,
       type: 'BUY',
       quantity: 0.015,
       pricePerUnit: btcPrice5?.closePrice || 1550000000,

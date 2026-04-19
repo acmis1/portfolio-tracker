@@ -1,13 +1,17 @@
 import { formatCurrency } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
+import { EditTransactionModal } from "@/features/transactions/components/edit-transaction-modal"
 
 interface AssetTransactionTableProps {
   transactions: any[]
+  symbol: string
+  assetName: string
+  assetClass: string
   assetCurrency: string
   fxRate: number
 }
 
-export function AssetTransactionTable({ transactions, assetCurrency, fxRate }: AssetTransactionTableProps) {
+export function AssetTransactionTable({ transactions, symbol, assetName, assetClass, assetCurrency, fxRate }: AssetTransactionTableProps) {
   const isUSD = assetCurrency === 'USD';
 
   return (
@@ -25,6 +29,7 @@ export function AssetTransactionTable({ transactions, assetCurrency, fxRate }: A
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Fees ({assetCurrency})</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Total (VND)</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Realized P&L</th>
+                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -69,6 +74,18 @@ export function AssetTransactionTable({ transactions, assetCurrency, fxRate }: A
                       realizedPnL > 0 ? "text-emerald-400" : realizedPnL < 0 ? "text-red-400" : "text-slate-500"
                     )}>
                       {realizedPnL != null ? formatCurrency(realizedPnL, 'VND') : '-'}
+                    </td>
+                    <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                       <EditTransactionModal 
+                         transaction={tx} 
+                         asset={{
+                           symbol,
+                           name: assetName,
+                           assetClass: assetClass as any,
+                           currency: assetCurrency as any
+                         }}
+                         fxRate={fxRate}
+                       />
                     </td>
                   </tr>
                 );

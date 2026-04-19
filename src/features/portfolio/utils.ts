@@ -1,8 +1,24 @@
 import { prisma } from "@/lib/db";
 import { xirr } from "@finprecise/cashflow";
+import { auth } from "@clerk/nextjs/server";
 
 export async function getPortfolioSummary() {
+  const { userId } = await auth()
+  if (!userId) return {
+    totalValue: 0,
+    totalInvested: 0,
+    xirr: 0,
+    assetCount: 0,
+    totalRealizedPnL: 0,
+    lastPriceDate: null
+  }
+
+  return await getPortfolioSummaryInternal(userId)
+}
+
+export async function getPortfolioSummaryInternal(userId: string) {
   const assets = await prisma.asset.findMany({
+    where: { userId },
     include: {
       transactions: true,
       prices: {
@@ -13,6 +29,7 @@ export async function getPortfolioSummary() {
   });
 
   const latestPrice = await prisma.dailyPrice.findFirst({
+    where: { asset: { userId } },
     orderBy: { date: 'desc' }
   });
 
@@ -87,7 +104,11 @@ export async function getPortfolioSummary() {
 
 
 export async function getHoldingsLedger() {
+  const { userId } = await auth()
+  if (!userId) return []
+
   const assets = await prisma.asset.findMany({
+    where: { userId },
     include: {
       transactions: {
         orderBy: { date: 'asc' }
@@ -145,8 +166,12 @@ export async function getHoldingsLedger() {
 }
 
 export async function getPortfolioHistory(days = 365) {
+  const { userId } = await auth()
+  if (!userId) return []
+
   // We fetch a generous amount of history by default to allow client-side range toggles
   const assets = await prisma.asset.findMany({
+    where: { userId },
     include: {
       transactions: {
         orderBy: { date: 'asc' }

@@ -1,6 +1,7 @@
 import { getCashTransactions } from '../actions'
 import { formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import { EditCashModal } from './edit-cash-modal'
 
 export async function CashLedgerTable() {
   const transactions = await getCashTransactions()
@@ -27,6 +28,7 @@ export async function CashLedgerTable() {
               <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Type</th>
               <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Description</th>
               <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Amount</th>
+              <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -48,6 +50,9 @@ export async function CashLedgerTable() {
                   isInflow(tx.type) ? "text-emerald-400" : "text-slate-400"
                 )}>
                   {isInflow(tx.type) ? '+' : '-'} {formatCurrency(tx.amount)}
+                </td>
+                <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                  <EditCashModal transaction={tx} />
                 </td>
               </tr>
             ))}

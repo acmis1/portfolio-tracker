@@ -38,6 +38,8 @@ export async function POST(req: Request) {
     const todayMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     const USD_VND_RATE = await getLiveExchangeRate();
 
+    const updatedUserIds = new Set<string>();
+
     // 3. Process Batch
     await prisma.$transaction(async (tx: any) => {
       for (const item of body as any[]) {
@@ -50,47 +52,49 @@ export async function POST(req: Request) {
             continue;
           }
 
-          // Find Asset
-          const asset = await tx.asset.findFirst({
-            where: { symbol: ticker }
+          // Find all Assets across all users with this ticker
+          const assets = await tx.asset.findMany({
+            where: { symbol: ticker.toUpperCase() }
           });
 
-          if (!asset) {
-            results.push({ ticker, status: "skipped", error: "Asset not found" });
+          if (assets.length === 0) {
+            results.push({ ticker, status: "skipped", error: "No user portfolios contain this asset" });
             summary.skipped++;
             continue;
           }
 
-          // Currency Conversion
+          // Currency Conversion (Calculate once for all instances of this asset)
           let priceVND = price;
           if (currency === "USD") {
             priceVND = price * USD_VND_RATE;
           } else if (currency !== "VND") {
-             // We only support USD/VND for now as per requirements
              results.push({ ticker, status: "failed", error: `Unsupported currency: ${currency}` });
              summary.failed++;
              continue;
           }
 
-          // Upsert DailyPrice
-          await tx.dailyPrice.upsert({
-            where: {
-              assetId_date: {
+          // Update each asset instance
+          for (const asset of assets) {
+            await tx.dailyPrice.upsert({
+              where: {
+                assetId_date: {
+                  assetId: asset.id,
+                  date: todayMidnight
+                }
+              },
+              update: {
+                closePrice: priceVND,
+                source: "webhook"
+              },
+              create: {
                 assetId: asset.id,
-                date: todayMidnight
+                date: todayMidnight,
+                closePrice: priceVND,
+                source: "webhook"
               }
-            },
-            update: {
-              closePrice: priceVND,
-              source: "webhook"
-            },
-            create: {
-              assetId: asset.id,
-              date: todayMidnight,
-              closePrice: priceVND,
-              source: "webhook"
-            }
-          });
+            });
+            updatedUserIds.add(asset.userId);
+          }
 
           results.push({ ticker, status: "updated", priceVND });
           summary.updated++;
@@ -101,14 +105,17 @@ export async function POST(req: Request) {
       }
     });
 
-    // 4. Trigger Portfolio Snapshot
+    // 4. Trigger Portfolio Snapshots for affected users
     let snapshotStatus = "skipped";
-    if (summary.updated > 0) {
+    if (updatedUserIds.size > 0) {
       const { capturePortfolioSnapshot } = await import("@/features/portfolio/actions/rebalancing");
       try {
-        await capturePortfolioSnapshot();
+        for (const userId of updatedUserIds) {
+          await capturePortfolioSnapshot(userId);
+        }
         snapshotStatus = "success";
       } catch (err) {
+        console.error("Batch snapshot failed:", err);
         snapshotStatus = "failed";
       }
     }

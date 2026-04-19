@@ -8,8 +8,8 @@ import { auth } from "@clerk/nextjs/server";
 export async function getAssetDetails(id: string) {
   const { userId } = await auth()
   if (!userId) return null
-  const asset = await prisma.asset.findUnique({
-    where: { id },
+  const asset = await prisma.asset.findFirst({
+    where: { id, userId },
     include: {
       transactions: {
         orderBy: { date: 'desc' }
@@ -106,7 +106,7 @@ export async function addPriceUpdate(data: { symbol: string; date: string; price
 
   try {
     const asset = await prisma.asset.findFirst({
-      where: { symbol: symbol.toUpperCase() }
+      where: { symbol: symbol.toUpperCase(), userId }
     });
 
     if (!asset) {
