@@ -36,7 +36,7 @@ export function AllocationChart({ data }: AllocationChartProps) {
                   dataKey="value"
                   stroke="none"
                 >
-                  {data.map((entry, index) => (
+                  {data.map((entry: any, index: number) => (
                     <Cell 
                       key={`cell-${index}`} 
                       fill={entry.color} 
@@ -45,7 +45,7 @@ export function AllocationChart({ data }: AllocationChartProps) {
                   ))}
                 </Pie>
                 <Tooltip
-                  content={({ active, payload }) => {
+                  content={({ active, payload }: any) => {
                     if (active && payload && payload.length) {
                       return (
                         <div className="rounded-lg border border-white/10 bg-slate-900/90 p-2 shadow-2xl backdrop-blur-md">
@@ -65,7 +65,7 @@ export function AllocationChart({ data }: AllocationChartProps) {
             </ResponsiveContainer>
           </div>
           <div className="w-[140px] space-y-3 pl-4">
-            {data.map((item) => (
+            {data.map((item: any) => (
               <div key={item.name} className="space-y-1">
                 <div className="flex items-center gap-2">
                   <div 

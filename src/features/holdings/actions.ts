@@ -26,7 +26,7 @@ export async function getAssetDetails(id: string) {
   // Need to process transactions in chronological order (asc) for avg cost, 
   // but the include above was desc for the table view. 
   // We'll re-sort a copy for calculations.
-  const chronTransactions = [...asset.transactions].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const chronTransactions = [...asset.transactions].sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
 
   for (const tx of chronTransactions) {
     if (tx.type === 'BUY') {

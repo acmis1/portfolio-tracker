@@ -50,7 +50,7 @@ export async function getIncomeHistory() {
     let totalYTD = 0;
     const currentYear = new Date().getFullYear();
 
-    transactions.forEach((tx) => {
+    transactions.forEach((tx: any) => {
       const d = new Date(tx.date);
       const key = d.toLocaleString('default', { month: 'short', year: 'numeric' });
       
@@ -68,7 +68,7 @@ export async function getIncomeHistory() {
       }
     });
 
-    const history = Object.entries(monthlyData).map(([name, data]) => ({
+    const history = Object.entries(monthlyData).map(([name, data]: [string, any]) => ({
       name,
       dividend: data.dividend,
       interest: data.interest,

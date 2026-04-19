@@ -41,7 +41,7 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
         router.refresh()
         setTimeout(() => setHasCaptured(false), 3000)
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
     } finally {
       setIsCapturing(false)
@@ -60,7 +60,7 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
         return data.slice(-90)
       case 'YTD': {
         const currentYear = new Date().getFullYear()
-        return data.filter(d => {
+        return data.filter((d: any) => {
           // Simplistic matching for now, would ideally check fullDate
           return true
         })
@@ -165,7 +165,7 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
               width={45}
             />
             <Tooltip
-              content={({ active, payload }) => {
+              content={({ active, payload }: any) => {
                 if (active && payload && payload.length) {
                   const total = payload.find(p => p.dataKey === 'value')?.value as number || 0;
                   const invested = payload.find(p => p.dataKey === 'invested')?.value as number || 0;

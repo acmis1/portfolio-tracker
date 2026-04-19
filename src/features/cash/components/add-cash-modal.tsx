@@ -48,7 +48,7 @@ export function AddCashModal({ trigger }: AddCashModalProps) {
       } else {
         alert(result.error || "Something went wrong")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
       alert("Failed to record cash transaction")
     } finally {

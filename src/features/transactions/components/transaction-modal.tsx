@@ -54,7 +54,7 @@ export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalPr
       } else {
         alert(result.error || "Something went wrong")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
       alert("Failed to submit transaction")
     } finally {

@@ -8,7 +8,7 @@ interface AllocationSummaryProps {
 }
 
 export function AllocationSummary({ summary }: AllocationSummaryProps) {
-  const totalTargetWeight = summary.drifts.reduce((acc, drift) => acc + drift.targetWeight, 0);
+  const totalTargetWeight = summary.drifts.reduce((acc: number, drift: any) => acc + drift.targetWeight, 0);
   const isOverAllocated = totalTargetWeight > 100.01; // Small epsilon for float math
   const cashReserveTarget = Math.max(0, 100 - totalTargetWeight);
 
@@ -62,10 +62,10 @@ export function AllocationSummary({ summary }: AllocationSummaryProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-black text-white">
-            {summary.drifts.filter(d => Math.abs(d.drift) > 5).length > 0 ? "Drifting" : "Aligned"}
+            {summary.drifts.filter((d: any) => Math.abs(d.drift) > 5).length > 0 ? "Drifting" : "Aligned"}
           </div>
           <div className="text-xs text-slate-400 mt-1">
-          {summary.drifts.filter(d => Math.abs(d.drift) > 5).length} assets deviate by {'>'} 5%
+          {summary.drifts.filter((d: any) => Math.abs(d.drift) > 5).length} assets deviate by {'>'} 5%
           </div>
         </CardContent>
       </Card>

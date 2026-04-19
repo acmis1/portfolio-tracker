@@ -70,7 +70,7 @@ export async function getPortfolioSummary() {
       if (result.ok) {
         portfolioXirr = result.value.toNumber() * 100;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("XIRR calculation failed:", error);
     }
   }
@@ -188,7 +188,7 @@ export async function getPortfolioHistory(days = 365) {
     for (const asset of assets) {
       // Calculate quantity at this specific date
       const quantityAtDate = asset.transactions
-        .filter(tx => tx.date <= currentDate)
+        .filter((tx: any) => tx.date <= currentDate)
         .reduce((acc: any, tx: any) => {
           if (tx.type === 'BUY') return acc + tx.quantity;
           if (tx.type === 'SELL') return acc - tx.quantity;
@@ -198,8 +198,8 @@ export async function getPortfolioHistory(days = 365) {
       if (quantityAtDate > 0.000001) {
         // Find the latest price on or before this date
         const priceAtDate = asset.prices
-          .filter(p => p.date <= currentDate)
-          .sort((a, b) => b.date.getTime() - a.date.getTime())[0]?.closePrice || 0;
+          .filter((p: any) => p.date <= currentDate)
+          .sort((a: any, b: any) => b.date.getTime() - a.date.getTime())[0]?.closePrice || 0;
 
         dailyTotalValue += quantityAtDate * priceAtDate;
       }

@@ -32,7 +32,7 @@ export async function getLiveExchangeRate(): Promise<number> {
 
     // Return rounded rate for cleaner accounting and presentation
     return Math.round(rate);
-  } catch (error) {
+  } catch (error: any) {
     console.error('CRITICAL: Dynamic FX fetch failed. Falling back to static rate.', error);
     return FALLBACK_USD_VND_RATE;
   }
