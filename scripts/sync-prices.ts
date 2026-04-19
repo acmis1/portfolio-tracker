@@ -126,21 +126,38 @@ async function fetchMutualFundPrice(symbol: string) {
 }
 
 async function fetchGoldPrice() {
-  const url = 'https://sjc.com.vn/xml/tygiavang.xml';
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`SJC API failed: ${res.status}`);
-  const xml = await res.text();
+  const url = "https://webgia.com/gia-vang/sjc/";
   
-  // Extract the sell price for 1 Tael of SJC
-  const match = xml.match(/type="V\u00e0ng SJC 1L"[^>]*sell="([^"]+)"/i) || xml.match(/type="Vàng SJC 1L"[^>]*sell="([^"]+)"/i);
+  // Use a modern browser User-Agent to ensure the request is accepted
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+  });
+  
+  if (!res.ok) throw new Error(`Gold data source (webgia) failed: ${res.status}`);
+  const html = await res.text();
+  
+  /**
+   * The page structure is a table with rows like:
+   * <tr><td>Vàng SJC 1L, 10L, 1KG</td><td class="text-right">16.850.000</td>...</tr>
+   * We need the "Mua vào" (Buy) price which is the first value after the asset name.
+   */
+  const regex = /Vàng SJC 1L[^<]*<\/td>\s*<td[^>]*>([\d.]+)<\/td>/i;
+  const match = html.match(regex);
   
   if (match && match[1]) {
-    // Convert "84.500" -> 84.5 -> 84500000
-    const cleanNumber = match[1].replace(',', '.');
-    return Math.round(parseFloat(cleanNumber) * 1000000);
+    // 1. Remove formatting dots: "16.850.000" -> 16850000 (VND per "Chỉ")
+    const pricePerChi = parseInt(match[1].replace(/\./g, ""));
+    
+    // 2. Convert from "Chỉ" to "Lượng" (Tael) - 1 Lượng = 10 Chỉ
+    // This returns the full VND value for 1 Lượng SJC.
+    return pricePerChi * 10;
   }
-  throw new Error("Could not parse SJC 1L Gold price from XML");
+  
+  throw new Error("Could not parse SJC 1L Gold price from webgia.com HTML");
 }
+
 
 async function main() {
   console.log("Starting price sync...");
