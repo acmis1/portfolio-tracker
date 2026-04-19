@@ -47,10 +47,11 @@ export function Navigation({ fxRate, lastSync }: NavigationProps) {
                     lastSync ? "bg-emerald-500" : "bg-amber-500"
                   )} />
                   <span className={cn(
-                    "text-[10px] font-black uppercase tracking-widest",
+                    "text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5",
                     lastSync ? "text-emerald-500/80" : "text-amber-500/80"
                   )}>
-                    {lastSync ? `${formatDistanceToNow(new Date(lastSync))} ago` : 'Prices Stale'}
+                    <span className="opacity-50">Data Sync</span>
+                    <span>{lastSync ? formatDistanceToNow(new Date(lastSync), { addSuffix: true }) : 'Never'}</span>
                   </span>
                 </div>
               </TooltipTrigger>

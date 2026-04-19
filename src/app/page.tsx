@@ -79,25 +79,6 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-3 cursor-help">
-                  <div className={cn(
-                    "h-2 w-2 rounded-full animate-pulse",
-                    isDataFresh ? "bg-emerald-500" : "bg-amber-500"
-                  )} />
-                  <span className={cn(
-                    "text-xs font-bold uppercase tracking-widest",
-                    isDataFresh ? "text-emerald-500/80" : "text-amber-500/80"
-                  )}>
-                    {isDataFresh ? "Data Fresh" : "Prices Stale"}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Last successful sync: {lastPriceDate ? new Date(lastPriceDate).toLocaleString() : 'Never'}</p>
-              </TooltipContent>
-            </Tooltip>
             
             <div className="h-4 w-px bg-white/10 mx-1" />
             
