@@ -1,8 +1,7 @@
 import { formatCurrency } from "@/lib/formatters";
-import { CashTransaction } from "@prisma/client";
 
 interface RecentPayoutsTableProps {
-  transactions: CashTransaction[];
+  transactions: any[];
 }
 
 export function RecentPayoutsTable({ transactions }: RecentPayoutsTableProps) {
