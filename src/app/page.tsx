@@ -3,7 +3,7 @@ import { OverviewCards } from '@/features/portfolio/components/overview-cards'
 import { GrowthChart } from '@/features/portfolio/components/growth-chart'
 import { AllocationChart } from '@/features/portfolio/components/allocation-chart'
 import { Suspense } from 'react'
-import { HoldingsTable } from '@/features/holdings/components/holdings-table'
+import { TopHoldings } from '@/features/holdings/components/top-holdings'
 import { getHoldingsLedger, getPortfolioSummary, getAssetClassPerformance } from "@/features/portfolio/utils"
 import { getPortfolioSnapshots } from "@/features/portfolio/actions/rebalancing"
 import { cn } from '@/lib/utils'
@@ -23,8 +23,6 @@ export default async function DashboardPage() {
     getAssetClassPerformance()
   ]);
 
-  const lastPriceDate = summary.lastPriceDate;
-  
   // Transform holdings into chart data
   const totalMarketValue = holdings.reduce((sum: number, h: any) => sum + (h.marketValue || 0), 0);
   
@@ -77,37 +75,53 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* 1. KPI Overview (Prioritized) */}
+        {/* 1. Performance Attribution (High Level) */}
         <div className="space-y-4">
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-            Performance Overview
+            Performance Attribution
           </h2>
-          <Suspense fallback={<div className="h-48 w-full animate-pulse rounded-2xl glass-premium" />}>
-            <OverviewCards />
-          </Suspense>
           <PerformanceAttribution data={assetPerformance} />
         </div>
 
+        {/* 2. Charts & Top Holdings Breakdown */}
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <GrowthChart data={historyData} />
+          <div className="lg:col-span-2 space-y-10">
+            <div className="space-y-4">
+              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                Growth & Performance
+              </h2>
+              <GrowthChart data={historyData} />
+            </div>
+            
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-4">
+                <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                  Asset Allocation
+                </h2>
+                <AllocationChart data={allocationData} />
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                  Summary
+                </h2>
+                <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
+                  <OverviewCards />
+                </Suspense>
+              </div>
+            </div>
           </div>
-          <div>
-            <AllocationChart data={allocationData} />
+
+          <div className="space-y-4">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              Top Holdings
+            </h2>
+            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-2xl glass-premium" />}>
+              <TopHoldings />
+            </Suspense>
           </div>
         </div>
 
-        {/* 3. Holdings Ledger */}
-        <div className="space-y-4">
-          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-            Holdings Ledger
-          </h2>
-          <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
-            <HoldingsTable fxRate={fxRate} />
-          </Suspense>
-        </div>
-
-        {/* 4. Cash Ledger */}
+        {/* 3. Cash Ledger (Secondary) */}
         <div className="space-y-4 pb-12">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">

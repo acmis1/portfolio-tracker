@@ -16,6 +16,10 @@ export async function getAssetDetails(id: string) {
       },
       prices: {
         orderBy: { date: 'asc' }
+      },
+      termDeposits: {
+        take: 1,
+        orderBy: { startDate: 'desc' }
       }
     }
   });
@@ -26,9 +30,6 @@ export async function getAssetDetails(id: string) {
   let currentQty = 0;
   let avgCost = 0;
   
-  // Need to process transactions in chronological order (asc) for avg cost, 
-  // but the include above was desc for the table view. 
-  // We'll re-sort a copy for calculations.
   const chronTransactions = [...asset.transactions].sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
 
   for (const tx of chronTransactions) {
@@ -45,7 +46,17 @@ export async function getAssetDetails(id: string) {
   }
 
   const livePrice = asset.prices.length > 0 ? asset.prices[asset.prices.length - 1].closePrice : null;
-  const marketValue = livePrice !== null ? currentQty * livePrice : 0;
+  let marketValue = livePrice !== null ? currentQty * livePrice : 0;
+  let accruedInterest = 0;
+
+  if (asset.assetClass === 'TERM_DEPOSIT' && asset.termDeposits[0]) {
+    const td = asset.termDeposits[0];
+    const now = new Date();
+    const daysElapsed = Math.max(0, (now.getTime() - td.startDate.getTime()) / (1000 * 60 * 60 * 24));
+    accruedInterest = (td.principal * (td.interestRate / 100) * daysElapsed) / 365;
+    marketValue = td.principal + accruedInterest;
+  }
+
   const unrealizedPnL = livePrice !== null ? marketValue - (currentQty * avgCost) : null;
   const unrealizedPnLPctg = (livePrice !== null && avgCost > 0) 
     ? (unrealizedPnL! / (currentQty * avgCost)) * 100 
@@ -54,7 +65,7 @@ export async function getAssetDetails(id: string) {
   // Calculate Asset-Specific XIRR
   let assetXirr = null;
   const cashflows: { amount: string; date: string }[] = asset.transactions.map((tx: any) => ({
-    amount: tx.grossAmount.toString(),
+    amount: tx.grossAmount.toString(), // BUY is negative, SELL is positive
     date: tx.date.toISOString().split('T')[0]
   }));
 
@@ -87,10 +98,12 @@ export async function getAssetDetails(id: string) {
       avgCost,
       livePrice,
       marketValue,
+      accruedInterest,
       unrealizedPnL,
       unrealizedPnLPctg,
       xirr: assetXirr,
-    }
+    },
+    termDeposit: asset.termDeposits[0] || null
   };
 }
 export async function addPriceUpdate(data: { symbol: string; date: string; price: number; currency: string }) {

@@ -25,6 +25,10 @@ export async function getPortfolioSummaryInternal(userId: string) {
       prices: {
         orderBy: { date: 'desc' },
         take: 1
+      },
+      termDeposits: {
+        take: 1,
+        orderBy: { startDate: 'desc' }
       }
     }
   });
@@ -39,24 +43,14 @@ export async function getPortfolioSummaryInternal(userId: string) {
   let totalRealizedPnL = 0;
   let activeAssetCount = 0;
   const cashflows: { amount: string; date: string }[] = [];
+  const now = new Date();
 
   for (const asset of assets) {
-    const quantity = asset.transactions.reduce((acc: any, tx: any) => {
-      if (tx.type === 'BUY') return acc + tx.quantity;
-      if (tx.type === 'SELL') return acc - tx.quantity;
-      return acc;
-    }, 0);
-
-    const currentPrice = asset.prices[0]?.closePrice || 0;
-    const assetValue = quantity * currentPrice;
-    
-    if (quantity > 0.000001) {
-      activeAssetCount++;
-      totalValue += assetValue;
-    }
-
-    // Calculate total net invested capital and realized P&L
+    let currentQty = 0;
     for (const tx of asset.transactions) {
+      if (tx.type === 'BUY') currentQty += tx.quantity;
+      else if (tx.type === 'SELL') currentQty -= tx.quantity;
+      
       const amount = Number(tx.grossAmount);
       totalInvested -= amount; 
 
@@ -68,6 +62,23 @@ export async function getPortfolioSummaryInternal(userId: string) {
         amount: tx.grossAmount.toString(),
         date: tx.date.toISOString().split('T')[0]
       });
+    }
+
+    if (currentQty > 0.000001) {
+      activeAssetCount++;
+      
+      let assetValue = 0;
+      if (asset.assetClass === 'TERM_DEPOSIT' && asset.termDeposits[0]) {
+        const td = asset.termDeposits[0];
+        const daysElapsed = Math.max(0, (now.getTime() - td.startDate.getTime()) / (1000 * 60 * 60 * 24));
+        const accruedInterest = (td.principal * (td.interestRate / 100) * daysElapsed) / 365;
+        assetValue = td.principal + accruedInterest;
+      } else {
+        const currentPrice = asset.prices[0]?.closePrice || 0;
+        assetValue = currentQty * currentPrice;
+      }
+      
+      totalValue += assetValue;
     }
   }
 
@@ -104,7 +115,56 @@ export async function getPortfolioSummaryInternal(userId: string) {
 }
 
 
-export async function getHoldingsLedger() {
+export type AssetHolding = 
+  | (LiquidHolding & { type: 'LIQUID' })
+  | (TermDepositHolding & { type: 'TERM_DEPOSIT' })
+  | (RealEstateHolding & { type: 'REAL_ESTATE' })
+  | (GoldHolding & { type: 'GOLD' });
+
+interface BaseHolding {
+  id: string;
+  symbol: string;
+  name: string;
+  currency: string;
+  assetClass: string;
+  marketValue: number;
+  weight: number;
+  status: string;
+}
+
+interface LiquidHolding extends BaseHolding {
+  quantity: number;
+  avgCost: number;
+  livePrice: number | null;
+  unrealizedPnL: number | null;
+  unrealizedPnLPctg: number | null;
+}
+
+interface TermDepositHolding extends BaseHolding {
+  principal: number;
+  interestRate: number;
+  maturityDate: Date;
+  accruedInterest: number;
+  daysToMaturity: number;
+}
+
+interface RealEstateHolding extends BaseHolding {
+  purchasePrice: number;
+  currentValuation: number;
+  valuationDate: Date | null;
+  appraisalAgeDays: number | null;
+}
+
+interface GoldHolding extends BaseHolding {
+  quantity: number; // weight in grams/tael
+  avgCost: number;
+  livePrice: number | null;
+  unrealizedPnL: number | null;
+  unrealizedPnLPctg: number | null;
+  unit: string;
+}
+
+export async function getHoldingsLedger(): Promise<AssetHolding[]> {
   const { userId } = await auth()
   if (!userId) return []
 
@@ -117,14 +177,19 @@ export async function getHoldingsLedger() {
       prices: {
         orderBy: { date: 'desc' },
         take: 1
+      },
+      termDeposits: {
+        take: 1,
+        orderBy: { startDate: 'desc' }
       }
     }
   });
 
-  const holdings = [];
+  const holdings: AssetHolding[] = [];
+  const now = new Date();
 
-    for (const asset of assets) {
-      let currentQty = 0;
+  for (const asset of assets) {
+    let currentQty = 0;
     let avgCost = 0;
     for (const tx of asset.transactions) {
       if (tx.type === 'BUY') {
@@ -140,30 +205,100 @@ export async function getHoldingsLedger() {
     }
 
     if (currentQty > 0.000001) {
-      const livePrice = asset.prices[0]?.closePrice ?? null;
-      const marketValue = livePrice !== null ? currentQty * livePrice : 0;
-      const unrealizedPnL = livePrice !== null ? marketValue - (currentQty * avgCost) : null;
-      const unrealizedPnLPctg = (livePrice !== null && avgCost > 0) 
-        ? (unrealizedPnL! / (currentQty * avgCost)) * 100 
-        : null;
-
-      holdings.push({
+      const baseData = {
         id: asset.id,
         symbol: asset.symbol,
         name: asset.name,
         currency: asset.currency,
         assetClass: asset.assetClass,
-        quantity: currentQty,
-        avgCost,
-        livePrice,
-        marketValue,
-        unrealizedPnL,
-        unrealizedPnLPctg,
-      });
+        weight: 0, // Calculated after loop
+      };
+
+      if (asset.assetClass === 'TERM_DEPOSIT') {
+        const td = asset.termDeposits[0];
+        if (td) {
+          const daysElapsed = Math.max(0, (now.getTime() - td.startDate.getTime()) / (1000 * 60 * 60 * 24));
+          const accruedInterest = (td.principal * (td.interestRate / 100) * daysElapsed) / 365;
+          const marketValue = td.principal + accruedInterest;
+          const daysToMaturity = Math.ceil((td.maturityDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          
+          holdings.push({
+            ...baseData,
+            type: 'TERM_DEPOSIT',
+            marketValue,
+            principal: td.principal,
+            interestRate: td.interestRate,
+            maturityDate: td.maturityDate,
+            accruedInterest,
+            daysToMaturity,
+            status: daysToMaturity <= 0 ? 'Matured' : `Matures in ${daysToMaturity}d`,
+          });
+        }
+      } else if (asset.assetClass === 'REAL_ESTATE') {
+        const livePrice = asset.prices[0]?.closePrice ?? avgCost;
+        const marketValue = currentQty * livePrice;
+        const appraisalAgeDays = asset.prices[0] 
+          ? Math.floor((now.getTime() - asset.prices[0].date.getTime()) / (1000 * 60 * 60 * 24))
+          : null;
+
+        holdings.push({
+          ...baseData,
+          type: 'REAL_ESTATE',
+          marketValue,
+          purchasePrice: avgCost,
+          currentValuation: livePrice,
+          valuationDate: asset.prices[0]?.date ?? null,
+          appraisalAgeDays,
+          status: appraisalAgeDays !== null ? `Appraisal ${appraisalAgeDays}d old` : 'Manual Valuation',
+        });
+      } else if (asset.assetClass === 'GOLD') {
+        const livePrice = asset.prices[0]?.closePrice ?? null;
+        const marketValue = livePrice !== null ? currentQty * livePrice : currentQty * avgCost;
+        const unrealizedPnL = livePrice !== null ? marketValue - (currentQty * avgCost) : null;
+        const unrealizedPnLPctg = (livePrice !== null && avgCost > 0) 
+          ? (unrealizedPnL! / (currentQty * avgCost)) * 100 
+          : null;
+        
+        holdings.push({
+          ...baseData,
+          type: 'GOLD',
+          quantity: currentQty,
+          avgCost,
+          livePrice,
+          marketValue,
+          unrealizedPnL,
+          unrealizedPnLPctg,
+          unit: 'Tael',
+          status: livePrice !== null ? 'Live' : 'Last Purchase',
+        });
+      } else {
+        const livePrice = asset.prices[0]?.closePrice ?? null;
+        const marketValue = livePrice !== null ? currentQty * livePrice : currentQty * avgCost;
+        const unrealizedPnL = livePrice !== null ? marketValue - (currentQty * avgCost) : null;
+        const unrealizedPnLPctg = (livePrice !== null && avgCost > 0) 
+          ? (unrealizedPnL! / (currentQty * avgCost)) * 100 
+          : null;
+
+        holdings.push({
+          ...baseData,
+          type: 'LIQUID',
+          quantity: currentQty,
+          avgCost,
+          livePrice,
+          marketValue,
+          unrealizedPnL,
+          unrealizedPnLPctg,
+          status: livePrice !== null ? 'Live' : 'Avg Cost Fallback',
+        });
+      }
     }
   }
 
-  return holdings;
+  const finalTotalValue = holdings.reduce((sum, h) => sum + h.marketValue, 0);
+  return holdings.map(h => ({
+    ...h,
+    weight: finalTotalValue > 0 ? (h.marketValue / finalTotalValue) * 100 : 0
+  })).sort((a, b) => b.marketValue - a.marketValue);
 }
 
 export async function getPortfolioHistory(days = 365) {
