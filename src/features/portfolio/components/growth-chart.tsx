@@ -167,8 +167,8 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
             <Tooltip
               content={({ active, payload }: any) => {
                 if (active && payload && payload.length) {
-                  const total = payload.find(p => p.dataKey === 'value')?.value as number || 0;
-                  const invested = payload.find(p => p.dataKey === 'invested')?.value as number || 0;
+                  const total = payload.find((p: any) => p.dataKey === 'value')?.value as number || 0;
+                  const invested = payload.find((p: any) => p.dataKey === 'invested')?.value as number || 0;
                   const delta = total - invested;
                   const isPositive = delta >= 0;
 

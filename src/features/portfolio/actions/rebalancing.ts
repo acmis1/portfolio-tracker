@@ -109,7 +109,7 @@ export async function updateTargetWeight(assetId: string, newWeight: number) {
  * - Derived quantities use the provided currentPrice (latest known).
  */
 export async function executeRebalancePlan(plan: AssetDrift[]) {
-  const actionable = plan.filter(d => Math.abs(d.actionAmount) >= 1000);
+  const actionable = plan.filter((d: any) => Math.abs(d.actionAmount) >= 1000);
   
   if (actionable.length === 0) {
     return { success: false, error: "No actionable trades found (threshold: 1000 VND)" };

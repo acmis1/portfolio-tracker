@@ -24,13 +24,13 @@ export function ExecutionModal({ drifts, cashBalance }: ExecutionModalProps) {
   const [open, setOpen] = React.useState(false)
   const [isSettling, setIsSettling] = React.useState(false)
   
-  const actionableTrades = drifts.filter(d => Math.abs(d.actionAmount) >= 1000)
+  const actionableTrades = drifts.filter((d: any) => Math.abs(d.actionAmount) >= 1000)
   const totalBuyAmount = actionableTrades
-    .filter(d => d.actionAmount > 0)
+    .filter((d: any) => d.actionAmount > 0)
     .reduce((acc: any, d: any) => acc + d.actionAmount, 0)
   
   const totalSellAmount = actionableTrades
-    .filter(d => d.actionAmount < 0)
+    .filter((d: any) => d.actionAmount < 0)
     .reduce((acc: any, d: any) => acc + Math.abs(d.actionAmount), 0)
   
   const isCashInsufficient = totalBuyAmount > cashBalance

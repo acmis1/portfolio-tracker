@@ -57,7 +57,7 @@ export default async function DashboardPage() {
   const allocationData = allocation.map((a: any) => ({
     ...a,
     value: totalMarketValue > 0 ? (a.value / totalMarketValue) * 100 : 0
-  })).filter(a => a.value > 0);
+  })).filter((a: any) => a.value > 0);
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 lg:p-10">

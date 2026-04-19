@@ -66,7 +66,7 @@ export function AssetPriceChart({ prices }: AssetPriceChartProps) {
       case '1Y': cutoff.setFullYear(now.getFullYear() - 1); break
     }
 
-    return fullPriceData.filter(p => new Date(p.date) >= cutoff)
+    return fullPriceData.filter((p: any) => new Date(p.date) >= cutoff)
   }, [fullPriceData, range])
 
   const hasData = filteredPrices && filteredPrices.length > 0

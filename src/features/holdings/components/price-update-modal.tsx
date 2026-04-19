@@ -23,7 +23,7 @@ const priceUpdateSchema = z.object({
   symbol: z.string().min(1, "Symbol is required").toUpperCase(),
   date: z.string().min(1, "Date is required"),
   price: z.number().positive("Price must be positive"),
-  currency: z.enum(['VND', 'USD']).default('VND'),
+  currency: z.enum(['VND', 'USD']),
 })
 
 type PriceUpdateFormValues = z.infer<typeof priceUpdateSchema>
