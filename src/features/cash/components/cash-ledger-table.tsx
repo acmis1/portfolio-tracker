@@ -30,7 +30,7 @@ export async function CashLedgerTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {transactions.map((tx) => (
+            {transactions.map((tx: any) => (
               <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
                 <td className="px-6 py-4 text-xs font-medium text-slate-300">
                   {new Date(tx.date).toLocaleDateString()}

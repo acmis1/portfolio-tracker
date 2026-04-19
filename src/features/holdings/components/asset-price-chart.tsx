@@ -27,10 +27,10 @@ type TimeRange = '1M' | '3M' | '6M' | '1Y' | 'ALL'
  * Assumes data is sorted ascending by date.
  */
 function calculateSMA(data: { closePrice: number }[], period: number) {
-  return data.map((_, index) => {
+  return data.map((_: any, index: number) => {
     if (index < period - 1) return null
     const slice = data.slice(index - period + 1, index + 1)
-    const sum = slice.reduce((acc, curr) => acc + curr.closePrice, 0)
+    const sum = slice.reduce((acc: number, curr: any) => acc + curr.closePrice, 0)
     return sum / period
   })
 }
@@ -45,7 +45,7 @@ export function AssetPriceChart({ prices }: AssetPriceChartProps) {
     const sma20 = calculateSMA(prices, 20)
     const sma50 = calculateSMA(prices, 50)
     
-    return prices.map((p, i) => ({
+    return prices.map((p: any, i: number) => ({
       ...p,
       sma20: sma20[i],
       sma50: sma50[i]
@@ -71,7 +71,7 @@ export function AssetPriceChart({ prices }: AssetPriceChartProps) {
 
   const hasData = filteredPrices && filteredPrices.length > 0
 
-  const chartData = filteredPrices.map(p => ({
+  const chartData = filteredPrices.map((p: any) => ({
     date: new Date(p.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' }),
     price: p.closePrice,
     rawDate: p.date,
@@ -122,7 +122,7 @@ export function AssetPriceChart({ prices }: AssetPriceChartProps) {
         </div>
 
         <div className="flex items-center gap-1 rounded-lg bg-slate-900/50 p-1 border border-white/5">
-          {ranges.map((r) => (
+          {ranges.map((r: any) => (
             <button
               key={r}
               onClick={() => setRange(r)}
@@ -187,7 +187,7 @@ export function AssetPriceChart({ prices }: AssetPriceChartProps) {
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-white/5 pb-1">
                         {payload[0].payload.date}
                       </p>
-                      {payload.map((entry, index) => (
+                      {payload.map((entry: any, index: number) => (
                         <div key={index} className="flex items-center justify-between gap-4">
                           <span className="text-[10px] font-bold text-slate-400 uppercase">{entry.name}</span>
                           <span className="text-xs font-black text-white">

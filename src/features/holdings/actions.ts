@@ -50,7 +50,7 @@ export async function getAssetDetails(id: string) {
 
   // Calculate Asset-Specific XIRR
   let assetXirr = null;
-  const cashflows: { amount: string; date: string }[] = asset.transactions.map(tx => ({
+  const cashflows: { amount: string; date: string }[] = asset.transactions.map((tx: any) => ({
     amount: tx.grossAmount.toString(),
     date: tx.date.toISOString().split('T')[0]
   }));
@@ -72,7 +72,7 @@ export async function getAssetDetails(id: string) {
       if (result.ok) {
         assetXirr = result.value.toNumber() * 100;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`XIRR calculation failed for asset ${id}:`, error);
     }
   }
@@ -129,7 +129,7 @@ export async function addPriceUpdate(data: { symbol: string; date: string; price
 
     revalidatePath('/');
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to update price:", error);
     return { success: false, error: "Database operation failed" };
   }

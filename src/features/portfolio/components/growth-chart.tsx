@@ -111,7 +111,7 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
         </div>
         
         <div className="flex items-center gap-1 rounded-lg bg-slate-900/50 p-1 border border-white/5">
-          {ranges.map((r) => (
+          {ranges.map((r: any) => (
             <button
               key={r}
               onClick={() => setRange(r)}

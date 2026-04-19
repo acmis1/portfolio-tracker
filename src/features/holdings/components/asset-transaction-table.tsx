@@ -28,7 +28,7 @@ export function AssetTransactionTable({ transactions, assetCurrency, fxRate }: A
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {transactions.map((tx) => {
+              {transactions.map((tx: any) => {
                 // Late-stage presentation conversion using dynamic fxRate
                 const displayPrice = isUSD ? tx.pricePerUnit / fxRate : tx.pricePerUnit;
                 const displayFees = isUSD ? tx.fees / fxRate : tx.fees;

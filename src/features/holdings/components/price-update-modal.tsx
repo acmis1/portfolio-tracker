@@ -52,7 +52,7 @@ export function PriceUpdateModal() {
       } else {
         alert(result.error || "Something went wrong")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
       alert("Failed to update price")
     } finally {

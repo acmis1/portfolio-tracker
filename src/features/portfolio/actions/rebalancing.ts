@@ -32,8 +32,8 @@ export async function getRebalancingDrift(): Promise<RebalancingSummary> {
 
   // 3. Process asset holdings and market values
   let totalInvestedValue = 0;
-  const assetCalculations = assets.map(asset => {
-    const quantity = asset.transactions.reduce((acc, tx) => {
+  const assetCalculations = assets.map((asset: any) => {
+    const quantity = asset.transactions.reduce((acc: number, tx: any) => {
       if (tx.type === 'BUY') return acc + tx.quantity;
       if (tx.type === 'SELL') return acc - tx.quantity;
       return acc;
@@ -58,7 +58,7 @@ export async function getRebalancingDrift(): Promise<RebalancingSummary> {
   const totalPortfolioValue = totalInvestedValue + cashBalance;
 
   // 4. Calculate drifts and actions
-  const drifts: AssetDrift[] = assetCalculations.map(calc => {
+  const drifts: AssetDrift[] = assetCalculations.map((calc: any) => {
     const currentWeight = totalPortfolioValue > 0 
       ? (calc.marketValue / totalPortfolioValue) * 100 
       : 0;
@@ -77,7 +77,7 @@ export async function getRebalancingDrift(): Promise<RebalancingSummary> {
   });
 
   // 5. Sort by absolute drift descending (most skewed first)
-  drifts.sort((a, b) => Math.abs(b.drift) - Math.abs(a.drift));
+  drifts.sort((a: any, b: any) => Math.abs(b.drift) - Math.abs(a.drift));
 
   return {
     totalPortfolioValue,
@@ -96,7 +96,7 @@ export async function updateTargetWeight(assetId: string, newWeight: number) {
 
     revalidatePath('/rebalance');
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to update target weight:", error);
     return { success: false, error: "Database update failed" };
   }
@@ -116,7 +116,7 @@ export async function executeRebalancePlan(plan: AssetDrift[]) {
   }
 
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       for (const drift of actionable) {
         // We use the price provided in the drift (latest price from getRebalancingDrift)
         const price = drift.currentPrice;
@@ -198,14 +198,14 @@ export async function getPortfolioSnapshots() {
       orderBy: { date: 'asc' }
     });
     
-    return snapshots.map(s => ({
+    return snapshots.map((s: any) => ({
       date: s.date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
       value: s.totalValue,
       invested: s.costBasis, // Net Invested Capital (Cost Basis)
       marketValue: s.investedValue, // Current Market Value of assets
       fullDate: s.date
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to fetch portfolio snapshots:", error);
     return [];
   }

@@ -30,10 +30,10 @@ export default async function DashboardPage() {
   const isDataFresh = lastPriceDate ? new Date(lastPriceDate).toDateString() === new Date().toDateString() : false;
   
   // Transform holdings into chart data
-  const totalMarketValue = holdings.reduce((sum, h) => sum + (h.marketValue || 0), 0);
+  const totalMarketValue = holdings.reduce((sum: number, h: any) => sum + (h.marketValue || 0), 0);
   
-  const allocation = holdings.reduce((acc, h) => {
-    const existing = acc.find(a => a.name === h.assetClass);
+  const allocation = holdings.reduce((acc: any[], h: any) => {
+    const existing = acc.find((a: any) => a.name === h.assetClass);
     if (existing) {
       existing.value += (h.marketValue || 0);
     } else {
@@ -54,7 +54,7 @@ export default async function DashboardPage() {
     return acc;
   }, [] as { name: string; value: number; color: string }[]);
 
-  const allocationData = allocation.map(a => ({
+  const allocationData = allocation.map((a: any) => ({
     ...a,
     value: totalMarketValue > 0 ? (a.value / totalMarketValue) * 100 : 0
   })).filter(a => a.value > 0);

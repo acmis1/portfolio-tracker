@@ -23,7 +23,7 @@ export async function getPortfolioSummary() {
   const cashflows: { amount: string; date: string }[] = [];
 
   for (const asset of assets) {
-    const quantity = asset.transactions.reduce((acc, tx) => {
+    const quantity = asset.transactions.reduce((acc: any, tx: any) => {
       if (tx.type === 'BUY') return acc + tx.quantity;
       if (tx.type === 'SELL') return acc - tx.quantity;
       return acc;
@@ -161,7 +161,7 @@ export async function getPortfolioHistory(days = 365) {
 
   // Find the earliest transaction date to avoid unnecessary empty days at the start of ALL range
   let earliestTxDate = new Date();
-  assets.forEach(a => {
+  assets.forEach((a: any) => {
     if (a.transactions.length > 0 && a.transactions[0].date < earliestTxDate) {
       earliestTxDate = new Date(a.transactions[0].date);
     }
@@ -189,7 +189,7 @@ export async function getPortfolioHistory(days = 365) {
       // Calculate quantity at this specific date
       const quantityAtDate = asset.transactions
         .filter(tx => tx.date <= currentDate)
-        .reduce((acc, tx) => {
+        .reduce((acc: any, tx: any) => {
           if (tx.type === 'BUY') return acc + tx.quantity;
           if (tx.type === 'SELL') return acc - tx.quantity;
           return acc;

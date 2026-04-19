@@ -26,7 +26,7 @@ export function DriftTable({ drifts }: DriftTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {drifts.map((drift) => (
+            {drifts.map((drift: any) => (
               <DriftRow key={drift.assetId} drift={drift} />
             ))}
           </tbody>

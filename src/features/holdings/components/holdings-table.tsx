@@ -47,7 +47,7 @@ export async function HoldingsTable({ fxRate }: HoldingsTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {holdings.map((holding) => {
+            {holdings.map((holding: any) => {
               const isUSD = holding.currency === 'USD';
               
               const displayAvgCost = isUSD ? holding.avgCost / fxRate : holding.avgCost;

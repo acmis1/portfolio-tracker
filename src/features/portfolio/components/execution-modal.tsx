@@ -27,11 +27,11 @@ export function ExecutionModal({ drifts, cashBalance }: ExecutionModalProps) {
   const actionableTrades = drifts.filter(d => Math.abs(d.actionAmount) >= 1000)
   const totalBuyAmount = actionableTrades
     .filter(d => d.actionAmount > 0)
-    .reduce((acc, d) => acc + d.actionAmount, 0)
+    .reduce((acc: any, d: any) => acc + d.actionAmount, 0)
   
   const totalSellAmount = actionableTrades
     .filter(d => d.actionAmount < 0)
-    .reduce((acc, d) => acc + Math.abs(d.actionAmount), 0)
+    .reduce((acc: any, d: any) => acc + Math.abs(d.actionAmount), 0)
   
   const isCashInsufficient = totalBuyAmount > cashBalance
 
@@ -44,7 +44,7 @@ export function ExecutionModal({ drifts, cashBalance }: ExecutionModalProps) {
       } else {
         alert(result.error || "Execution failed")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
       alert("An unexpected error occurred during settlement")
     } finally {
@@ -90,7 +90,7 @@ export function ExecutionModal({ drifts, cashBalance }: ExecutionModalProps) {
               <div className="space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 px-1">Planned Transactions</h3>
                 <div className="space-y-2">
-                  {actionableTrades.map(trade => {
+                  {actionableTrades.map((trade: any) => {
                     const isBuy = trade.actionAmount > 0
                     return (
                       <div 
