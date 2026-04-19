@@ -97,8 +97,8 @@ export async function getHoldingsLedger() {
 
   const holdings = [];
 
-  for (const asset of assets) {
-    let currentQty = 0;
+    for (const asset of assets) {
+      let currentQty = 0;
     let avgCost = 0;
     for (const tx of asset.transactions) {
       if (tx.type === 'BUY') {

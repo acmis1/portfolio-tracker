@@ -14,6 +14,9 @@ import { AddCashModal } from '@/features/cash/components/add-cash-modal'
 import { PriceUpdateModal } from '@/features/holdings/components/price-update-modal'
 import { TransactionModal } from '@/features/transactions/components/transaction-modal'
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function DashboardPage() {
   const [holdings, historyData, summary] = await Promise.all([
     getHoldingsLedger(),
