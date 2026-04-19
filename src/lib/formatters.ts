@@ -35,3 +35,23 @@ export const formatNumber = (value: number, decimals = 2): string => {
     maximumFractionDigits: decimals,
   }).format(value);
 };
+
+export const formatAssetClass = (slug: string): string => {
+  if (!slug) return '';
+  
+  const mapping: Record<string, string> = {
+    'MUTUAL_FUND': 'Mutual Fund',
+    'REAL_ESTATE': 'Real Estate',
+    'STOCK': 'Stock',
+    'CRYPTO': 'Crypto',
+    'GOLD': 'Gold',
+    'TERM_DEPOSIT': 'Term Deposit'
+  };
+
+  if (mapping[slug]) return mapping[slug];
+
+  return slug
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};

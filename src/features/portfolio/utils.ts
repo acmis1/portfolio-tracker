@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { xirr } from "@finprecise/cashflow";
 import { auth } from "@clerk/nextjs/server";
+import { formatAssetClass } from "@/lib/formatters";
 
 export async function getPortfolioSummary() {
   const { userId } = await auth()
@@ -279,19 +280,22 @@ export async function getAssetClassPerformance() {
     buckets[bucketKey].marketValue += quantity * currentPrice;
 
     const netInvestedForAsset = asset.transactions.reduce((acc, tx) => {
-      return acc + Number(tx.grossAmount);
+      const amount = Number(tx.grossAmount);
+      if (tx.type === 'BUY') return acc + amount;
+      if (tx.type === 'SELL') return acc - amount;
+      return acc;
     }, 0);
     
     buckets[bucketKey].netInvested += netInvestedForAsset;
   }
 
   return Object.entries(buckets).map(([name, data]) => {
-    const roi = data.netInvested > 0 
+    const roi = data.netInvested > 0.01 // Use a small epsilon
       ? ((data.marketValue - data.netInvested) / data.netInvested) * 100 
       : 0;
     
     return {
-      name,
+      name, // Here name is already 'Equities', 'Gold', 'Crypto' which were manually set in buckets keys
       marketValue: data.marketValue,
       netInvested: data.netInvested,
       roi

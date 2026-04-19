@@ -9,6 +9,7 @@ import { getPortfolioSnapshots } from "@/features/portfolio/actions/rebalancing"
 import { cn } from '@/lib/utils'
 import { CashLedgerTable } from '@/features/cash/components/cash-ledger-table'
 import { PerformanceAttribution } from '@/features/portfolio/components/performance-attribution'
+import { formatAssetClass } from "@/lib/formatters"
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -28,7 +29,8 @@ export default async function DashboardPage() {
   const totalMarketValue = holdings.reduce((sum: number, h: any) => sum + (h.marketValue || 0), 0);
   
   const allocation = holdings.reduce((acc: any[], h: any) => {
-    const existing = acc.find((a: any) => a.name === h.assetClass);
+    const className = formatAssetClass(h.assetClass);
+    const existing = acc.find((a: any) => a.name === className);
     if (existing) {
       existing.value += (h.marketValue || 0);
     } else {
@@ -41,7 +43,7 @@ export default async function DashboardPage() {
         'REAL_ESTATE': '#64748b'
       };
       acc.push({ 
-        name: h.assetClass, 
+        name: className, 
         value: h.marketValue || 0,
         color: colors[h.assetClass] || '#94a3b8'
       });
