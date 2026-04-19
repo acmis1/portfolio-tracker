@@ -32,8 +32,8 @@ export async function POST(req: Request) {
     const USD_VND_RATE = await getLiveExchangeRate();
 
     // 3. Process Batch
-    await prisma.$transaction(async (tx) => {
-      for (const item of body) {
+    await prisma.$transaction(async (tx: any) => {
+      for (const item of body as any[]) {
         try {
           const { ticker, price, currency } = item;
 
