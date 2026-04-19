@@ -4,30 +4,25 @@ import { GrowthChart } from '@/features/portfolio/components/growth-chart'
 import { AllocationChart } from '@/features/portfolio/components/allocation-chart'
 import { Suspense } from 'react'
 import { HoldingsTable } from '@/features/holdings/components/holdings-table'
-import { getHoldingsLedger, getPortfolioSummary } from "@/features/portfolio/utils"
+import { getHoldingsLedger, getPortfolioSummary, getAssetClassPerformance } from "@/features/portfolio/utils"
 import { getPortfolioSnapshots } from "@/features/portfolio/actions/rebalancing"
 import { cn } from '@/lib/utils'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { CashLedgerTable } from '@/features/cash/components/cash-ledger-table'
-import { AddCashModal } from '@/features/cash/components/add-cash-modal'
-import { PriceUpdateModal } from '@/features/holdings/components/price-update-modal'
-import { TransactionModal } from '@/features/transactions/components/transaction-modal'
+import { PerformanceAttribution } from '@/features/portfolio/components/performance-attribution'
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function DashboardPage() {
-  const [holdings, historyData, summary, fxRate] = await Promise.all([
+  const [holdings, historyData, summary, fxRate, assetPerformance] = await Promise.all([
     getHoldingsLedger(),
     getPortfolioSnapshots(),
     getPortfolioSummary(),
-    getLiveExchangeRate()
+    getLiveExchangeRate(),
+    getAssetClassPerformance()
   ]);
 
   const lastPriceDate = summary.lastPriceDate;
-  const isDataFresh = lastPriceDate ? new Date(lastPriceDate).toDateString() === new Date().toDateString() : false;
   
   // Transform holdings into chart data
   const totalMarketValue = holdings.reduce((sum: number, h: any) => sum + (h.marketValue || 0), 0);
@@ -78,20 +73,6 @@ export default async function DashboardPage() {
               Real-time portfolio intelligence and performance analytics
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            
-            <div className="h-4 w-px bg-white/10 mx-1" />
-            
-            <PriceUpdateModal />
-            
-            <TransactionModal 
-              trigger={
-                <Button variant="premium" size="sm">
-                  <Plus className="mr-2 h-4 w-4" /> Add Transaction
-                </Button>
-              } 
-            />
-          </div>
         </div>
 
         {/* 1. KPI Overview (Prioritized) */}
@@ -102,6 +83,7 @@ export default async function DashboardPage() {
           <Suspense fallback={<div className="h-48 w-full animate-pulse rounded-2xl glass-premium" />}>
             <OverviewCards />
           </Suspense>
+          <PerformanceAttribution data={assetPerformance} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -129,7 +111,6 @@ export default async function DashboardPage() {
             <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
               Cash Ledger
             </h2>
-            <AddCashModal />
           </div>
           <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
             <CashLedgerTable />

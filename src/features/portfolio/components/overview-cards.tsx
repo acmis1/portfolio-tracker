@@ -1,16 +1,14 @@
 import { TrendingUp, TrendingDown, DollarSign, PieChart, Activity } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { getPortfolioSummary } from '../utils'
 import { formatCurrency, formatPercentage } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
-import { CashBalanceCard } from '@/features/cash/components/cash-balance-card'
 
 export async function OverviewCards() {
   const { totalValue, totalInvested, xirr, totalRealizedPnL } = await getPortfolioSummary()
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {/* Card 1: Total Net Worth */}
       <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300">
         <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-emerald-500/10 blur-3xl" />
@@ -114,9 +112,6 @@ export async function OverviewCards() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Card 5: Cash Balance */}
-      <CashBalanceCard />
     </div>
   )
 }

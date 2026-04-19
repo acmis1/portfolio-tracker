@@ -238,3 +238,63 @@ export async function getPortfolioHistory(days = 365) {
 
   return history;
 }
+
+export async function getAssetClassPerformance() {
+  const { userId } = await auth();
+  if (!userId) return [];
+
+  const assets = await prisma.asset.findMany({
+    where: { userId },
+    include: {
+      transactions: true,
+      prices: {
+        orderBy: { date: 'desc' },
+        take: 1
+      }
+    }
+  });
+
+  const buckets = {
+    Equities: { marketValue: 0, netInvested: 0 },
+    Gold: { marketValue: 0, netInvested: 0 },
+    Crypto: { marketValue: 0, netInvested: 0 },
+  };
+
+  for (const asset of assets) {
+    let bucketKey: keyof typeof buckets | null = null;
+    
+    if (asset.assetClass === 'STOCK' || asset.assetClass === 'MUTUAL_FUND') bucketKey = 'Equities';
+    else if (asset.assetClass === 'GOLD') bucketKey = 'Gold';
+    else if (asset.assetClass === 'CRYPTO') bucketKey = 'Crypto';
+
+    if (!bucketKey) continue;
+
+    const quantity = asset.transactions.reduce((acc, tx) => {
+      if (tx.type === 'BUY') return acc + tx.quantity;
+      if (tx.type === 'SELL') return acc - tx.quantity;
+      return acc;
+    }, 0);
+
+    const currentPrice = asset.prices[0]?.closePrice || 0;
+    buckets[bucketKey].marketValue += quantity * currentPrice;
+
+    const netInvestedForAsset = asset.transactions.reduce((acc, tx) => {
+      return acc + Number(tx.grossAmount);
+    }, 0);
+    
+    buckets[bucketKey].netInvested += netInvestedForAsset;
+  }
+
+  return Object.entries(buckets).map(([name, data]) => {
+    const roi = data.netInvested > 0 
+      ? ((data.marketValue - data.netInvested) / data.netInvested) * 100 
+      : 0;
+    
+    return {
+      name,
+      marketValue: data.marketValue,
+      netInvested: data.netInvested,
+      roi
+    };
+  });
+}
