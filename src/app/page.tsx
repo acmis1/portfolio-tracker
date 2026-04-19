@@ -93,7 +93,7 @@ export default async function DashboardPage() {
           <PerformanceAttribution data={assetPerformance} />
         </div>
 
-        {/* Row 3: Analytics Grid (Growth + Top Holdings) */}
+        {/* Row 3: Analytics Grid (Growth + Allocation) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Growth Chart (Span 2) */}
           <div className="lg:col-span-2 space-y-4">
@@ -103,6 +103,17 @@ export default async function DashboardPage() {
             <GrowthChart data={historyData} />
           </div>
 
+          {/* Asset Allocation (Span 1) */}
+          <div className="lg:col-span-1 space-y-4">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
+              Asset Allocation
+            </h2>
+            <AllocationChart data={allocationData} />
+          </div>
+        </div>
+
+        {/* Row 4: Secondary Data Grid (Top Holdings + Cash) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Top Holdings (Span 1) */}
           <div className="lg:col-span-1 space-y-4">
             <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
@@ -111,16 +122,6 @@ export default async function DashboardPage() {
             <Suspense fallback={<div className="h-full min-h-[400px] w-full animate-pulse rounded-2xl glass-premium" />}>
               <TopHoldings />
             </Suspense>
-          </div>
-        </div>
-
-        {/* Row 4: Asset Allocation & Secondary Data */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-1 space-y-4">
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
-              Asset Allocation
-            </h2>
-            <AllocationChart data={allocationData} />
           </div>
           
           <div className="lg:col-span-2 space-y-4">
