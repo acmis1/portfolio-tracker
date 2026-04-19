@@ -1,13 +1,13 @@
 import { formatCurrency } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
-import { USD_VND_RATE } from "@/lib/constants"
 
 interface AssetTransactionTableProps {
   transactions: any[]
   assetCurrency: string
+  fxRate: number
 }
 
-export function AssetTransactionTable({ transactions, assetCurrency }: AssetTransactionTableProps) {
+export function AssetTransactionTable({ transactions, assetCurrency, fxRate }: AssetTransactionTableProps) {
   const isUSD = assetCurrency === 'USD';
 
   return (
@@ -29,8 +29,9 @@ export function AssetTransactionTable({ transactions, assetCurrency }: AssetTran
             </thead>
             <tbody className="divide-y divide-white/5">
               {transactions.map((tx) => {
-                const displayPrice = isUSD ? tx.pricePerUnit / USD_VND_RATE : tx.pricePerUnit;
-                const displayFees = isUSD ? tx.fees / USD_VND_RATE : tx.fees;
+                // Late-stage presentation conversion using dynamic fxRate
+                const displayPrice = isUSD ? tx.pricePerUnit / fxRate : tx.pricePerUnit;
+                const displayFees = isUSD ? tx.fees / fxRate : tx.fees;
                 
                 // Total (Gross Amount) is the wealth/cash impact, strictly VND
                 const displayTotal = tx.grossAmount;

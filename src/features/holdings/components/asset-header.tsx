@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCurrency, formatPercentage } from "@/lib/formatters"
 import { TrendingUp, TrendingDown, LayoutDashboard } from "lucide-react"
-import { USD_VND_RATE } from "@/lib/constants"
 import Link from "next/link"
 
 interface AssetHeaderProps {
@@ -19,15 +18,17 @@ interface AssetHeaderProps {
       unrealizedPnLPctg: number | null;
       xirr: number | null;
     }
-  }
+  };
+  fxRate: number;
 }
 
-export function AssetHeader({ asset }: AssetHeaderProps) {
+export function AssetHeader({ asset, fxRate }: AssetHeaderProps) {
     const { holding } = asset;
     const isUSD = asset.currency === 'USD';
 
-    const displayLivePrice = isUSD && holding.livePrice !== null ? holding.livePrice / USD_VND_RATE : holding.livePrice;
-    const displayAvgCost = isUSD ? holding.avgCost / USD_VND_RATE : holding.avgCost;
+    // Late-stage presentation conversion using dynamic fxRate
+    const displayLivePrice = isUSD && holding.livePrice !== null ? holding.livePrice / fxRate : holding.livePrice;
+    const displayAvgCost = isUSD ? holding.avgCost / fxRate : holding.avgCost;
     
     // Valuation and performance in base currency VND
     const displayMarketValue = holding.marketValue;

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { xirr } from "@finprecise/cashflow";
+import { revalidatePath } from "next/cache";
 
 export async function getAssetDetails(id: string) {
   const asset = await prisma.asset.findUnique({
@@ -94,7 +95,8 @@ export async function addPriceUpdate(data: { symbol: string; date: string; price
   const dateObj = new Date(date);
   dateObj.setHours(0, 0, 0, 0);
 
-  const { USD_VND_RATE } = await import("@/lib/constants");
+  const { getLiveExchangeRate } = await import("@/lib/fx");
+  const USD_VND_RATE = await getLiveExchangeRate();
   const price = currency === 'USD' ? rawPrice * USD_VND_RATE : rawPrice;
 
   try {

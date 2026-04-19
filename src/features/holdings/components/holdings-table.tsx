@@ -3,10 +3,13 @@ import { formatCurrency, formatPercentage } from "@/lib/formatters";
 import { TrendingUp, TrendingDown, Info, Plus } from "lucide-react";
 import { TransactionModal } from "@/features/transactions/components/transaction-modal";
 import { Button } from "@/components/ui/button";
-import { USD_VND_RATE } from "@/lib/constants";
 import Link from "next/link";
 
-export async function HoldingsTable() {
+interface HoldingsTableProps {
+  fxRate: number;
+}
+
+export async function HoldingsTable({ fxRate }: HoldingsTableProps) {
   const holdings = await getHoldingsLedger();
 
   if (holdings.length === 0) {
@@ -47,8 +50,8 @@ export async function HoldingsTable() {
             {holdings.map((holding) => {
               const isUSD = holding.currency === 'USD';
               
-              const displayAvgCost = isUSD ? holding.avgCost / USD_VND_RATE : holding.avgCost;
-              const displayLivePrice = isUSD && holding.livePrice !== null ? holding.livePrice / USD_VND_RATE : holding.livePrice;
+              const displayAvgCost = isUSD ? holding.avgCost / fxRate : holding.avgCost;
+              const displayLivePrice = isUSD && holding.livePrice !== null ? holding.livePrice / fxRate : holding.livePrice;
               
               // Market Value and P&L remain in VND as per accounting truth
               const displayMarketValue = holding.marketValue;

@@ -17,7 +17,8 @@ export async function addTransaction(formData: TransactionFormValues) {
   const { symbol, name, assetClass, type, quantity, price: rawPrice, fees: rawFees, date, currency } = result.data
   const dateObj = new Date(date)
 
-  const { USD_VND_RATE } = await import("@/lib/constants")
+  const { getLiveExchangeRate } = await import("@/lib/fx")
+  const USD_VND_RATE = await getLiveExchangeRate()
   const isUSD = currency === 'USD'
   
   // Convert to VND if input is USD

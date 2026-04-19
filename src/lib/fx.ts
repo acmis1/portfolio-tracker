@@ -1,0 +1,39 @@
+/**
+ * Aegis Ledger Dynamic FX Engine
+ * Orchestrates live exchange rate retrieval with institutional fallback.
+ */
+
+const FALLBACK_USD_VND_RATE = 25400;
+
+/**
+ * Fetches the current USD to VND exchange rate.
+ * Uses Next.js data caching for 1-hour revalidation.
+ */
+export async function getLiveExchangeRate(): Promise<number> {
+  try {
+    // Open Exchange Rates API (no key required for latest v6)
+    const response = await fetch('https://open.er-api.com/v6/latest/USD', {
+      next: { 
+        revalidate: 3600, // 1 hour revalidation
+        tags: ['fx-rate'] 
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`FX API responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const rate = data.rates?.VND;
+
+    if (typeof rate !== 'number' || rate <= 0) {
+      throw new Error('FX API returned invalid or missing VND rate');
+    }
+
+    // Return rounded rate for cleaner accounting and presentation
+    return Math.round(rate);
+  } catch (error) {
+    console.error('CRITICAL: Dynamic FX fetch failed. Falling back to static rate.', error);
+    return FALLBACK_USD_VND_RATE;
+  }
+}

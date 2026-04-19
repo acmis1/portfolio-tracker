@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus, Loader2 } from "lucide-react"
+import { Plus, Loader2, Info } from "lucide-react"
 import { 
   Dialog, 
   DialogContent, 
@@ -18,12 +18,14 @@ import { Select } from "@/components/ui/select"
 import { transactionSchema, type TransactionFormValues } from "@/lib/validations"
 import { addTransaction } from "@/features/transactions/actions"
 import { cn } from "@/lib/utils"
+import { formatCurrency } from "@/lib/formatters"
 
 interface TransactionModalProps {
-  trigger?: React.ReactElement
+  trigger?: React.ReactElement;
+  fxRate?: number; // Optional live rate for conversion preview
 }
 
-export function TransactionModal({ trigger }: TransactionModalProps) {
+export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalProps) {
   const [open, setOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
@@ -61,6 +63,9 @@ export function TransactionModal({ trigger }: TransactionModalProps) {
   }
 
   const errors = form.formState.errors
+  const selectedCurrency = form.watch("currency")
+  const inputPrice = form.watch("price")
+  const isUSD = selectedCurrency === 'USD'
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -181,8 +186,8 @@ export function TransactionModal({ trigger }: TransactionModalProps) {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Price per Unit ({form.watch("currency")})</Label>
+            <div className="space-y-2 relative">
+              <Label htmlFor="price">Price per Unit ({selectedCurrency})</Label>
               <Input 
                 id="price" 
                 type="number" 
@@ -190,12 +195,18 @@ export function TransactionModal({ trigger }: TransactionModalProps) {
                 className={cn(errors.price && "border-red-500/50")}
                 {...form.register("price", { valueAsNumber: true })}
               />
+              {isUSD && inputPrice > 0 && (
+                <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-emerald-500/80 animate-in fade-in slide-in-from-top-1">
+                  <Info className="h-2.5 w-2.5" />
+                  Est. {formatCurrency(inputPrice * fxRate, 'VND')}
+                </div>
+              )}
               {errors.price && (
                 <p className="text-[10px] font-medium text-red-400">{errors.price.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="fees">Fees ({form.watch("currency")})</Label>
+              <Label htmlFor="fees">Fees ({selectedCurrency})</Label>
               <Input 
                 id="fees" 
                 type="number" 

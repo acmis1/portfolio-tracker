@@ -1,3 +1,4 @@
+import { getLiveExchangeRate } from "@/lib/fx"
 import { OverviewCards } from '@/features/portfolio/components/overview-cards'
 import { GrowthChart } from '@/features/portfolio/components/growth-chart'
 import { AllocationChart } from '@/features/portfolio/components/allocation-chart'
@@ -18,10 +19,11 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function DashboardPage() {
-  const [holdings, historyData, summary] = await Promise.all([
+  const [holdings, historyData, summary, fxRate] = await Promise.all([
     getHoldingsLedger(),
     getPortfolioSnapshots(),
-    getPortfolioSummary()
+    getPortfolioSummary(),
+    getLiveExchangeRate()
   ]);
 
   const lastPriceDate = summary.lastPriceDate;
@@ -136,7 +138,7 @@ export default async function DashboardPage() {
             Holdings Ledger
           </h2>
           <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
-            <HoldingsTable />
+            <HoldingsTable fxRate={fxRate} />
           </Suspense>
         </div>
 

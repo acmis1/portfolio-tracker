@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/layout/navigation";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { getLiveExchangeRate } from "@/lib/fx";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,11 +20,13 @@ export const metadata: Metadata = {
   description: "Institutional-grade wealth management and portfolio intelligence",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const fxRate = await getLiveExchangeRate();
+
   return (
     <html
       lang="en"
@@ -32,7 +35,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-slate-950">
         <TooltipProvider>
-          <Navigation />
+          <Navigation fxRate={fxRate} />
           <div className="flex-1">{children}</div>
         </TooltipProvider>
       </body>

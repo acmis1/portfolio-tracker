@@ -5,6 +5,7 @@ import { AssetHeader } from "@/features/holdings/components/asset-header"
 import { AssetTransactionTable } from "@/features/holdings/components/asset-transaction-table"
 import { AssetPriceChart } from "@/features/holdings/components/asset-price-chart"
 import { BenchmarkCards } from "@/features/holdings/components/benchmark-cards"
+import { getLiveExchangeRate } from "@/lib/fx"
 
 interface AssetPageProps {
   params: Promise<{ id: string }>
@@ -12,7 +13,10 @@ interface AssetPageProps {
 
 export default async function AssetPage({ params }: AssetPageProps) {
   const { id } = await params;
-  const assetData = await getAssetDetails(id);
+  const [assetData, fxRate] = await Promise.all([
+    getAssetDetails(id),
+    getLiveExchangeRate()
+  ]);
 
   if (!assetData) {
     notFound();
@@ -28,7 +32,7 @@ export default async function AssetPage({ params }: AssetPageProps) {
 
       <div className="relative z-10 mx-auto max-w-7xl space-y-10">
         <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
-          <AssetHeader asset={assetData} />
+          <AssetHeader asset={assetData} fxRate={fxRate} />
         </Suspense>
 
         <Suspense fallback={<div className="h-[400px] w-full animate-pulse rounded-2xl glass-premium" />}>
@@ -43,6 +47,7 @@ export default async function AssetPage({ params }: AssetPageProps) {
           <AssetTransactionTable 
             transactions={assetData.transactions} 
             assetCurrency={assetData.currency}
+            fxRate={fxRate}
           />
         </Suspense>
       </div>

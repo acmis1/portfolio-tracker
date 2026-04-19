@@ -1,10 +1,16 @@
 "use client"
 
-import { PieChart, User } from 'lucide-react'
+import { PieChart, User, Globe } from 'lucide-react'
 import { TransactionModal } from '@/features/transactions/components/transaction-modal'
 import Link from 'next/link'
+import { formatCurrency } from '@/lib/formatters'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
-export function Navigation() {
+interface NavigationProps {
+  fxRate: number;
+}
+
+export function Navigation({ fxRate }: NavigationProps) {
   return (
     <nav className="sticky top-0 z-50 glass border-b border-white/5">
       <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
@@ -20,14 +26,32 @@ export function Navigation() {
 
         {/* Right: User Avatar / Actions */}
         <div className="flex items-center gap-6">
-          <div className="hidden md:flex items-center gap-6 border-r border-white/10 pr-6">
+          <div className="hidden lg:flex items-center gap-6 border-r border-white/10 pr-6">
             <Link href="/" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Dashboard</Link>
             <Link href="/holdings" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Holdings</Link>
             <Link href="/rebalance" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Rebalance</Link>
             <Link href="/income" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Income</Link>
           </div>
           
-          <TransactionModal />
+          {/* Live FX Badge */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10 cursor-help group transition-colors hover:bg-emerald-500/10 active:scale-95">
+                <Globe className="h-3.5 w-3.5 text-emerald-500" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60 leading-tight">Live USD/VND</span>
+                  <span className="text-xs font-bold text-white tabular-nums leading-tight">
+                    {formatCurrency(fxRate, 'VND')}
+                  </span>
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="glass-premium border-white/10">
+              <p className="text-xs font-medium">Auto-synced from global market data</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <TransactionModal fxRate={fxRate} />
 
           <div className="h-10 w-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center cursor-pointer hover:border-emerald-500/50 transition-colors">
             <User className="h-5 w-5 text-slate-400" />

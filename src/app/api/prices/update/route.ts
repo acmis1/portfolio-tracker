@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { USD_VND_RATE } from "@/lib/constants";
+import { getLiveExchangeRate } from "@/lib/fx";
 import { forcePortfolioSnapshot } from "@/features/portfolio/actions/rebalancing";
 
 export async function POST(req: Request) {
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
 
     const now = new Date();
     const todayMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const USD_VND_RATE = await getLiveExchangeRate();
 
     // 3. Process Batch
     await prisma.$transaction(async (tx) => {
