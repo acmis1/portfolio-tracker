@@ -11,6 +11,20 @@ const CRYPTO_MAP: Record<string, string> = {
   SOL: "solana",
 };
 
+async function connectWithRetry(retries = 5, delayMs = 5000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await prisma.$connect();
+      console.log("✅ Database connected successfully.");
+      return;
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      console.warn(`⚠️ Database sleeping or busy, waiting for wake up... (Attempt ${i + 1}/${retries})`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
 async function fetchStockPrice(symbol: string) {
   const to = Math.floor(Date.now() / 1000);
   const from = to - 86400 * 2; // 2 days to be safe for weekends/holidays
@@ -66,6 +80,8 @@ async function fetchMutualFundPrice(symbol: string) {
 
 async function main() {
   console.log("Starting price sync...");
+  
+  await connectWithRetry();
   
   const assets = await prisma.asset.findMany();
   const now = new Date();
