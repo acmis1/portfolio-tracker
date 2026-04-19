@@ -57,13 +57,20 @@ export async function addTransaction(formData: TransactionFormValues) {
         })
       }
 
+      const locale = currency === 'VND' ? 'vi-VN' : 'en-US';
+      const formattedPrice = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currency,
+        maximumFractionDigits: currency === 'VND' ? 0 : 2,
+      }).format(rawPrice);
+
       // 2. Create associated CashTransaction for accurate cash ledger
       const cashTx = await tx.cashTransaction.create({
         data: {
           amount: Math.abs(grossAmount),
           date: dateObj,
           type: type === 'BUY' ? 'BUY_ASSET' : 'SELL_ASSET',
-          description: `${type} ${quantity} ${symbol} @ ${price}`,
+          description: `${type} ${quantity} ${symbol} @ ${formattedPrice}`,
           currency: 'VND',
           userId,
         }
@@ -180,13 +187,20 @@ export async function editTransaction(id: string, formData: TransactionFormValue
     await prisma.$transaction(async (tx) => {
       // 1. Update cash transaction if it exists
       if (existing.cashTransactionId) {
+        const locale = currency === 'VND' ? 'vi-VN' : 'en-US';
+        const formattedPrice = new Intl.NumberFormat(locale, {
+          style: 'currency',
+          currency: currency,
+          maximumFractionDigits: currency === 'VND' ? 0 : 2,
+        }).format(rawPrice);
+
         await tx.cashTransaction.update({
           where: { id: existing.cashTransactionId },
           data: {
             amount: Math.abs(grossAmount),
             date: dateObj,
             type: type === 'BUY' ? 'BUY_ASSET' : 'SELL_ASSET',
-            description: `${type} ${quantity} ${symbol} @ ${price}`,
+            description: `${type} ${quantity} ${symbol} @ ${formattedPrice}`,
           }
         })
       }
