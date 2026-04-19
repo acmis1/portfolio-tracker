@@ -125,6 +125,23 @@ async function fetchMutualFundPrice(symbol: string) {
   return nav;
 }
 
+async function fetchGoldPrice() {
+  const url = 'https://sjc.com.vn/xml/tygiavang.xml';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`SJC API failed: ${res.status}`);
+  const xml = await res.text();
+  
+  // Extract the sell price for 1 Tael of SJC
+  const match = xml.match(/type="V\u00e0ng SJC 1L"[^>]*sell="([^"]+)"/i) || xml.match(/type="Vàng SJC 1L"[^>]*sell="([^"]+)"/i);
+  
+  if (match && match[1]) {
+    // Convert "84.500" -> 84.5 -> 84500000
+    const cleanNumber = match[1].replace(',', '.');
+    return Math.round(parseFloat(cleanNumber) * 1000000);
+  }
+  throw new Error("Could not parse SJC 1L Gold price from XML");
+}
+
 async function main() {
   console.log("Starting price sync...");
   
@@ -153,6 +170,9 @@ async function main() {
           break;
         case "MUTUAL_FUND":
           price = await fetchMutualFundPrice(asset.symbol);
+          break;
+        case "GOLD":
+          price = await fetchGoldPrice();
           break;
         default:
           console.log(`Skipping asset ${asset.symbol} (unsupported class: ${asset.assetClass})`);
