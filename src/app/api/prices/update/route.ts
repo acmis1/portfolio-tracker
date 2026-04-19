@@ -5,6 +5,12 @@ import crypto from "crypto";
 
 export async function POST(req: Request) {
   try {
+    // 0. Payload Size Guard (100KB limit for price updates)
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength) > 1024 * 100) {
+      return NextResponse.json({ error: "Payload Too Large" }, { status: 413 });
+    }
+
     // 1. Auth Check - Timing-safe comparison
     const authHeader = req.headers.get("authorization") || "";
     const secret = process.env.PRICE_WEBHOOK_SECRET || "dev_secret_123";
@@ -40,7 +46,19 @@ export async function POST(req: Request) {
 
     const updatedUserIds = new Set<string>();
 
-    // 3. Process Batch
+    // 3. Pre-fetch all assets that need updating to avoid N+1 queries
+    const tickers = body.map((item: any) => item.ticker?.toUpperCase()).filter(Boolean);
+    const allAssets = await prisma.asset.findMany({
+      where: { symbol: { in: tickers } }
+    });
+
+    const assetsBySymbol = allAssets.reduce((acc: Record<string, any[]>, asset: any) => {
+      if (!acc[asset.symbol]) acc[asset.symbol] = [];
+      acc[asset.symbol].push(asset);
+      return acc;
+    }, {});
+
+    // 4. Process Batch
     await prisma.$transaction(async (tx: any) => {
       for (const item of body as any[]) {
         try {
@@ -52,10 +70,8 @@ export async function POST(req: Request) {
             continue;
           }
 
-          // Find all Assets across all users with this ticker
-          const assets = await tx.asset.findMany({
-            where: { symbol: ticker.toUpperCase() }
-          });
+          const symbol = ticker.toUpperCase();
+          const assets = assetsBySymbol[symbol] || [];
 
           if (assets.length === 0) {
             results.push({ ticker, status: "skipped", error: "No user portfolios contain this asset" });

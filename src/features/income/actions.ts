@@ -10,6 +10,7 @@ export async function getIncomeHistory() {
   try {
     const transactions = await prisma.cashTransaction.findMany({
       where: {
+        userId,
         type: {
           in: ['DIVIDEND', 'INTEREST'],
         },
@@ -86,6 +87,7 @@ export async function getIncomeHistory() {
     // Recent 10
     const recent = await prisma.cashTransaction.findMany({
       where: {
+        userId,
         type: {
           in: ['DIVIDEND', 'INTEREST'],
         },

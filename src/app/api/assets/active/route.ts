@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import crypto from "crypto";
 
 /**
  * GET /api/assets/active
@@ -8,11 +9,18 @@ import { prisma } from "@/lib/db";
  */
 export async function GET(req: Request) {
   try {
-    // 1. Auth Check - Shared with Pricing Webhook
-    const authHeader = req.headers.get("authorization");
+    // 1. Auth Check - Shared with Pricing Webhook (Timing-safe)
+    const authHeader = req.headers.get("authorization") || "";
     const secret = process.env.PRICE_WEBHOOK_SECRET || "dev_secret_123";
+    const expectedToken = `Bearer ${secret}`;
 
-    if (!authHeader || authHeader !== `Bearer ${secret}`) {
+    const expectedBuffer = Buffer.from(expectedToken);
+    const providedBuffer = Buffer.from(authHeader);
+
+    if (
+      expectedBuffer.length !== providedBuffer.length ||
+      !crypto.timingSafeEqual(expectedBuffer, providedBuffer)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
