@@ -20,6 +20,9 @@ export async function addTransaction(formData: TransactionFormValues) {
 
   const { symbol, name, assetClass, type, quantity, price: rawPrice, fees: rawFees, date, currency } = result.data
   const dateObj = new Date(date)
+  
+  // Logic for non-ticker assets: derive symbol from name if not provided
+  const effectiveSymbol = symbol || name.toUpperCase().trim()
 
   const { getLiveExchangeRate } = await import("@/lib/fx")
   const USD_VND_RATE = await getLiveExchangeRate()
@@ -40,15 +43,14 @@ export async function addTransaction(formData: TransactionFormValues) {
   }
   try {
     const result = await prisma.$transaction(async (tx: any) => {
-      // 1. Ensure Asset exists (safe finding by symbol AND userId)
       let asset = await tx.asset.findFirst({
-        where: { symbol, userId }
+        where: { symbol: effectiveSymbol, userId }
       })
 
       if (!asset) {
         asset = await tx.asset.create({
           data: {
-            symbol,
+            symbol: effectiveSymbol,
             name,
             assetClass,
             currency,
@@ -70,7 +72,7 @@ export async function addTransaction(formData: TransactionFormValues) {
           amount: Math.abs(grossAmount),
           date: dateObj,
           type: type === 'BUY' ? 'BUY_ASSET' : 'SELL_ASSET',
-          description: `${type} ${quantity} ${symbol} @ ${formattedPrice}`,
+          description: `${type} ${quantity} ${effectiveSymbol} @ ${formattedPrice}`,
           currency: 'VND',
           userId,
         }
@@ -228,4 +230,18 @@ export async function editTransaction(id: string, formData: TransactionFormValue
     console.error("Failed to edit transaction:", error)
     return { success: false, error: "Update failed" }
   }
+}
+
+export async function getUserAssets() {
+  const { userId } = await auth()
+  if (!userId) return []
+
+  return prisma.asset.findMany({
+    where: { userId },
+    select: {
+      symbol: true,
+      name: true,
+      assetClass: true,
+    }
+  })
 }

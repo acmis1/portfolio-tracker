@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { transactionSchema, type TransactionFormValues } from "@/lib/validations"
-import { addTransaction } from "@/features/transactions/actions"
+import { addTransaction, getUserAssets } from "@/features/transactions/actions"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/formatters"
 
@@ -25,9 +25,12 @@ interface TransactionModalProps {
   fxRate?: number; // Optional live rate for conversion preview
 }
 
+const TICKER_CLASSES = ['STOCK', 'CRYPTO', 'MUTUAL_FUND']
+
 export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalProps) {
   const [open, setOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [assets, setAssets] = React.useState<any[]>([])
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -43,6 +46,27 @@ export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalPr
       date: new Date().toISOString().split('T')[0],
     },
   })
+
+  // Fetch assets on open for autofill
+  React.useEffect(() => {
+    if (open) {
+      getUserAssets().then(setAssets)
+    }
+  }, [open])
+
+  const symbol = form.watch("symbol")
+  const assetClass = form.watch("assetClass")
+  const isTickerAsset = TICKER_CLASSES.includes(assetClass)
+
+  // Smart Autofill logic
+  React.useEffect(() => {
+    if (!symbol || symbol.length < 2) return
+    const match = assets.find(a => a.symbol.toLowerCase() === symbol.toLowerCase())
+    if (match) {
+      form.setValue("name", match.name)
+      form.setValue("assetClass", match.assetClass)
+    }
+  }, [symbol, assets, form])
 
   async function onSubmit(data: TransactionFormValues) {
     setIsSubmitting(true)
@@ -67,6 +91,15 @@ export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalPr
   const inputPrice = form.watch("price")
   const isUSD = selectedCurrency === 'USD'
 
+  const getNameLabel = () => {
+    switch (assetClass) {
+      case 'GOLD': return "Asset Name (e.g. SJC Gold Bar)"
+      case 'TERM_DEPOSIT': return "Bank & Term (e.g. VCB 6-Month)"
+      case 'REAL_ESTATE': return "Property Name"
+      default: return "Full Name"
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -82,43 +115,73 @@ export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalPr
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="symbol">Symbol</Label>
-              <Input 
-                id="symbol" 
-                placeholder="BTC, AAPL..." 
-                className={cn(errors.symbol && "border-red-500/50 focus-visible:ring-red-500/20")}
-                {...form.register("symbol")}
-              />
-              {errors.symbol && (
-                <p className="text-[10px] font-medium text-red-400">{errors.symbol.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="assetClass">Asset Class</Label>
-              <Select 
-                id="assetClass" 
-                className={cn(errors.assetClass && "border-red-500/50")}
-                {...form.register("assetClass")}
-              >
-                <option value="STOCK">Stock</option>
-                <option value="CRYPTO">Crypto</option>
-                <option value="MUTUAL_FUND">Mutual Fund</option>
-                <option value="GOLD">Gold</option>
-                <option value="TERM_DEPOSIT">Term Deposit</option>
-                <option value="REAL_ESTATE">Real Estate</option>
-              </Select>
-              {errors.assetClass && (
-                <p className="text-[10px] font-medium text-red-400">{errors.assetClass.message}</p>
-              )}
-            </div>
+            {isTickerAsset ? (
+              <div className="space-y-2">
+                <Label htmlFor="symbol">Symbol</Label>
+                <Input 
+                  id="symbol" 
+                  placeholder="BTC, AAPL..." 
+                  className={cn(errors.symbol && "border-red-500/50 focus-visible:ring-red-500/20")}
+                  {...form.register("symbol")}
+                />
+                {errors.symbol && (
+                  <p className="text-[10px] font-medium text-red-400">{errors.symbol.message}</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="assetClass">Asset Class</Label>
+                <Select 
+                  id="assetClass" 
+                  className={cn(errors.assetClass && "border-red-500/50")}
+                  {...form.register("assetClass")}
+                >
+                  <option value="STOCK">Stock</option>
+                  <option value="CRYPTO">Crypto</option>
+                  <option value="MUTUAL_FUND">Mutual Fund</option>
+                  <option value="GOLD">Gold</option>
+                  <option value="TERM_DEPOSIT">Term Deposit</option>
+                  <option value="REAL_ESTATE">Real Estate</option>
+                </Select>
+              </div>
+            )}
+
+            {isTickerAsset && (
+              <div className="space-y-2">
+                <Label htmlFor="assetClass">Asset Class</Label>
+                <Select 
+                  id="assetClass" 
+                  className={cn(errors.assetClass && "border-red-500/50")}
+                  {...form.register("assetClass")}
+                >
+                  <option value="STOCK">Stock</option>
+                  <option value="CRYPTO">Crypto</option>
+                  <option value="MUTUAL_FUND">Mutual Fund</option>
+                  <option value="GOLD">Gold</option>
+                  <option value="TERM_DEPOSIT">Term Deposit</option>
+                  <option value="REAL_ESTATE">Real Estate</option>
+                </Select>
+              </div>
+            )}
+
+            {!isTickerAsset && (
+               <div className="space-y-2">
+                 <Label htmlFor="date">Date</Label>
+                 <Input 
+                   id="date" 
+                   type="date" 
+                   className={cn(errors.date && "border-red-500/50")}
+                   {...form.register("date")} 
+                 />
+               </div>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">{getNameLabel()}</Label>
             <Input 
               id="name" 
-              placeholder="Bitcoin, Apple Inc..." 
+              placeholder={isTickerAsset ? "Bitcoin, Apple Inc..." : "Description..."} 
               className={cn(errors.name && "border-red-500/50")}
               {...form.register("name")}
             />
@@ -129,7 +192,7 @@ export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalPr
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="type">Type</Label>
+              <Label htmlFor="type">Transaction Type</Label>
               <Select 
                 id="type" 
                 className={cn(errors.type && "border-red-500/50")}
@@ -144,18 +207,32 @@ export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalPr
                 <p className="text-[10px] font-medium text-red-400">{errors.type.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
-              <Input 
-                id="date" 
-                type="date" 
-                className={cn(errors.date && "border-red-500/50")}
-                {...form.register("date")} 
-              />
-              {errors.date && (
-                <p className="text-[10px] font-medium text-red-400">{errors.date.message}</p>
-              )}
-            </div>
+            {isTickerAsset && (
+              <div className="space-y-2">
+                <Label htmlFor="date">Date</Label>
+                <Input 
+                  id="date" 
+                  type="date" 
+                  className={cn(errors.date && "border-red-500/50")}
+                  {...form.register("date")} 
+                />
+                {errors.date && (
+                  <p className="text-[10px] font-medium text-red-400">{errors.date.message}</p>
+                )}
+              </div>
+            )}
+            {!isTickerAsset && (
+               <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Select 
+                  id="currency" 
+                  {...form.register("currency")}
+                >
+                  <option value="VND">VND</option>
+                  <option value="USD">USD</option>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -172,17 +249,29 @@ export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalPr
                 <p className="text-[10px] font-medium text-red-400">{errors.quantity.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Select 
-                id="currency" 
-                className={cn(errors.currency && "border-red-500/50")}
-                {...form.register("currency")}
-              >
-                <option value="VND">VND</option>
-                <option value="USD">USD</option>
-              </Select>
-            </div>
+            {isTickerAsset && (
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Select 
+                  id="currency" 
+                  {...form.register("currency")}
+                >
+                  <option value="VND">VND</option>
+                  <option value="USD">USD</option>
+                </Select>
+              </div>
+            )}
+            {!isTickerAsset && (
+              <div className="space-y-2">
+                <Label htmlFor="fees">Total Fees ({selectedCurrency})</Label>
+                <Input 
+                  id="fees" 
+                  type="number" 
+                  step="any"
+                  {...form.register("fees", { valueAsNumber: true })}
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -205,19 +294,21 @@ export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalPr
                 <p className="text-[10px] font-medium text-red-400">{errors.price.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="fees">Fees ({selectedCurrency})</Label>
-              <Input 
-                id="fees" 
-                type="number" 
-                step="any"
-                className={cn(errors.fees && "border-red-500/50")}
-                {...form.register("fees", { valueAsNumber: true })}
-              />
-              {errors.fees && (
-                <p className="text-[10px] font-medium text-red-400">{errors.fees.message}</p>
-              )}
-            </div>
+            {isTickerAsset && (
+              <div className="space-y-2">
+                <Label htmlFor="fees">Fees ({selectedCurrency})</Label>
+                <Input 
+                  id="fees" 
+                  type="number" 
+                  step="any"
+                  className={cn(errors.fees && "border-red-500/50")}
+                  {...form.register("fees", { valueAsNumber: true })}
+                />
+                {errors.fees && (
+                  <p className="text-[10px] font-medium text-red-400">{errors.fees.message}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <Button 

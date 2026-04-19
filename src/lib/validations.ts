@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 export const transactionSchema = z.object({
-  symbol: z.string().min(1, "Symbol is required").toUpperCase(),
+  symbol: z.string().toUpperCase().optional(),
   name: z.string().min(1, "Name is required"),
   assetClass: z.enum(['CRYPTO', 'MUTUAL_FUND', 'STOCK', 'GOLD', 'TERM_DEPOSIT', 'REAL_ESTATE']),
   type: z.enum(['BUY', 'SELL', 'DIVIDEND', 'INTEREST']),
@@ -10,6 +10,15 @@ export const transactionSchema = z.object({
   fees: z.number().min(0, "Fees cannot be negative"),
   currency: z.enum(['VND', 'USD']),
   date: z.string().min(1, "Date is required"),
-})
+}).superRefine((data, ctx) => {
+  const TICKER_CLASSES = ['STOCK', 'CRYPTO', 'MUTUAL_FUND'];
+  if (TICKER_CLASSES.includes(data.assetClass) && !data.symbol) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Symbol is required for ticker assets",
+      path: ["symbol"],
+    });
+  }
+});
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>
