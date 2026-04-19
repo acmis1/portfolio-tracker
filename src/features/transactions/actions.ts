@@ -51,7 +51,33 @@ export async function addTransaction(formData: TransactionFormValues) {
         })
       }
 
-      // 2. Create Transaction
+      // 2. Calculate Realized P&L if this is a SELL transaction
+      let realizedPnL = null
+      if (type === 'SELL') {
+        // Fetch historical transactions to compute cost basis
+        const history = await tx.transaction.findMany({
+          where: { assetId: asset.id },
+          orderBy: { date: 'asc' }
+        })
+
+        let currentQty = 0
+        let currentAvgCost = 0
+        for (const t of history) {
+          if (t.type === 'BUY') {
+            const newQty = currentQty + t.quantity
+            currentAvgCost = (currentQty * currentAvgCost + t.quantity * t.pricePerUnit) / newQty
+            currentQty = newQty
+          } else if (t.type === 'SELL') {
+            currentQty = Math.max(0, currentQty - t.quantity)
+            if (currentQty === 0) currentAvgCost = 0
+          }
+        }
+        
+        // realizedPnL = ((sellPrice - avgCost) * quantity) - fees
+        realizedPnL = ((price - currentAvgCost) * quantity) - fees
+      }
+
+      // 3. Create Transaction
       await tx.transaction.create({
         data: {
           assetId: asset.id,
@@ -60,6 +86,7 @@ export async function addTransaction(formData: TransactionFormValues) {
           pricePerUnit: price,
           grossAmount,
           date: dateObj,
+          realizedPnL: realizedPnL ?? undefined,
         }
       })
     })

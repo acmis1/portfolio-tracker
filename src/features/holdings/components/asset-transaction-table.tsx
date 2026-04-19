@@ -24,6 +24,7 @@ export function AssetTransactionTable({ transactions, assetCurrency }: AssetTran
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Price ({assetCurrency})</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Fees ({assetCurrency})</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Total (VND)</th>
+                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Realized P&L</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -33,6 +34,7 @@ export function AssetTransactionTable({ transactions, assetCurrency }: AssetTran
                 
                 // Total (Gross Amount) is the wealth/cash impact, strictly VND
                 const displayTotal = tx.grossAmount;
+                const realizedPnL = tx.realizedPnL;
                 
                 return (
                   <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
@@ -60,6 +62,12 @@ export function AssetTransactionTable({ transactions, assetCurrency }: AssetTran
                     </td>
                     <td className="px-6 py-4 text-right font-bold text-white tabular-nums">
                       {formatCurrency(displayTotal, 'VND')}
+                    </td>
+                    <td className={cn(
+                      "px-6 py-4 text-right font-bold tabular-nums",
+                      realizedPnL > 0 ? "text-emerald-400" : realizedPnL < 0 ? "text-red-400" : "text-slate-500"
+                    )}>
+                      {realizedPnL != null ? formatCurrency(realizedPnL, 'VND') : '-'}
                     </td>
                   </tr>
                 );

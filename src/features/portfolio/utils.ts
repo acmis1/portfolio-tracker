@@ -18,6 +18,7 @@ export async function getPortfolioSummary() {
 
   let totalValue = 0;
   let totalInvested = 0;
+  let totalRealizedPnL = 0;
   let activeAssetCount = 0;
   const cashflows: { amount: string; date: string }[] = [];
 
@@ -36,12 +37,14 @@ export async function getPortfolioSummary() {
       totalValue += assetValue;
     }
 
-    // Calculate total net invested capital (signed for cashflow)
-    // BUY = negative (cash out), SELL = positive (cash in)
-    // Total Invested = -(sum of these cashflows)
+    // Calculate total net invested capital and realized P&L
     for (const tx of asset.transactions) {
       const amount = Number(tx.grossAmount);
-      totalInvested -= amount; // Subtracting a negative BUY increases totalInvested
+      totalInvested -= amount; 
+
+      if ((tx as any).realizedPnL) {
+        totalRealizedPnL += (tx as any).realizedPnL;
+      }
 
       cashflows.push({
         amount: tx.grossAmount.toString(),
@@ -77,6 +80,7 @@ export async function getPortfolioSummary() {
     totalInvested,
     xirr: portfolioXirr,
     assetCount: activeAssetCount,
+    totalRealizedPnL,
     lastPriceDate: latestPrice?.date || null
   };
 }

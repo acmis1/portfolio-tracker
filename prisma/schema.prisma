@@ -39,6 +39,7 @@ model Transaction {
   pricePerUnit Float
   grossAmount  Float
   asset        Asset    @relation(fields: [assetId], references: [id])
+  realizedPnL  Float?
 }
 
 model CashTransaction {
