@@ -40,7 +40,7 @@ export async function OverviewCards() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
-              Portfolio XIRR
+              Annualized Yield
             </CardDescription>
             <Activity className="h-4 w-4 text-blue-500/50" />
           </div>
@@ -50,22 +50,13 @@ export async function OverviewCards() {
             {formatPercentage(xirr)}
           </div>
           <div className="flex items-center gap-1.5">
-             {Math.abs(xirr) > 0.001 ? (
-              <>
-                <div className={cn(
-                  "h-1.5 w-1.5 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]",
-                  xirr >= 0 ? "bg-emerald-500" : "bg-red-500"
-                )} />
-                <span className={cn(
-                  "text-[10px] font-bold uppercase tracking-wider",
-                  xirr >= 0 ? "text-emerald-400" : "text-red-400"
-                )}>
-                  {xirr >= 0 ? "Bullish Return" : "Bearing State"}
-                </span>
-              </>
+            {Math.abs(xirr) > 0.0001 ? (
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                Institutional Yield Status: <span className={xirr >= 0 ? "text-emerald-500" : "text-red-400"}>Current Yield</span>
+              </span>
             ) : (
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Insufficient Data
+                No return history yet
               </span>
             )}
           </div>

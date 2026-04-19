@@ -1,6 +1,7 @@
 "use client"
 
-import { PieChart, Globe } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
+import { PieChart, Globe, Database } from 'lucide-react'
 import { TransactionModal } from '@/features/transactions/components/transaction-modal'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/formatters'
@@ -9,9 +10,10 @@ import { UserButton } from "@clerk/nextjs"
 
 interface NavigationProps {
   fxRate: number;
+  lastSync: Date | null;
 }
 
-export function Navigation({ fxRate }: NavigationProps) {
+export function Navigation({ fxRate, lastSync }: NavigationProps) {
   return (
     <nav className="sticky top-0 z-50 glass border-b border-white/5">
       <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-4">
@@ -34,23 +36,43 @@ export function Navigation({ fxRate }: NavigationProps) {
             <Link href="/income" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors">Income</Link>
           </div>
           
-          {/* Live FX Badge */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10 cursor-help group transition-colors hover:bg-emerald-500/10 active:scale-95">
-                <Globe className="h-3.5 w-3.5 text-emerald-500" />
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60 leading-tight">Live USD/VND</span>
-                  <span className="text-xs font-bold text-white tabular-nums leading-tight">
-                    {formatCurrency(fxRate, 'VND')}
-                  </span>
+          <div className="flex items-center gap-3">
+            {/* Database Sync Status */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 transition-colors hover:bg-white/10">
+                  <Database className="h-3.5 w-3.5 text-slate-400" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 leading-tight">Data Sync</span>
+                    <span className="text-xs font-bold text-slate-300 leading-tight">
+                      {lastSync ? `${formatDistanceToNow(new Date(lastSync))} ago` : 'No data'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent className="glass-premium border-white/10">
-              <p className="text-xs font-medium">Auto-synced from global market data</p>
-            </TooltipContent>
-          </Tooltip>
+              </TooltipTrigger>
+              <TooltipContent className="glass-premium border-white/10">
+                <p className="text-xs font-medium">Last successful price update from providers</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Live FX Badge */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/5 border border-emerald-500/10 cursor-help group transition-colors hover:bg-emerald-500/10 active:scale-95">
+                  <Globe className="h-3.5 w-3.5 text-emerald-500" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60 leading-tight">Live USD/VND</span>
+                    <span className="text-xs font-bold text-white tabular-nums leading-tight">
+                      {formatCurrency(fxRate, 'VND')}
+                    </span>
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="glass-premium border-white/10">
+                <p className="text-xs font-medium">Auto-synced from global market data</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
 
           <TransactionModal fxRate={fxRate} />
 

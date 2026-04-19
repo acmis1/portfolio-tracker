@@ -21,12 +21,17 @@ export const metadata: Metadata = {
   description: "Institutional-grade wealth management and portfolio intelligence",
 };
 
+import { getLastSyncTime } from "@/features/portfolio/actions/stats";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const fxRate = await getLiveExchangeRate();
+  const [fxRate, lastSync] = await Promise.all([
+    getLiveExchangeRate(),
+    getLastSyncTime(),
+  ]);
 
   return (
     <ClerkProvider>
@@ -37,7 +42,7 @@ export default async function RootLayout({
       >
         <body className="min-h-full flex flex-col bg-slate-950">
           <TooltipProvider>
-            <Navigation fxRate={fxRate} />
+            <Navigation fxRate={fxRate} lastSync={lastSync} />
             <div className="flex-1">{children}</div>
           </TooltipProvider>
         </body>

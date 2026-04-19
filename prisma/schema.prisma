@@ -30,6 +30,8 @@ model DailyPrice {
   closePrice Float
   source     String
   asset      Asset    @relation(fields: [assetId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@unique([assetId, date])
 }
