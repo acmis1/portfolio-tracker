@@ -61,19 +61,47 @@ async function fetchStockPrice(symbol: string) {
   return data.c[data.c.length - 1] * 1000;
 }
 
-async function fetchCryptoPrice(symbol: string) {
+async function getUsdToVndRate(): Promise<number> {
+  const FALLBACK_RATE = 25400;
+  const URL = "https://open.er-api.com/v6/latest/USD";
+
+  try {
+    const res = await fetch(URL);
+    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+    
+    const data: any = await res.json();
+    const rate = data.rates?.VND;
+
+    if (typeof rate !== "number" || rate <= 0) {
+      throw new Error("Invalid VND rate in response");
+    }
+
+    console.log(`✅ Live FX Rate Loaded: 1 USD = ${Math.round(rate).toLocaleString()} VND`);
+    return Math.round(rate);
+  } catch (err: any) {
+    console.warn("************************************************************");
+    console.warn("⚠️  WARNING: LIVE FX FETCH FAILED");
+    console.warn(`⚠️  REASON: ${err.message}`);
+    console.warn(`⚠️  FALLBACK: Using institutional rate of ${FALLBACK_RATE.toLocaleString()} VND`);
+    console.warn("************************************************************");
+    return FALLBACK_RATE;
+  }
+}
+
+async function fetchCryptoPrice(symbol: string, fxRate: number) {
   const cgId = CRYPTO_MAP[symbol.toUpperCase()];
   if (!cgId) throw new Error(`No CoinGecko ID mapped for ${symbol}`);
   
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${cgId}&vs_currencies=vnd`;
+  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${cgId}&vs_currencies=usd`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`CoinGecko API failed: ${res.status}`);
   const data: any = await res.json();
   
-  const price = data[cgId]?.vnd;
-  if (price === undefined) throw new Error(`Price not found in CoinGecko response for ${cgId}`);
+  const usdPrice = data[cgId]?.usd;
+  if (usdPrice === undefined) throw new Error(`USD price not found in CoinGecko response for ${cgId}`);
   
-  return price;
+  const priceVnd = usdPrice * fxRate;
+  return priceVnd;
 }
 
 async function fetchMutualFundPrice(symbol: string) {
@@ -102,6 +130,9 @@ async function main() {
   
   await connectWithRetry();
   
+  // Load central FX rate once per run
+  const usdToVndRate = await getUsdToVndRate();
+  
   const assets = await prisma.asset.findMany();
   const now = new Date();
   const todayMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -118,7 +149,7 @@ async function main() {
           price = await fetchStockPrice(asset.symbol);
           break;
         case "CRYPTO":
-          price = await fetchCryptoPrice(asset.symbol);
+          price = await fetchCryptoPrice(asset.symbol, usdToVndRate);
           break;
         case "MUTUAL_FUND":
           price = await fetchMutualFundPrice(asset.symbol);
