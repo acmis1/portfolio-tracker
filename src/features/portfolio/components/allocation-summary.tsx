@@ -22,7 +22,7 @@ export function AllocationSummary({ summary }: AllocationSummaryProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-black text-white">{formatCurrency(summary.totalPortfolioValue)}</div>
+          <div className="text-2xl font-black text-white">{formatCurrency(summary.totalPortfolioValue || 0)}</div>
           <div className="text-xs text-slate-400 mt-1">
             Includes <span className="text-emerald-400 font-bold">{formatCurrency(summary.cashBalance)}</span> unallocated cash
           </div>

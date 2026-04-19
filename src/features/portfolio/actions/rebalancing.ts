@@ -249,16 +249,16 @@ export async function capturePortfolioSnapshot() {
   await prisma.portfolioSnapshot.upsert({
     where: { date: todayMidnight },
     update: {
-      totalValue: drift.totalPortfolioValue,
-      investedValue: drift.investedValue,
-      cashBalance: drift.cashBalance,
+      totalValue: drift.totalPortfolioValue || 0,
+      investedValue: drift.investedValue || 0,
+      cashBalance: drift.cashBalance || 0,
       costBasis: summary.totalInvested,
     },
     create: {
       date: todayMidnight,
-      totalValue: drift.totalPortfolioValue,
-      investedValue: drift.investedValue,
-      cashBalance: drift.cashBalance,
+      totalValue: drift.totalPortfolioValue || 0,
+      investedValue: drift.investedValue || 0,
+      cashBalance: drift.cashBalance || 0,
       costBasis: summary.totalInvested,
     },
   });
