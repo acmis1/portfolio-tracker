@@ -18,11 +18,11 @@ export async function addTransaction(formData: TransactionFormValues) {
     return { success: false, error: "Invalid transaction data" }
   }
 
-  const { symbol, name, assetClass, type, quantity, price: rawPrice, fees: rawFees, date, currency } = result.data
+  const { symbol, name, assetClass, type, quantity, price: rawPrice, fees: rawFees, date, currency, maturityDate, interestRate } = result.data
   const dateObj = new Date(date)
   
   // Logic for non-ticker assets: derive symbol from name if not provided
-  const effectiveSymbol = symbol || name.toUpperCase().trim()
+  const effectiveSymbol = symbol || name.toUpperCase().replace(/\s+/g, '_').trim()
 
   const { getLiveExchangeRate } = await import("@/lib/fx")
   const USD_VND_RATE = await getLiveExchangeRate()
@@ -55,6 +55,20 @@ export async function addTransaction(formData: TransactionFormValues) {
             assetClass,
             currency,
             userId,
+          }
+        })
+      }
+
+      // Special handling for Term Deposits - Create the child record
+      if (assetClass === 'TERM_DEPOSIT' && maturityDate && interestRate !== undefined) {
+        await tx.termDeposit.create({
+          data: {
+            assetId: asset.id,
+            bankName: name, // Using asset name as bank name for simplicity
+            principal: price, // For TD, price is the principal
+            startDate: dateObj,
+            maturityDate: new Date(maturityDate),
+            interestRate: interestRate,
           }
         })
       }

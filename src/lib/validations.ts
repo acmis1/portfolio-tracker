@@ -10,14 +10,36 @@ export const transactionSchema = z.object({
   fees: z.number().min(0, "Fees cannot be negative"),
   currency: z.enum(['VND', 'USD']),
   date: z.string().min(1, "Date is required"),
+  maturityDate: z.string().optional(),
+  interestRate: z.number().optional(),
 }).superRefine((data, ctx) => {
   const TICKER_CLASSES = ['STOCK', 'CRYPTO', 'MUTUAL_FUND'];
+  
+  // Requirement for Ticker Assets
   if (TICKER_CLASSES.includes(data.assetClass) && !data.symbol) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Symbol is required for ticker assets",
       path: ["symbol"],
     });
+  }
+
+  // Requirement for Term Deposits
+  if (data.assetClass === 'TERM_DEPOSIT') {
+    if (!data.maturityDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Maturity date is required for term deposits",
+        path: ["maturityDate"],
+      });
+    }
+    if (data.interestRate === undefined || data.interestRate === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Interest rate is required for term deposits",
+        path: ["interestRate"],
+      });
+    }
   }
 });
 
