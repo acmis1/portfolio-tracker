@@ -38,22 +38,19 @@ async function fetchStockPrice(symbol: string) {
     }
   });
 
-  const rawText = await res.text();
-
   if (!res.ok) {
-    console.error(`🚨 [DNSE WAF DEBUG] HTTP Status: ${res.status} ${res.statusText}`);
-    console.error(`🚨 [DNSE WAF DEBUG] Headers:`, Object.fromEntries(res.headers.entries()));
-    console.error(`🚨 [DNSE WAF DEBUG] Body Snippet: ${rawText.substring(0, 500)}`);
-    throw new Error(`DNSE rejected the request with status ${res.status}`);
+    const errorText = await res.text();
+    console.error(`🚨 [HTTP Error] Status: ${res.status}`);
+    console.error(`🚨 [Headers]:`, Object.fromEntries(res.headers.entries()));
+    throw new Error(`API failed. Response snippet: ${errorText.substring(0, 200)}`);
   }
 
   let data;
   try {
-    data = JSON.parse(rawText);
+    data = await res.json();
   } catch (e) {
-    console.error(`🚨 [DNSE JSON DEBUG] Failed to parse response as JSON.`);
-    console.error(`🚨 [DNSE JSON DEBUG] Raw Response: ${rawText.substring(0, 500)}`);
-    throw new Error("DNSE returned non-JSON data (likely an HTML firewall page).");
+    console.error(`🚨 [Parse Error] Failed to parse JSON.`);
+    throw new Error("API returned invalid JSON data.");
   }
 
   if (!data?.c || !Array.isArray(data.c) || data.c.length === 0) {
