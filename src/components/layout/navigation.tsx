@@ -6,6 +6,7 @@ import { TransactionModal } from '@/features/transactions/components/transaction
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/formatters'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import { UserButton } from "@clerk/nextjs"
 
 interface NavigationProps {
