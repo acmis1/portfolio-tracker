@@ -1,5 +1,5 @@
-import { Building2, Coins, Bitcoin } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+import { Building2, Layers, Bitcoin } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card'
 import { formatCurrency, formatPercentage } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
@@ -14,7 +14,7 @@ interface PerformanceAttributionProps {
 
 const icons: Record<string, any> = {
   'Equities': Building2,
-  'Gold': Coins,
+  'Gold': Layers,
   'Crypto': Bitcoin
 }
 
@@ -26,7 +26,7 @@ const glows: Record<string, string> = {
 
 export function PerformanceAttribution({ data }: PerformanceAttributionProps) {
   return (
-    <div className="grid gap-6 md:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {data.map((item) => {
         const Icon = icons[item.name] || Building2;
         const glowClass = glows[item.name] || 'bg-slate-500/10';
@@ -36,39 +36,38 @@ export function PerformanceAttribution({ data }: PerformanceAttributionProps) {
             {/* Subtle Glow */}
             <div className={cn("absolute -right-4 -top-4 h-24 w-24 rounded-full blur-3xl", glowClass)} />
             
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-8">
-                <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
-                    {item.name} Performance
-                  </h3>
-                  <div className={cn(
-                    "text-3xl font-black tracking-tight tabular-nums",
-                    item.roi >= 0 ? "text-emerald-400 glow-emerald" : "text-rose-400"
-                  )}>
-                    {item.roi > 0 ? "+" : ""}{formatPercentage(item.roi)}
-                  </div>
-                </div>
-                <div className="rounded-xl bg-white/5 p-2.5">
-                  <Icon className="h-5 w-5 text-slate-400" />
-                </div>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
+                  {item.name} Performance
+                </CardDescription>
+                <Icon className="h-4 w-4 text-slate-500/50" />
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              <div className={cn(
+                "mb-4 text-2xl font-black tracking-tight tabular-nums",
+                item.roi >= 0 ? "text-white glow-emerald" : "text-rose-400"
+              )}>
+                {item.roi > 0 ? "+" : ""}{formatPercentage(item.roi)}
               </div>
               
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    Current Exposure
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-bold text-slate-500 uppercase tracking-widest">
+                    Exposure
                   </span>
-                  <span className="text-sm font-bold text-white tabular-nums">
+                  <span className="font-bold text-white tabular-nums">
                     {formatCurrency(item.marketValue)}
                   </span>
                 </div>
 
-                <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    Net Invested
+                <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[11px]">
+                  <span className="font-bold text-slate-500 uppercase tracking-widest">
+                    Cost Basis
                   </span>
-                  <span className="text-xs font-bold text-slate-400 tabular-nums">
+                  <span className="font-bold text-slate-400 tabular-nums">
                     {formatCurrency(item.netInvested)}
                   </span>
                 </div>
