@@ -62,9 +62,9 @@ export default async function DashboardPage() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl space-y-10">
+      <div className="relative z-10 mx-auto max-w-7xl space-y-6">
         {/* Header section */}
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between px-1">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
               Wealth Management
@@ -75,62 +75,62 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* 1. Performance Attribution (High Level) */}
+        {/* Row 1: Overview Cards */}
         <div className="space-y-4">
-          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
+            Portfolio Overview
+          </h2>
+          <Suspense fallback={<div className="h-32 w-full animate-pulse rounded-2xl glass-premium" />}>
+            <OverviewCards />
+          </Suspense>
+        </div>
+
+        {/* Row 2: Performance Attribution */}
+        <div className="space-y-4">
+          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
             Performance Attribution
           </h2>
           <PerformanceAttribution data={assetPerformance} />
         </div>
 
-        {/* 2. Charts & Top Holdings Breakdown */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-10">
-            <div className="space-y-4">
-              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-                Growth & Performance
-              </h2>
-              <GrowthChart data={historyData} />
-            </div>
-            
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-                  Asset Allocation
-                </h2>
-                <AllocationChart data={allocationData} />
-              </div>
-              <div className="space-y-4">
-                <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-                  Summary
-                </h2>
-                <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
-                  <OverviewCards />
-                </Suspense>
-              </div>
-            </div>
+        {/* Row 3: Analytics Grid (Growth + Top Holdings) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Growth Chart (Span 2) */}
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
+              Growth & Performance
+            </h2>
+            <GrowthChart data={historyData} />
           </div>
 
-          <div className="space-y-4">
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+          {/* Top Holdings (Span 1) */}
+          <div className="lg:col-span-1 space-y-4">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
               Top Holdings
             </h2>
-            <Suspense fallback={<div className="h-full w-full animate-pulse rounded-2xl glass-premium" />}>
+            <Suspense fallback={<div className="h-full min-h-[400px] w-full animate-pulse rounded-2xl glass-premium" />}>
               <TopHoldings />
             </Suspense>
           </div>
         </div>
 
-        {/* 3. Cash Ledger (Secondary) */}
-        <div className="space-y-4 pb-12">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+        {/* Row 4: Asset Allocation & Secondary Data */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-1 space-y-4">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
+              Asset Allocation
+            </h2>
+            <AllocationChart data={allocationData} />
+          </div>
+          
+          <div className="lg:col-span-2 space-y-4">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
               Cash Ledger
             </h2>
+            <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
+              <CashLedgerTable />
+            </Suspense>
           </div>
-          <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
-            <CashLedgerTable />
-          </Suspense>
         </div>
       </div>
     </main>

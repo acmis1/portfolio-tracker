@@ -1,76 +1,96 @@
-import { getHoldingsLedger, AssetHolding } from "@/features/portfolio/utils";
+import { getHoldingsLedger } from "@/features/portfolio/utils";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
-import { TrendingUp, TrendingDown, ArrowUpRight } from "lucide-react";
+import { Trophy, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Card, CardHeader, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export async function TopHoldings() {
   const allHoldings = await getHoldingsLedger();
   const topHoldings = allHoldings.slice(0, 5);
 
-  if (topHoldings.length === 0) return null;
+  if (topHoldings.length === 0) {
+    return (
+      <Card className="glass-premium relative overflow-hidden h-full flex flex-col items-center justify-center p-8 text-center border-white/5">
+        <p className="text-slate-500 font-medium tracking-tight">No holdings available yet.</p>
+      </Card>
+    );
+  }
 
   return (
-    <div className="glass-premium rounded-2xl border border-white/5 overflow-hidden">
-      <div className="flex items-center justify-between border-b border-white/5 bg-white/5 px-6 py-4">
-        <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">
+    <Card className="glass-premium relative overflow-hidden h-full flex flex-col border-white/5">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-400">
           Top Holdings
-        </h3>
-        <Link 
-          href="/holdings" 
-          className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300 transition-colors"
-        >
-          View All <ArrowUpRight className="h-3 w-3" />
-        </Link>
-      </div>
+        </CardTitle>
+        <Trophy className="h-4 w-4 text-amber-500/50" />
+      </CardHeader>
       
-      <div className="divide-y divide-white/5">
-        {topHoldings.map((holding) => (
-          <div key={holding.id} className="flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors group">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <Link 
-                  href={`/holdings/${holding.id}`}
-                  className="font-bold text-white hover:text-emerald-400 transition-colors"
-                >
-                  {holding.symbol}
-                </Link>
-                <span className="text-[10px] font-black text-slate-500 uppercase">
-                  {holding.weight.toFixed(1)}%
-                </span>
-              </div>
-              <span className="text-xs text-slate-500 truncate max-w-[120px]">{holding.name}</span>
-            </div>
+      <CardContent className="flex-1 px-0 py-0">
+        <div className="flex flex-col">
+          {topHoldings.map((holding) => {
+            const hasPnL = (holding.type === 'LIQUID' || holding.type === 'GOLD') && holding.unrealizedPnLPctg !== null;
+            const pnlValue = hasPnL ? (holding as any).unrealizedPnLPctg : null;
 
-            <div className="text-right">
-              <div className="font-bold text-white">
-                {formatCurrency(holding.marketValue, 'VND')}
-              </div>
-              <div className="flex items-center justify-end gap-1.5 mt-0.5">
-                {holding.type === 'LIQUID' && holding.unrealizedPnLPctg !== null ? (
-                  <>
-                    <span className={cn(
-                      "text-[10px] font-black tracking-tighter",
-                      holding.unrealizedPnLPctg >= 0 ? "text-emerald-500" : "text-red-500"
-                    )}>
-                      {holding.unrealizedPnLPctg >= 0 ? '+' : ''}{formatPercentage(holding.unrealizedPnLPctg)}
-                    </span>
-                    {holding.unrealizedPnLPctg >= 0 ? (
-                      <TrendingUp className="h-3 w-3 text-emerald-500" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 text-red-500" />
-                    )}
-                  </>
-                ) : (
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                    {holding.status}
+            return (
+              <div 
+                key={holding.id} 
+                className="flex items-center justify-between px-6 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors group"
+              >
+                <div className="flex flex-col min-w-0">
+                  <Link 
+                    href={`/holdings/${holding.id}`}
+                    className="font-bold text-white hover:text-emerald-400 transition-colors truncate"
+                  >
+                    {holding.symbol}
+                  </Link>
+                  <span className="text-[11px] text-slate-500 font-medium truncate max-w-[140px]">
+                    {holding.name}
                   </span>
-                )}
+                </div>
+
+                <div className="text-right flex flex-col items-end shrink-0">
+                  <div className="font-bold text-white tabular-nums">
+                    {formatCurrency(holding.marketValue, 'VND')}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[10px] font-black text-slate-500/60 uppercase tracking-tighter">
+                      {holding.weight.toFixed(1)}%
+                    </span>
+                    {hasPnL ? (
+                      <span className={cn(
+                        "text-[10px] font-black tabular-nums",
+                        pnlValue! >= 0 ? "text-emerald-500" : "text-rose-500"
+                      )}>
+                        {pnlValue! >= 0 ? '+' : ''}{formatPercentage(pnlValue!)}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-tight">
+                        {holding.status}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+            );
+          })}
+        </div>
+      </CardContent>
+
+      <CardFooter className="pt-4 pb-4">
+        <Button 
+          asChild
+          variant="premium"
+          className="w-full group h-9 rounded-xl bg-white/5 border-white/5 text-slate-300 hover:text-white hover:bg-white/10 shadow-none"
+        >
+          <Link href="/holdings" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+            View All Holdings 
+            <ArrowUpRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
+
