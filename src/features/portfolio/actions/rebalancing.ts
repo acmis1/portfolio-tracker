@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCashBalance } from "@/features/cash/actions";
 import { AssetDrift, RebalancingSummary } from "../types";
 import { revalidatePath } from "next/cache";
-import { CashTransactionType } from "@prisma/client";
+
 
 /**
  * Calculates the deviation between current portfolio weights and target allocations.
@@ -145,7 +145,7 @@ export async function executeRebalancePlan(plan: AssetDrift[]) {
           await tx.cashTransaction.create({
             data: {
               amount: absAmount,
-              type: CashTransactionType.BUY_ASSET,
+              type: 'BUY_ASSET',
               date,
               description: `Rebalance: Buy ${drift.symbol}`,
               referenceId: drift.assetId
@@ -167,7 +167,7 @@ export async function executeRebalancePlan(plan: AssetDrift[]) {
           await tx.cashTransaction.create({
             data: {
               amount: absAmount,
-              type: CashTransactionType.SELL_ASSET,
+              type: 'SELL_ASSET',
               date,
               description: `Rebalance: Sell ${drift.symbol}`,
               referenceId: drift.assetId

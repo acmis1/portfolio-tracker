@@ -1,14 +1,14 @@
 'use server'
 
 import { prisma } from "@/lib/db";
-import { CashTransactionType } from "@prisma/client";
+
 
 export async function getIncomeHistory() {
   try {
     const transactions = await prisma.cashTransaction.findMany({
       where: {
         type: {
-          in: [CashTransactionType.DIVIDEND, CashTransactionType.INTEREST],
+          in: ['DIVIDEND', 'INTEREST'],
         },
       },
       orderBy: { date: "asc" },
@@ -55,9 +55,9 @@ export async function getIncomeHistory() {
       const key = d.toLocaleString('default', { month: 'short', year: 'numeric' });
       
       if (monthlyData[key]) {
-        if (tx.type === CashTransactionType.DIVIDEND) {
+        if (tx.type === 'DIVIDEND') {
           monthlyData[key].dividend += tx.amount;
-        } else if (tx.type === CashTransactionType.INTEREST) {
+        } else if (tx.type === 'INTEREST') {
           monthlyData[key].interest += tx.amount;
         }
       }
@@ -84,7 +84,7 @@ export async function getIncomeHistory() {
     const recent = await prisma.cashTransaction.findMany({
       where: {
         type: {
-          in: [CashTransactionType.DIVIDEND, CashTransactionType.INTEREST],
+          in: ['DIVIDEND', 'INTEREST'],
         },
       },
       orderBy: { date: "desc" },
