@@ -27,10 +27,17 @@ async function connectWithRetry(retries = 5, delayMs = 5000) {
 
 async function fetchStockPrice(symbol: string) {
   const to = Math.floor(Date.now() / 1000);
-  const from = to - 86400 * 2; // 2 days to be safe for weekends/holidays
+  const from = to - (7 * 24 * 60 * 60); // 7 days to cover weekends and slow updates
   const url = `https://api.dnse.com.vn/chart-api/v2/ohlcs/stock?symbol=${symbol}&resolution=1&from=${from}&to=${to}`;
   
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      "Accept": "application/json",
+      "Referer": "https://dnse.com.vn/"
+    }
+  });
+  
   if (!res.ok) throw new Error(`DNSE API failed: ${res.status}`);
   const data: any = await res.json();
   
