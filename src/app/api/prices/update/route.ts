@@ -1,14 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getLiveExchangeRate } from "@/lib/fx";
+import crypto from "crypto";
 
 export async function POST(req: Request) {
   try {
-    // 1. Auth Check
-    const authHeader = req.headers.get("authorization");
+    // 1. Auth Check - Timing-safe comparison
+    const authHeader = req.headers.get("authorization") || "";
     const secret = process.env.PRICE_WEBHOOK_SECRET || "dev_secret_123";
+    const expectedToken = `Bearer ${secret}`;
 
-    if (!authHeader || authHeader !== `Bearer ${secret}`) {
+    const expectedBuffer = Buffer.from(expectedToken);
+    const providedBuffer = Buffer.from(authHeader);
+
+    if (
+      expectedBuffer.length !== providedBuffer.length ||
+      !crypto.timingSafeEqual(expectedBuffer, providedBuffer)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
