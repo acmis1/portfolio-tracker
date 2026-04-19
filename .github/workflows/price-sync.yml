@@ -8,6 +8,10 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      NODE_OPTIONS: "--no-warnings"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,8 +30,3 @@ jobs:
 
       - name: Run price sync
         run: npx tsx scripts/sync-prices.ts
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.DIRECT_URL }}
-          # Some APIs might need a user-agent to avoid being blocked
-          NODE_OPTIONS: "--no-warnings"

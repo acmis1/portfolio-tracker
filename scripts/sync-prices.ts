@@ -14,14 +14,14 @@ const CRYPTO_MAP: Record<string, string> = {
 async function fetchStockPrice(symbol: string) {
   const to = Math.floor(Date.now() / 1000);
   const from = to - 86400 * 2; // 2 days to be safe for weekends/holidays
-  const url = `https://services.entrade.com.vn/chart-api/v2/ohlcs/stock?symbol=${symbol}&resolution=1D&from=${from}&to=${to}`;
+  const url = `https://api.dnse.com.vn/chart-api/v2/ohlcs/stock?symbol=${symbol}&resolution=1&from=${from}&to=${to}`;
   
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Entrade API failed: ${res.status}`);
+  if (!res.ok) throw new Error(`DNSE API failed: ${res.status}`);
   const data: any = await res.json();
   
   if (!data?.c || !Array.isArray(data.c) || data.c.length === 0) {
-    throw new Error(`Invalid data from Entrade for ${symbol}`);
+    throw new Error(`Invalid data from DNSE for ${symbol}`);
   }
   
   // Last close price * 1000 for true VND
