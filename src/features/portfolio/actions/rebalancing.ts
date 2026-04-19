@@ -22,6 +22,8 @@ export async function getRebalancingDrift(): Promise<RebalancingSummary> {
     drifts: [],
     cashBalance: 0,
     totalValue: 0,
+    totalPortfolioValue: 0,
+    investedValue: 0,
     currentYield: 0,
     targetYield: 0
   }
@@ -90,10 +92,13 @@ export async function getRebalancingDrift(): Promise<RebalancingSummary> {
   drifts.sort((a: any, b: any) => Math.abs(b.drift) - Math.abs(a.drift));
 
   return {
+    totalValue: totalPortfolioValue,
     totalPortfolioValue,
     cashBalance,
     investedValue: totalInvestedValue,
-    drifts
+    drifts,
+    currentYield: 0,
+    targetYield: 0,
   };
 }
 
