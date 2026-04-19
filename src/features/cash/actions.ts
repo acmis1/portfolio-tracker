@@ -9,7 +9,7 @@ export async function getCashTransactions() {
     return await prisma.cashTransaction.findMany({
       orderBy: { date: 'desc' }
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to fetch cash transactions:", error)
     return []
   }
@@ -22,7 +22,7 @@ export async function getCashBalance() {
     // Accounting rules:
     // Inflows: DEPOSIT, DIVIDEND, INTEREST, SELL_ASSET -> add
     // Outflows: WITHDRAWAL, BUY_ASSET -> subtract
-    return transactions.reduce((acc, tx) => {
+    return transactions.reduce((acc: number, tx: any) => {
       switch (tx.type) {
         case 'DEPOSIT':
         case 'DIVIDEND':
@@ -36,7 +36,7 @@ export async function getCashBalance() {
           return acc
       }
     }, 0)
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to calculate cash balance:", error)
     return 0
   }
@@ -67,7 +67,7 @@ export async function addCashTransaction(formData: CashTransactionFormValues) {
 
     revalidatePath('/')
     return { success: true }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to add cash transaction:", error)
     return { success: false, error: "Database operation failed" }
   }

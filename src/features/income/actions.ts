@@ -78,7 +78,7 @@ export async function getIncomeHistory() {
 
     // Average monthly (trailing 12 months)
     const trailing12 = history.slice(-12);
-    const avgMonthly = trailing12.reduce((acc, curr) => acc + curr.total, 0) / (trailing12.length || 1);
+    const avgMonthly = trailing12.reduce((acc: number, curr: any) => acc + curr.total, 0) / (trailing12.length || 1);
 
     // Recent 10
     const recent = await prisma.cashTransaction.findMany({
@@ -100,7 +100,7 @@ export async function getIncomeHistory() {
       },
       recent,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to fetch income history:", error);
     return {
       history: [],

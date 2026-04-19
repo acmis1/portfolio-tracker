@@ -35,7 +35,7 @@ export async function addTransaction(formData: TransactionFormValues) {
     grossAmount = (quantity * price)
   }
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // 1. Ensure Asset exists (safe finding by symbol)
       let asset = await tx.asset.findFirst({
         where: { symbol }
@@ -94,7 +94,7 @@ export async function addTransaction(formData: TransactionFormValues) {
 
     revalidatePath('/')
     return { success: true }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to add transaction:", error)
     return { success: false, error: "Database operation failed" }
   }
