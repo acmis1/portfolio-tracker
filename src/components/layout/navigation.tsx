@@ -40,14 +40,17 @@ export function Navigation({ fxRate, lastSync }: NavigationProps) {
             {/* Database Sync Status */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 transition-colors hover:bg-white/10">
-                  <Database className="h-3.5 w-3.5 text-slate-400" />
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 leading-tight">Data Sync</span>
-                    <span className="text-xs font-bold text-slate-300 leading-tight">
-                      {lastSync ? `${formatDistanceToNow(new Date(lastSync))} ago` : 'No data'}
-                    </span>
-                  </div>
+                <div className="flex items-center gap-2.5 cursor-help py-1">
+                  <div className={cn(
+                    "h-2 w-2 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]",
+                    lastSync ? "bg-emerald-500" : "bg-amber-500"
+                  )} />
+                  <span className={cn(
+                    "text-[10px] font-black uppercase tracking-widest",
+                    lastSync ? "text-emerald-500/80" : "text-amber-500/80"
+                  )}>
+                    {lastSync ? `${formatDistanceToNow(new Date(lastSync))} ago` : 'Prices Stale'}
+                  </span>
                 </div>
               </TooltipTrigger>
               <TooltipContent className="glass-premium border-white/10">
