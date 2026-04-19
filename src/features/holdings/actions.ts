@@ -3,8 +3,11 @@
 import { prisma } from "@/lib/db";
 import { xirr } from "@finprecise/cashflow";
 import { revalidatePath } from "next/cache";
+import { auth } from "@clerk/nextjs/server";
 
 export async function getAssetDetails(id: string) {
+  const { userId } = await auth()
+  if (!userId) return null
   const asset = await prisma.asset.findUnique({
     where: { id },
     include: {
@@ -91,6 +94,8 @@ export async function getAssetDetails(id: string) {
   };
 }
 export async function addPriceUpdate(data: { symbol: string; date: string; price: number; currency: string }) {
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: "Unauthorized" }
   const { symbol, date, price: rawPrice, currency } = data;
   const dateObj = new Date(date);
   dateObj.setHours(0, 0, 0, 0);

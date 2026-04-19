@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getLiveExchangeRate } from "@/lib/fx";
-import { forcePortfolioSnapshot } from "@/features/portfolio/actions/rebalancing";
 
 export async function POST(req: Request) {
   try {
@@ -97,8 +96,13 @@ export async function POST(req: Request) {
     // 4. Trigger Portfolio Snapshot
     let snapshotStatus = "skipped";
     if (summary.updated > 0) {
-      const snapshotResult = await forcePortfolioSnapshot();
-      snapshotStatus = snapshotResult.success ? "success" : "failed";
+      const { capturePortfolioSnapshot } = await import("@/features/portfolio/actions/rebalancing");
+      try {
+        await capturePortfolioSnapshot();
+        snapshotStatus = "success";
+      } catch (err) {
+        snapshotStatus = "failed";
+      }
     }
 
     return NextResponse.json({

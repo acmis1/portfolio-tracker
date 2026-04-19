@@ -3,8 +3,11 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { TransactionFormValues, transactionSchema } from "@/lib/validations"
+import { auth } from "@clerk/nextjs/server"
 
 export async function addTransaction(formData: TransactionFormValues) {
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: "Unauthorized" }
   // Convert date string to Date object before validation if needed, 
   // or handle it in the schema. In our schema it's a string, so we convert it here for Prisma.
   const result = transactionSchema.safeParse(formData)

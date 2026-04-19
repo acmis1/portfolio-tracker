@@ -3,8 +3,12 @@
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { cashTransactionSchema, type CashTransactionFormValues } from "./validations"
+import { auth } from "@clerk/nextjs/server"
 
 export async function getCashTransactions() {
+  const { userId } = await auth()
+  if (!userId) return []
+
   try {
     return await prisma.cashTransaction.findMany({
       orderBy: { date: 'desc' }
@@ -16,6 +20,15 @@ export async function getCashTransactions() {
 }
 
 export async function getCashBalance() {
+  const { userId } = await auth()
+  if (!userId) return 0
+  return await getCashBalanceInternal()
+}
+
+/**
+ * Internal version of getCashBalance that skips Clerk auth.
+ */
+export async function getCashBalanceInternal() {
   try {
     const transactions = await prisma.cashTransaction.findMany()
     
@@ -43,6 +56,8 @@ export async function getCashBalance() {
 }
 
 export async function addCashTransaction(formData: CashTransactionFormValues) {
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: "Unauthorized" }
   const result = cashTransactionSchema.safeParse(formData)
   
   if (!result.success) {

@@ -1,10 +1,11 @@
 "use client"
 
-import { PieChart, User, Globe } from 'lucide-react'
+import { PieChart, Globe } from 'lucide-react'
 import { TransactionModal } from '@/features/transactions/components/transaction-modal'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/formatters'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { UserButton } from "@clerk/nextjs"
 
 interface NavigationProps {
   fxRate: number;
@@ -53,9 +54,13 @@ export function Navigation({ fxRate }: NavigationProps) {
 
           <TransactionModal fxRate={fxRate} />
 
-          <div className="h-10 w-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center cursor-pointer hover:border-emerald-500/50 transition-colors">
-            <User className="h-5 w-5 text-slate-400" />
-          </div>
+          <UserButton 
+            appearance={{
+              elements: {
+                avatarBox: "h-10 w-10 border border-white/10 hover:border-emerald-500/50 transition-colors"
+              }
+            }}
+          />
         </div>
       </div>
     </nav>

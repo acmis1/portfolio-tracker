@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCashBalance } from "@/features/cash/actions";
 import { AssetDrift, RebalancingSummary } from "../types";
 import { revalidatePath } from "next/cache";
+import { auth } from "@clerk/nextjs/server";
 
 
 /**
@@ -16,6 +17,15 @@ import { revalidatePath } from "next/cache";
  * - Action Amount = Target Value - Market Value (Positive = BUY, Negative = SELL)
  */
 export async function getRebalancingDrift(): Promise<RebalancingSummary> {
+  const { userId } = await auth()
+  if (!userId) return {
+    drifts: [],
+    cashBalance: 0,
+    totalValue: 0,
+    currentYield: 0,
+    targetYield: 0
+  }
+
   // 1. Fetch assets with their holdings data
   const assets = await prisma.asset.findMany({
     include: {
@@ -88,6 +98,9 @@ export async function getRebalancingDrift(): Promise<RebalancingSummary> {
 }
 
 export async function updateTargetWeight(assetId: string, newWeight: number) {
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: "Unauthorized" }
+
   try {
     await prisma.asset.update({
       where: { id: assetId },
@@ -109,6 +122,9 @@ export async function updateTargetWeight(assetId: string, newWeight: number) {
  * - Derived quantities use the provided currentPrice (latest known).
  */
 export async function executeRebalancePlan(plan: AssetDrift[]) {
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: "Unauthorized" }
+
   const actionable = plan.filter((d: any) => Math.abs(d.actionAmount) >= 1000);
   
   if (actionable.length === 0) {
@@ -193,6 +209,9 @@ import { getPortfolioSummary } from "../utils";
  * Includes Net Invested (Cost Basis) and Total Value.
  */
 export async function getPortfolioSnapshots() {
+  const { userId } = await auth()
+  if (!userId) return []
+
   try {
     const snapshots = await prisma.portfolioSnapshot.findMany({
       orderBy: { date: 'asc' }
@@ -212,38 +231,126 @@ export async function getPortfolioSnapshots() {
 }
 
 /**
+ * Internal logic for capturing a portfolio snapshot.
+ * Used by both secured server actions and public webhooks (with their own auth).
+ */
+export async function capturePortfolioSnapshot() {
+  const summary = await getPortfolioSummary();
+  const drift = await getRebalancingDriftInternal(); // We need a non-auth version of this too
+
+  const now = new Date();
+  const todayMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
+  await prisma.portfolioSnapshot.upsert({
+    where: { date: todayMidnight },
+    update: {
+      totalValue: drift.totalPortfolioValue,
+      investedValue: drift.investedValue,
+      cashBalance: drift.cashBalance,
+      costBasis: summary.totalInvested,
+    },
+    create: {
+      date: todayMidnight,
+      totalValue: drift.totalPortfolioValue,
+      investedValue: drift.investedValue,
+      cashBalance: drift.cashBalance,
+      costBasis: summary.totalInvested,
+    },
+  });
+}
+
+/**
  * Manually triggers a portfolio snapshot capture.
  * Reuses the same valuation logic as the summary and cron route.
  */
 export async function forcePortfolioSnapshot() {
+  const { userId } = await auth()
+  if (!userId) return { success: false, error: "Unauthorized" }
+
   try {
-    const summary = await getPortfolioSummary();
-    const drift = await getRebalancingDrift();
-
-    const now = new Date();
-    const todayMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-
-    await prisma.portfolioSnapshot.upsert({
-      where: { date: todayMidnight },
-      update: {
-        totalValue: drift.totalPortfolioValue,
-        investedValue: drift.investedValue,
-        cashBalance: drift.cashBalance,
-        costBasis: summary.totalInvested,
-      },
-      create: {
-        date: todayMidnight,
-        totalValue: drift.totalPortfolioValue,
-        investedValue: drift.investedValue,
-        cashBalance: drift.cashBalance,
-        costBasis: summary.totalInvested,
-      },
-    });
-
+    await capturePortfolioSnapshot();
     revalidatePath('/');
     return { success: true };
   } catch (error: any) {
     console.error("Manual snapshot failed:", error);
     return { success: false, error: error.message || "Failed to capture snapshot" };
   }
+}
+
+/**
+ * Internal version of getRebalancingDrift that skips Clerk auth.
+ * Used by system processes (webhooks) that have their own security.
+ */
+export async function getRebalancingDriftInternal(): Promise<RebalancingSummary> {
+  // 1. Fetch assets with their holdings data
+  const assets = await prisma.asset.findMany({
+    include: {
+      transactions: true,
+      prices: {
+        orderBy: { date: 'desc' },
+        take: 1
+      }
+    }
+  });
+
+  // 2. Fetch unallocated cash balance
+  // We need an internal version of getCashBalance too if it checks auth
+  const { getCashBalanceInternal } = await import("@/features/cash/actions");
+  const cashBalance = await getCashBalanceInternal();
+
+  // 3. Process asset holdings and market values
+  let totalInvestedValue = 0;
+  const assetCalculations = assets.map((asset: any) => {
+    const quantity = asset.transactions.reduce((acc: number, tx: any) => {
+      if (tx.type === 'BUY') return acc + tx.quantity;
+      if (tx.type === 'SELL') return acc - tx.quantity;
+      return acc;
+    }, 0);
+
+    const price = asset.prices[0]?.closePrice || 0;
+    const marketValue = quantity * price;
+
+    totalInvestedValue += marketValue;
+
+    return {
+      assetId: asset.id,
+      symbol: asset.symbol,
+      name: asset.name,
+      currentQuantity: quantity,
+      currentPrice: price,
+      marketValue,
+      targetWeight: asset.targetWeight || 0,
+    };
+  });
+
+  const totalPortfolioValue = totalInvestedValue + cashBalance;
+
+  // 4. Calculate drifts and actions
+  const drifts: AssetDrift[] = assetCalculations.map((calc: any) => {
+    const currentWeight = totalPortfolioValue > 0 
+      ? (calc.marketValue / totalPortfolioValue) * 100 
+      : 0;
+    
+    const drift = currentWeight - calc.targetWeight;
+    const targetValue = totalPortfolioValue * (calc.targetWeight / 100);
+    const actionAmount = targetValue - calc.marketValue;
+
+    return {
+      ...calc,
+      currentWeight,
+      drift,
+      targetValue,
+      actionAmount
+    };
+  });
+
+  // 5. Sort by absolute drift descending (most skewed first)
+  drifts.sort((a: any, b: any) => Math.abs(b.drift) - Math.abs(a.drift));
+
+  return {
+    totalPortfolioValue,
+    cashBalance,
+    investedValue: totalInvestedValue,
+    drifts
+  };
 }
