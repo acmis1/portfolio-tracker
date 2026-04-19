@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     });
 
     // 3. Map Internal -> External Schema
-    const formattedAssets = assets.map((a: { symbol: string; currency: string }) => ({
+    const formattedAssets = assets.map((a) => ({
       ticker: a.symbol,
       currency: a.currency
     }));
