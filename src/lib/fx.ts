@@ -11,28 +11,36 @@ const FALLBACK_USD_VND_RATE = 25400;
  */
 export async function getLiveExchangeRate(): Promise<number> {
   try {
-    // Open Exchange Rates API (no key required for latest v6)
-    const response = await fetch('https://open.er-api.com/v6/latest/USD', {
+    const appId = process.env.OXR_APP_ID;
+    if (!appId) {
+      throw new Error('OXR_APP_ID is not defined in environment variables');
+    }
+
+    // Open Exchange Rates API - Official Latest Endpoint
+    const url = `https://openexchangerates.org/api/latest.json?app_id=${appId}&symbols=VND`;
+    
+    const response = await fetch(url, {
       next: { 
         revalidate: 0, // Force fresh fetch for audit
-        tags: ['fx-rate-v2'] 
+        tags: ['usd-vnd-rate-v3'] 
       },
     });
 
     if (!response.ok) {
-      throw new Error(`FX API responded with status: ${response.status}`);
+      throw new Error(`OXR API responded with status: ${response.status}`);
     }
 
     const data = await response.json();
     const rate = data.rates?.VND;
 
     if (typeof rate !== 'number' || rate <= 0) {
-      throw new Error('FX API returned invalid or missing VND rate');
+      throw new Error('OXR API returned invalid or missing VND rate');
     }
 
     // Return rounded rate for cleaner accounting and presentation
+    // Note: We keep the full number (e.g. 26322) for correct currency conversions
     const liveRate = Math.round(rate);
-    console.log("✅ FX STATUS: Live USD/VND successfully fetched:", liveRate);
+    console.log("✅ FX STATUS: Live USD/VND fetched:", liveRate);
     return liveRate;
   } catch (error: any) {
     console.error("❌ FX STATUS: FX fetch failed. Triggering fallback. Error details:", error);
