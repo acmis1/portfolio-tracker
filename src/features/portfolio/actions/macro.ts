@@ -28,11 +28,13 @@ export const getVietnamMacro = unstable_cache(
         }
       });
 
+
       if (yahooRes.ok) {
         const data = await yahooRes.json();
         const result = data.chart?.result?.[0];
         const timestamps = result?.timestamp;
         const closes = result?.indicators?.quote?.[0]?.close;
+
 
         if (timestamps && closes && Array.isArray(timestamps) && Array.isArray(closes)) {
           // Yahoo sometimes returns nulls for specific months. Find first and last valid entries.
@@ -68,8 +70,9 @@ export const getVietnamMacro = unstable_cache(
           }
         }
       }
-    } catch (e) {
-      console.error("Yahoo Finance Error (CAGR):", e);
+    } catch (error) {
+      console.error("❌ MACRO STATUS: Fetch failed. Triggering fallback. Error details:", error);
+      console.error("Yahoo Finance Error (CAGR):", error);
     }
 
     // 2. Risk-Free Rate (HNX 10Y Government Bond Yield)
@@ -110,12 +113,13 @@ export const getVietnamMacro = unstable_cache(
       console.error("HNX Error:", e);
     }
 
+    console.log("✅ MACRO STATUS: Live data successfully fetched and calculated. CAGR:", marketBaseline);
     return { 
       riskFreeRate: Number(riskFreeRate.toFixed(2)), 
       marketBaseline: Number(marketBaseline.toFixed(2)) 
     };
   },
-  ['vietnam-macro-v9'],
+  ['vietnam-macro-v12'],
   { 
     revalidate: 86400, // 24 hours
     tags: ['macro'] 
