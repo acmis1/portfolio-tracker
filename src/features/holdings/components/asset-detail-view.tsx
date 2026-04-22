@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 interface AssetDetailViewProps {
   assetData: any;
   fxRate: number;
+  macro: { riskFreeRate: number; marketBaseline: number };
 }
 
-export function AssetDetailView({ assetData, fxRate }: AssetDetailViewProps) {
+export function AssetDetailView({ assetData, fxRate, macro }: AssetDetailViewProps) {
   const isTermDeposit = assetData.assetClass === 'TERM_DEPOSIT';
   const isRealEstate = assetData.assetClass === 'REAL_ESTATE';
   const isLiquid = !isTermDeposit && !isRealEstate;
@@ -23,7 +24,11 @@ export function AssetDetailView({ assetData, fxRate }: AssetDetailViewProps) {
       {isLiquid && (
         <>
           <AssetPriceChart prices={assetData.prices} />
-          <BenchmarkCards assetXirr={assetData.holding.xirr} />
+          <BenchmarkCards 
+            assetXirr={assetData.holding.xirr} 
+            riskFreeRate={macro.riskFreeRate}
+            marketBaseline={macro.marketBaseline}
+          />
         </>
       )}
 

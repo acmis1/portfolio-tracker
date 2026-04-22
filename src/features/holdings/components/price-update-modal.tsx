@@ -28,17 +28,29 @@ const priceUpdateSchema = z.object({
 
 type PriceUpdateFormValues = z.infer<typeof priceUpdateSchema>
 
-export function PriceUpdateModal() {
+interface PriceUpdateModalProps {
+  initialSymbol?: string;
+  initialCurrency?: string;
+  trigger?: React.ReactNode;
+  title?: string;
+}
+
+export function PriceUpdateModal({ 
+  initialSymbol = "", 
+  initialCurrency = "VND",
+  trigger,
+  title = "Manual Price Update"
+}: PriceUpdateModalProps) {
   const [open, setOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const form = useForm<PriceUpdateFormValues>({
     resolver: zodResolver(priceUpdateSchema),
     defaultValues: {
-      symbol: "",
+      symbol: initialSymbol,
       date: new Date().toISOString().split('T')[0],
       price: 0,
-      currency: "VND",
+      currency: initialCurrency as any,
     },
   })
 
@@ -65,13 +77,15 @@ export function PriceUpdateModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="glass-premium border-white/10 text-slate-400 hover:text-white">
-          <TrendingUp className="mr-2 h-4 w-4" /> Update Price
-        </Button>
+        {trigger || (
+          <Button variant="outline" size="sm" className="glass-premium border-white/10 text-slate-400 hover:text-white">
+            <TrendingUp className="mr-2 h-4 w-4" /> Update Price
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] glass-premium border-white/10">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-white">Manual Price Update</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-white">{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
           <div className="space-y-2">

@@ -2,6 +2,7 @@ import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { getAssetDetails } from "@/features/holdings/actions"
 import { getLiveExchangeRate } from "@/lib/fx"
+import { getVietnamMacro } from "@/features/portfolio/actions/macro"
 import { AssetDetailView } from "@/features/holdings/components/asset-detail-view"
 
 interface AssetPageProps {
@@ -10,9 +11,10 @@ interface AssetPageProps {
 
 export default async function AssetPage({ params }: AssetPageProps) {
   const { id } = await params;
-  const [assetData, fxRate] = await Promise.all([
+  const [assetData, fxRate, macro] = await Promise.all([
     getAssetDetails(id),
-    getLiveExchangeRate()
+    getLiveExchangeRate(),
+    getVietnamMacro()
   ]);
 
   if (!assetData) {
@@ -29,7 +31,7 @@ export default async function AssetPage({ params }: AssetPageProps) {
 
       <div className="relative z-10 mx-auto max-w-7xl">
         <Suspense fallback={<div className="h-screen w-full animate-pulse rounded-2xl glass-premium" />}>
-          <AssetDetailView assetData={assetData} fxRate={fxRate} />
+          <AssetDetailView assetData={assetData} fxRate={fxRate} macro={macro} />
         </Suspense>
       </div>
     </main>

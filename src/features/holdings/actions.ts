@@ -64,6 +64,16 @@ export async function getAssetDetails(id: string) {
 
   // Calculate Asset-Specific XIRR
   let assetXirr = null;
+  let isShortTerm = false;
+
+  const earliestTx = chronTransactions[0];
+  if (earliestTx) {
+    const daysHeld = (new Date().getTime() - earliestTx.date.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysHeld < 30) {
+      isShortTerm = true;
+    }
+  }
+
   const cashflows: { amount: string; date: string }[] = asset.transactions.map((tx: any) => ({
     amount: tx.grossAmount.toString(), // BUY is negative, SELL is positive
     date: tx.date.toISOString().split('T')[0]
@@ -80,7 +90,7 @@ export async function getAssetDetails(id: string) {
   const hasNegative = cashflows.some(cf => parseFloat(cf.amount) < 0);
   const hasPositive = cashflows.some(cf => parseFloat(cf.amount) > 0);
 
-  if (hasNegative && hasPositive && cashflows.length >= 2) {
+  if (!isShortTerm && hasNegative && hasPositive && cashflows.length >= 2) {
     try {
       const result = xirr({ cashflows });
       if (result.ok) {
@@ -102,6 +112,7 @@ export async function getAssetDetails(id: string) {
       unrealizedPnL,
       unrealizedPnLPctg,
       xirr: assetXirr,
+      isShortTerm,
     },
     termDeposit: asset.termDeposits[0] || null
   };

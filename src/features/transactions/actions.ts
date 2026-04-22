@@ -22,7 +22,12 @@ export async function addTransaction(formData: TransactionFormValues) {
   const dateObj = new Date(date)
   
   // Logic for non-ticker assets: derive symbol from name if not provided
-  const effectiveSymbol = symbol || name.toUpperCase().replace(/\s+/g, '_').trim()
+  let effectiveSymbol = symbol || name.toUpperCase().replace(/\s+/g, '_').trim()
+
+  // FORCE unique asset records for Term Deposits
+  if (assetClass === 'TERM_DEPOSIT') {
+    effectiveSymbol = `TD_${Date.now()}`
+  }
 
   const { getLiveExchangeRate } = await import("@/lib/fx")
   const USD_VND_RATE = await getLiveExchangeRate()

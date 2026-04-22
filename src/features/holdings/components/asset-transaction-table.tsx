@@ -1,6 +1,9 @@
 import { formatCurrency } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
 import { EditTransactionModal } from "@/features/transactions/components/edit-transaction-modal"
+import { TransactionModal } from "@/features/transactions/components/transaction-modal"
+import { PlusCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface AssetTransactionTableProps {
   transactions: any[]
@@ -16,7 +19,21 @@ export function AssetTransactionTable({ transactions, symbol, assetName, assetCl
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Transaction History</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Transaction History</h2>
+        <TransactionModal 
+          initialSymbol={symbol}
+          initialName={assetName}
+          initialAssetClass={assetClass}
+          initialCurrency={assetCurrency}
+          fxRate={fxRate}
+          trigger={
+            <Button variant="outline" size="sm" className="glass-premium border-white/10 text-slate-400 hover:text-white">
+              <PlusCircle className="mr-2 h-4 w-4" /> Log Transaction
+            </Button>
+          }
+        />
+      </div>
       <div className="glass-premium overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -28,15 +45,22 @@ export function AssetTransactionTable({ transactions, symbol, assetName, assetCl
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Price ({assetCurrency})</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Fees ({assetCurrency})</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Total (VND)</th>
-                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Realized P&L</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {transactions.map((tx: any) => {
                 // Late-stage presentation conversion using dynamic fxRate
+                // Derived Fees: Difference between cash impact and asset value
+                const theoreticalValueVnd = Math.abs(tx.quantity * tx.pricePerUnit);
+                const actualValueVnd = Math.abs(tx.grossAmount);
+                const derivedFeeVnd = tx.type === 'BUY' 
+                  ? actualValueVnd - theoreticalValueVnd 
+                  : theoreticalValueVnd - actualValueVnd;
+                const displayFeesVnd = Math.max(0, derivedFeeVnd);
+                
                 const displayPrice = isUSD ? tx.pricePerUnit / fxRate : tx.pricePerUnit;
-                const displayFees = isUSD ? tx.fees / fxRate : tx.fees;
+                const displayFees = isUSD ? displayFeesVnd / fxRate : displayFeesVnd;
                 
                 // Total (Gross Amount) is the wealth/cash impact, strictly VND
                 const displayTotal = tx.grossAmount;
@@ -68,12 +92,6 @@ export function AssetTransactionTable({ transactions, symbol, assetName, assetCl
                     </td>
                     <td className="px-6 py-4 text-right font-bold text-white tabular-nums">
                       {formatCurrency(displayTotal, 'VND')}
-                    </td>
-                    <td className={cn(
-                      "px-6 py-4 text-right font-bold tabular-nums",
-                      realizedPnL > 0 ? "text-emerald-400" : realizedPnL < 0 ? "text-red-400" : "text-slate-500"
-                    )}>
-                      {realizedPnL != null ? formatCurrency(realizedPnL, 'VND') : '-'}
                     </td>
                     <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
                        <EditTransactionModal 

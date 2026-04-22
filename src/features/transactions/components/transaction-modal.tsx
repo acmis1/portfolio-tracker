@@ -23,11 +23,22 @@ import { formatCurrency } from "@/lib/formatters"
 interface TransactionModalProps {
   trigger?: React.ReactElement;
   fxRate?: number; // Optional live rate for conversion preview
+  initialSymbol?: string;
+  initialAssetClass?: string;
+  initialName?: string;
+  initialCurrency?: string;
 }
 
 const TICKER_CLASSES = ['STOCK', 'CRYPTO', 'MUTUAL_FUND']
 
-export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalProps) {
+export function TransactionModal({ 
+  trigger, 
+  fxRate = 25400,
+  initialSymbol = "",
+  initialAssetClass = "STOCK",
+  initialName = "",
+  initialCurrency = "VND"
+}: TransactionModalProps) {
   const [open, setOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [assets, setAssets] = React.useState<any[]>([])
@@ -35,14 +46,14 @@ export function TransactionModal({ trigger, fxRate = 25400 }: TransactionModalPr
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      symbol: "",
-      name: "",
-      assetClass: "STOCK",
+      symbol: initialSymbol,
+      name: initialName,
+      assetClass: initialAssetClass as any,
       type: "BUY",
       quantity: 1,
       price: 0,
       fees: 0,
-      currency: "VND",
+      currency: initialCurrency as any,
       date: new Date().toISOString().split('T')[0],
     },
   })
