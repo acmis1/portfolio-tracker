@@ -5,20 +5,20 @@ import * as cheerio from 'cheerio';
 
 /**
  * Fetches dynamic Vietnamese macro data with a 24-hour cache.
- * Includes VN-Index 10Y CAGR and HNX 10Y Government Bond Yield.
+ * Includes VN-Index CAGR (dynamically calculated based on available history) 
+ * and HNX 10Y Government Bond Yield.
  */
 export const getVietnamMacro = unstable_cache(
   async () => {
     const today = Math.floor(Date.now() / 1000);
-    // 10 years ago + 15 day buffer to guarantee we hit a valid trading day
+    // Request 10 years of history (buffer included)
     const fromDate = today - (10 * 365 * 24 * 60 * 60) - (15 * 24 * 60 * 60);
 
     let marketBaseline = 11.5; // Institutional fallback (10Y VN-Index CAGR)
     let riskFreeRate = 3.5; // Institutional fallback (VN 10Y Gov Bond Yield)
 
-    // 1. Market Baseline (VN-Index 10Y CAGR)
+    // 1. Market Baseline (Dynamic VN-Index CAGR)
     try {
-      // Use 'index' endpoint and '1D' resolution for historical accuracy over 10 years
       const vnIndexUrl = `https://api.dnse.com.vn/chart-api/v2/ohlcs/index?symbol=VNINDEX&resolution=1D&from=${fromDate}&to=${today}`;
       const vnRes = await fetch(vnIndexUrl, {
         next: { revalidate: 86400 },
@@ -31,24 +31,31 @@ export const getVietnamMacro = unstable_cache(
 
       if (vnRes.ok) {
         const data = await vnRes.json();
-        if (data?.c && Array.isArray(data.c) && data.c.length > 1) {
+        // Check if we have at least 'c' (closes) and 't' (timestamps)
+        if (data?.c && data?.t && Array.isArray(data.c) && data.c.length > 1) {
           const latestClose = data.c[data.c.length - 1];
           const oldestClose = data.c[0];
+          const latestTime = data.t[data.t.length - 1];
+          const oldestTime = data.t[0];
           
-          // Apply CAGR formula: (Ending / Beginning)^(1/Years) - 1
-          const rawCagr = Math.pow(latestClose / oldestClose, 1 / 10) - 1;
-          marketBaseline = rawCagr * 100;
+          // Dynamically calculate years elapsed based on the actual range returned by API
+          // This resolves the error where API returns less than 10 years of data
+          const elapsedYears = (latestTime - oldestTime) / (365.25 * 24 * 60 * 60);
+          
+          // Ensure we have a valid positive time range
+          if (elapsedYears > 0) {
+            const rawCagr = Math.pow(latestClose / oldestClose, 1 / elapsedYears) - 1;
+            marketBaseline = rawCagr * 100;
+          }
         }
       }
     } catch (e) {
-      console.error("DNSE Error (10Y CAGR):", e);
+      console.error("DNSE Error (CAGR):", e);
     }
 
     // 2. Risk-Free Rate (HNX 10Y Government Bond Yield)
     try {
-      // Bypass SSL verification for HNX (known issue with their certificate chain)
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
       const hnxUrl = 'https://www.hnx.vn/vi-vn/m-trai-phieu/duong-cong-loi-suat.html';
       const hnxRes = await fetch(hnxUrl, {
         next: { revalidate: 86400 },
@@ -63,7 +70,6 @@ export const getVietnamMacro = unstable_cache(
       if (hnxRes.ok) {
         const html = await hnxRes.text();
         const $ = cheerio.load(html);
-        
         $('tr').each((_, element) => {
           const cells = $(element).find('td');
           if (cells.length >= 2) {
@@ -90,7 +96,7 @@ export const getVietnamMacro = unstable_cache(
       marketBaseline: Number(marketBaseline.toFixed(2)) 
     };
   },
-  ['vietnam-macro-v7'],
+  ['vietnam-macro-v8'],
   { 
     revalidate: 86400, // 24 hours
     tags: ['macro'] 
