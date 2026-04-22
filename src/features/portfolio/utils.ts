@@ -74,7 +74,21 @@ export async function getPortfolioSummaryInternal(userId: string) {
         const accruedInterest = (td.principal * (td.interestRate / 100) * daysElapsed) / 365;
         assetValue = td.principal + accruedInterest;
       } else {
-        const currentPrice = asset.prices[0]?.closePrice || 0;
+        // Calculate avgCost as fallback for illiquid assets or missing prices
+        let avgCost = 0;
+        let runningQty = 0;
+        for (const tx of asset.transactions) {
+          if (tx.type === 'BUY') {
+            const newQty = runningQty + tx.quantity;
+            avgCost = (runningQty * avgCost + tx.quantity * tx.pricePerUnit) / newQty;
+            runningQty = newQty;
+          } else if (tx.type === 'SELL') {
+            runningQty = Math.max(0, runningQty - tx.quantity);
+            if (runningQty === 0) avgCost = 0;
+          }
+        }
+        
+        const currentPrice = asset.prices[0]?.closePrice ?? avgCost;
         assetValue = currentQty * currentPrice;
       }
       
@@ -314,7 +328,8 @@ export async function getPortfolioHistory(days = 365) {
       },
       prices: {
         orderBy: { date: 'asc' }
-      }
+      },
+      termDeposits: true
     }
   });
 
@@ -357,12 +372,44 @@ export async function getPortfolioHistory(days = 365) {
         }, 0);
 
       if (quantityAtDate > 0.000001) {
-        // Find the latest price on or before this date
-        const priceAtDate = asset.prices
-          .filter((p: any) => p.date <= currentDate)
-          .sort((a: any, b: any) => b.date.getTime() - a.date.getTime())[0]?.closePrice || 0;
+        let assetValue = 0;
 
-        dailyTotalValue += quantityAtDate * priceAtDate;
+        if (asset.assetClass === 'TERM_DEPOSIT') {
+          const td = asset.termDeposits.find((t: any) => t.startDate <= currentDate);
+          if (td) {
+            const daysElapsed = Math.max(0, (currentDate.getTime() - td.startDate.getTime()) / (1000 * 60 * 60 * 24));
+            const accruedInterest = (td.principal * (td.interestRate / 100) * daysElapsed) / 365;
+            assetValue = td.principal + accruedInterest;
+          }
+        } else {
+          // Find the latest price on or before this date
+          const priceAtDate = asset.prices
+            .filter((p: any) => p.date <= currentDate)
+            .sort((a: any, b: any) => b.date.getTime() - a.date.getTime())[0]?.closePrice;
+
+          if (priceAtDate !== undefined && priceAtDate !== null) {
+            assetValue = quantityAtDate * priceAtDate;
+          } else {
+            // Fallback to avg cost on that date
+            let avgCostAtDate = 0;
+            let runningQtyAtDate = 0;
+            for (const tx of asset.transactions) {
+              if (tx.date <= currentDate) {
+                if (tx.type === 'BUY') {
+                  const newQty = runningQtyAtDate + tx.quantity;
+                  avgCostAtDate = (runningQtyAtDate * avgCostAtDate + tx.quantity * tx.pricePerUnit) / newQty;
+                  runningQtyAtDate = newQty;
+                } else if (tx.type === 'SELL') {
+                  runningQtyAtDate = Math.max(0, runningQtyAtDate - tx.quantity);
+                  if (runningQtyAtDate === 0) avgCostAtDate = 0;
+                }
+              }
+            }
+            assetValue = quantityAtDate * avgCostAtDate;
+          }
+        }
+
+        dailyTotalValue += assetValue;
       }
     }
 

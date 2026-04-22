@@ -47,10 +47,10 @@ export function PerformanceAttribution({ data }: PerformanceAttributionProps) {
 
             <CardContent>
               <div className={cn(
-                "mb-4 text-2xl font-black tracking-tight tabular-nums",
-                item.roi >= 0 ? "text-white glow-emerald" : "text-rose-400"
+                "mb-4 text-2xl font-bold tracking-tight tabular-nums",
+                item.roi > 0 ? "text-emerald-500" : item.roi < 0 ? "text-rose-500" : "text-white"
               )}>
-                {item.roi > 0 ? "+" : ""}{formatPercentage(item.roi)}
+                {formatPercentage(item.roi)}
               </div>
               
               <div className="space-y-3">
