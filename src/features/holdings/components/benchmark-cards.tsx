@@ -29,7 +29,7 @@ export function BenchmarkCards({ assetXirr, riskFreeRate, marketBaseline }: Benc
 
       <Card className="glass-premium border-white/5">
         <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">VN-Index 1Y Target</CardTitle>
+          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">VN-Index 10Y CAGR</CardTitle>
           <Landmark className="h-3 w-3 text-slate-600" />
         </CardHeader>
         <CardContent>

@@ -5,19 +5,20 @@ import * as cheerio from 'cheerio';
 
 /**
  * Fetches dynamic Vietnamese macro data with a 24-hour cache.
- * Includes VN-Index 1Y Return and HNX 10Y Government Bond Yield.
+ * Includes VN-Index 10Y CAGR and HNX 10Y Government Bond Yield.
  */
 export const getVietnamMacro = unstable_cache(
   async () => {
     const today = Math.floor(Date.now() / 1000);
-    const fromDate = today - (380 * 24 * 60 * 60); 
+    // 10 years ago + 15 day buffer to guarantee we hit a valid trading day
+    const fromDate = today - (10 * 365 * 24 * 60 * 60) - (15 * 24 * 60 * 60);
 
-    let marketBaseline = 12.0; 
-    let riskFreeRate = 3.5; 
+    let marketBaseline = 11.5; // Institutional fallback (10Y VN-Index CAGR)
+    let riskFreeRate = 3.5; // Institutional fallback (VN 10Y Gov Bond Yield)
 
-    // 1. Market Baseline (VN-Index 1Y Return)
+    // 1. Market Baseline (VN-Index 10Y CAGR)
     try {
-      // FIXED: Use 'index' endpoint and '1D' resolution
+      // Use 'index' endpoint and '1D' resolution for historical accuracy over 10 years
       const vnIndexUrl = `https://api.dnse.com.vn/chart-api/v2/ohlcs/index?symbol=VNINDEX&resolution=1D&from=${fromDate}&to=${today}`;
       const vnRes = await fetch(vnIndexUrl, {
         next: { revalidate: 86400 },
@@ -33,16 +34,19 @@ export const getVietnamMacro = unstable_cache(
         if (data?.c && Array.isArray(data.c) && data.c.length > 1) {
           const latestClose = data.c[data.c.length - 1];
           const oldestClose = data.c[0];
-          marketBaseline = ((latestClose - oldestClose) / oldestClose) * 100;
+          
+          // Apply CAGR formula: (Ending / Beginning)^(1/Years) - 1
+          const rawCagr = Math.pow(latestClose / oldestClose, 1 / 10) - 1;
+          marketBaseline = rawCagr * 100;
         }
       }
     } catch (e) {
-      console.error("DNSE Error:", e);
+      console.error("DNSE Error (10Y CAGR):", e);
     }
 
     // 2. Risk-Free Rate (HNX 10Y Government Bond Yield)
     try {
-      // FIXED: Bypass SSL verification for HNX (known issue with their certificate chain)
+      // Bypass SSL verification for HNX (known issue with their certificate chain)
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
       const hnxUrl = 'https://www.hnx.vn/vi-vn/m-trai-phieu/duong-cong-loi-suat.html';
@@ -65,11 +69,9 @@ export const getVietnamMacro = unstable_cache(
           if (cells.length >= 2) {
             const term = $(cells[0]).text().trim();
             if (term === '10 năm') {
-              // Extract the Spot Rate or Par Yield (usually columns 1-3)
               for (let i = 1; i < cells.length; i++) {
                 const text = $(cells[i]).text().trim().replace(',', '.');
                 const val = parseFloat(text);
-                // Valid yield is typically between 0.5% and 15%
                 if (!isNaN(val) && val > 0.5 && val < 15) {
                   riskFreeRate = val;
                   break; 
@@ -81,9 +83,6 @@ export const getVietnamMacro = unstable_cache(
       }
     } catch (e) {
       console.error("HNX Error:", e);
-    } finally {
-      // Restore TLS safety if possible, though process.env is global
-      // Note: In a shared environment, this affects other fetches, but HNX requires it.
     }
 
     return { 
@@ -91,7 +90,7 @@ export const getVietnamMacro = unstable_cache(
       marketBaseline: Number(marketBaseline.toFixed(2)) 
     };
   },
-  ['vietnam-macro-v5'],
+  ['vietnam-macro-v7'],
   { 
     revalidate: 86400, // 24 hours
     tags: ['macro'] 
