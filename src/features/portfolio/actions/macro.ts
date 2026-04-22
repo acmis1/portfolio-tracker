@@ -12,12 +12,15 @@ export const getVietnamMacro = unstable_cache(
     const period2 = Math.floor(Date.now() / 1000);
     const period1 = period2 - (10 * 365 * 24 * 60 * 60) - (15 * 24 * 60 * 60); // 10 years + 15 day buffer
 
-    let marketBaseline = 11.5; // Institutional fallback (10Y VN-Index CAGR)
+    let marketBaseline = 12.17; // Mathematical 10Y VN-Index CAGR fallback
     let riskFreeRate = 3.5; // Institutional fallback (VN 10Y Gov Bond Yield)
 
-    // 1. Market Baseline (VN-Index 10Y CAGR via Yahoo Finance)
+    // 1. Market Baseline (VN-Index 10Y CAGR via Yahoo Finance V8 API)
     try {
-      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/^VNINDEX.VN?period1=${period1}&period2=${period2}&interval=1mo`;
+      // Use Yahoo Finance V8 Chart API for ^VNINDEX.VN
+      const ticker = encodeURIComponent('^VNINDEX.VN');
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?period1=${period1}&period2=${period2}&interval=1mo`;
+      
       const yahooRes = await fetch(yahooUrl, {
         next: { revalidate: 86400 },
         headers: {
@@ -32,7 +35,7 @@ export const getVietnamMacro = unstable_cache(
         const closes = result?.indicators?.quote?.[0]?.close;
 
         if (timestamps && closes && Array.isArray(timestamps) && Array.isArray(closes)) {
-          // Yahoo sometimes returns nulls for certain months. Find first and last valid entries.
+          // Yahoo sometimes returns nulls for specific months. Find first and last valid entries.
           let oldestIdx = -1;
           let latestIdx = -1;
 
@@ -71,7 +74,7 @@ export const getVietnamMacro = unstable_cache(
 
     // 2. Risk-Free Rate (HNX 10Y Government Bond Yield)
     try {
-      // Bypass SSL verification for HNX (known issue with their certificate chain)
+      // Bypass SSL verification for HNX
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
       const hnxUrl = 'https://www.hnx.vn/vi-vn/m-trai-phieu/duong-cong-loi-suat.html';
       const hnxRes = await fetch(hnxUrl, {
@@ -79,7 +82,6 @@ export const getVietnamMacro = unstable_cache(
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
           'Referer': 'https://www.hnx.vn/'
         }
       });
