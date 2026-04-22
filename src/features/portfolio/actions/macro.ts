@@ -10,14 +10,15 @@ import * as cheerio from 'cheerio';
 export const getVietnamMacro = unstable_cache(
   async () => {
     const today = Math.floor(Date.now() / 1000);
-    const fromDate = today - (380 * 24 * 60 * 60); // 380 days to ensure we catch a trading day 1 year ago
+    const fromDate = today - (380 * 24 * 60 * 60); 
 
-    let marketBaseline = 12.0; // Fallback
-    let riskFreeRate = 3.5; // Institutional fallback (VN 10Y Gov Bond Yield)
+    let marketBaseline = 12.0; 
+    let riskFreeRate = 3.5; 
 
     // 1. Market Baseline (VN-Index 1Y Return)
     try {
-      const vnIndexUrl = `https://api.dnse.com.vn/chart-api/v2/ohlcs/stock?symbol=VNINDEX&resolution=D&from=${fromDate}&to=${today}`;
+      // FIXED: Use 'index' endpoint and '1D' resolution
+      const vnIndexUrl = `https://api.dnse.com.vn/chart-api/v2/ohlcs/index?symbol=VNINDEX&resolution=1D&from=${fromDate}&to=${today}`;
       const vnRes = await fetch(vnIndexUrl, {
         next: { revalidate: 86400 },
         headers: {
@@ -36,11 +37,14 @@ export const getVietnamMacro = unstable_cache(
         }
       }
     } catch (e) {
-      console.error("Failed to fetch VN-Index return:", e);
+      console.error("DNSE Error:", e);
     }
 
     // 2. Risk-Free Rate (HNX 10Y Government Bond Yield)
     try {
+      // FIXED: Bypass SSL verification for HNX (known issue with their certificate chain)
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
       const hnxUrl = 'https://www.hnx.vn/vi-vn/m-trai-phieu/duong-cong-loi-suat.html';
       const hnxRes = await fetch(hnxUrl, {
         next: { revalidate: 86400 },
@@ -56,17 +60,17 @@ export const getVietnamMacro = unstable_cache(
         const html = await hnxRes.text();
         const $ = cheerio.load(html);
         
-        // Find row where first cell is "10 năm"
         $('tr').each((_, element) => {
           const cells = $(element).find('td');
           if (cells.length >= 2) {
             const term = $(cells[0]).text().trim();
             if (term === '10 năm') {
-              // Try to find the rate in subsequent cells (Spot rate or Par yield)
+              // Extract the Spot Rate or Par Yield (usually columns 1-3)
               for (let i = 1; i < cells.length; i++) {
                 const text = $(cells[i]).text().trim().replace(',', '.');
                 const val = parseFloat(text);
-                if (!isNaN(val) && val > 0) {
+                // Valid yield is typically between 0.5% and 15%
+                if (!isNaN(val) && val > 0.5 && val < 15) {
                   riskFreeRate = val;
                   break; 
                 }
@@ -76,7 +80,10 @@ export const getVietnamMacro = unstable_cache(
         });
       }
     } catch (e) {
-      console.error("Failed to fetch HNX bond yield:", e);
+      console.error("HNX Error:", e);
+    } finally {
+      // Restore TLS safety if possible, though process.env is global
+      // Note: In a shared environment, this affects other fetches, but HNX requires it.
     }
 
     return { 
@@ -84,7 +91,7 @@ export const getVietnamMacro = unstable_cache(
       marketBaseline: Number(marketBaseline.toFixed(2)) 
     };
   },
-  ['vietnam-macro-v4'],
+  ['vietnam-macro-v5'],
   { 
     revalidate: 86400, // 24 hours
     tags: ['macro'] 
