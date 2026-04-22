@@ -43,10 +43,10 @@ export async function TopHoldings() {
                     href={`/holdings/${holding.id}`}
                     className="font-bold text-white hover:text-emerald-400 transition-colors truncate"
                   >
-                    {holding.symbol}
+                    {holding.symbol.replace(/_/g, ' ')}
                   </Link>
                   <span className="text-[11px] text-slate-500 font-medium truncate max-w-[140px]">
-                    {holding.name}
+                    {holding.name.replace(/_/g, ' ')}
                   </span>
                 </div>
 

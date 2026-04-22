@@ -14,8 +14,8 @@ export async function getLiveExchangeRate(): Promise<number> {
     // Open Exchange Rates API (no key required for latest v6)
     const response = await fetch('https://open.er-api.com/v6/latest/USD', {
       next: { 
-        revalidate: 3600, // 1 hour revalidation
-        tags: ['fx-rate'] 
+        revalidate: 0, // Force fresh fetch for audit
+        tags: ['fx-rate-v2'] 
       },
     });
 
@@ -31,8 +31,11 @@ export async function getLiveExchangeRate(): Promise<number> {
     }
 
     // Return rounded rate for cleaner accounting and presentation
-    return Math.round(rate);
+    const liveRate = Math.round(rate);
+    console.log("✅ FX STATUS: Live USD/VND successfully fetched:", liveRate);
+    return liveRate;
   } catch (error: any) {
+    console.error("❌ FX STATUS: FX fetch failed. Triggering fallback. Error details:", error);
     console.error('CRITICAL: Dynamic FX fetch failed. Falling back to static rate.', error);
     return FALLBACK_USD_VND_RATE;
   }
