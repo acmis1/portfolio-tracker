@@ -44,23 +44,34 @@ export function PerformanceAttribution({ summary }: PerformanceAttributionProps)
         </CardContent>
       </Card>
 
-      {/* 2. Net Cash Flow */}
+      {/* 2. Capital Flows */}
       <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/5">
         <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-indigo-500/10 blur-3xl" />
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
-              Net Cash Flow
+              Capital Flows
             </CardDescription>
             <Landmark className="h-4 w-4 text-indigo-500/50" />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="mb-4 text-2xl font-black tracking-tight text-white tabular-nums">
+        <CardContent className="space-y-3">
+          <div className="text-2xl font-black tracking-tight text-white tabular-nums">
             {formatVND(netCashFlow)}
           </div>
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-            Deposits - Withdrawals
+          <div className="flex flex-col gap-1 border-t border-white/5 pt-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] text-slate-500 font-black uppercase tracking-tight">Contributions</span>
+              <span className="text-xs font-black text-emerald-400">
+                + {formatVND(totalContributions)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] text-slate-500 font-black uppercase tracking-tight">Withdrawals</span>
+              <span className="text-xs font-black text-slate-300">
+                - {formatVND(Math.abs(totalWithdrawals))}
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -81,7 +92,7 @@ export function PerformanceAttribution({ summary }: PerformanceAttributionProps)
             "mb-4 text-2xl font-black tracking-tight tabular-nums",
             grossReturns >= 0 ? "text-emerald-400" : "text-rose-400"
           )}>
-            {grossReturns > 0 ? '+' : ''}{formatPercentage(grossReturns)}
+            {formatPercentage(grossReturns)}
           </div>
           <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
             Return on Investment (ROI)
