@@ -82,7 +82,10 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
   const ranges: TimeRange[] = ['7D', '1M', '3M', 'YTD', 'ALL']
 
   return (
-    <div className="h-[350px] w-full rounded-2xl glass-premium p-6 glow-card">
+    <div className={cn(
+      "w-full rounded-2xl glass-premium p-6 glow-card transition-all duration-500",
+      !hasData ? "h-[180px]" : "h-[350px]"
+    )}>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div>
@@ -110,29 +113,38 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
           </button>
         </div>
         
-        <div className="flex items-center gap-1 rounded-lg bg-slate-900/50 p-1 border border-white/5">
-          {ranges.map((r: any) => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              className={cn(
-                "rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition-all",
-                range === r
-                  ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
-                  : "text-slate-500 hover:text-slate-300"
-              )}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
+        {hasData && (
+          <div className="flex items-center gap-1 rounded-lg bg-slate-900/50 p-1 border border-white/5">
+            {ranges.map((r: any) => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                className={cn(
+                  "rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition-all",
+                  range === r
+                    ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
+                    : "text-slate-500 hover:text-slate-300"
+                )}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {!hasData ? (
-        <div className="flex flex-col items-center justify-center h-full space-y-4 opacity-50">
-          <TrendingUp className="w-12 h-12 text-slate-700" />
-          <p className="text-slate-400 font-medium">Accumulating historical data...</p>
-          <p className="text-xs text-slate-500">The chart will appear once at least 2 daily snapshots are captured.</p>
+        <div className="flex items-center justify-center h-[calc(100%-80px)] gap-6 px-4">
+          <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-6 h-6 text-emerald-500/50" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-slate-200 font-bold text-sm">Accumulating performance history</p>
+            <p className="text-xs text-slate-500 leading-relaxed max-w-sm">
+              We need at least two daily snapshots to calculate your growth curve. 
+              Click the <Camera className="inline h-3 w-3" /> icon above to capture your first snapshot today.
+            </p>
+          </div>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height="80%">
