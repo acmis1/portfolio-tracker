@@ -179,18 +179,26 @@ async function main() {
       let price: number | null = null;
       
       switch (asset.assetClass) {
-        case "STOCK":
+        case "INDIVIDUAL_STOCK":
+        case "ETF":
+        case "STOCK": // Legacy support
           price = await fetchStockPrice(asset.symbol);
           break;
         case "CRYPTO":
           price = await fetchCryptoPrice(asset.symbol, usdToVndRate);
           break;
-        case "MUTUAL_FUND":
+        case "STOCK_FUND":
+        case "BOND_FUND":
+        case "MUTUAL_FUND": // Legacy support
           price = await fetchMutualFundPrice(asset.symbol);
           break;
         case "GOLD":
           price = await fetchGoldPrice();
           break;
+        case "REAL_ESTATE":
+        case "TERM_DEPOSIT":
+          // Gracefully skip asset classes without live feeds
+          continue;
         default:
           console.log(`Skipping asset ${asset.symbol} (unsupported class: ${asset.assetClass})`);
           continue;
