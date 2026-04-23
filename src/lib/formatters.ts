@@ -40,18 +40,35 @@ export const formatAssetClass = (slug: string): string => {
   if (!slug) return '';
   
   const mapping: Record<string, string> = {
-    'MUTUAL_FUND': 'Mutual Fund',
-    'REAL_ESTATE': 'Real Estate',
-    'STOCK': 'Stock',
+    'INDIVIDUAL_STOCK': 'Individual Stock',
+    'ETF': 'ETF',
+    'STOCK_FUND': 'Stock Fund',
+    'BOND_FUND': 'Bond Fund',
     'CRYPTO': 'Crypto',
-    'GOLD': 'Gold',
-    'TERM_DEPOSIT': 'Term Deposit'
+    'REAL_ESTATE': 'Real Estate',
+    'TERM_DEPOSIT': 'Term Deposit',
+    'GOLD': 'Gold'
   };
 
   if (mapping[slug]) return mapping[slug];
-
   return slug
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
+};
+
+export const MACRO_MAPPING: Record<string, string> = {
+  'INDIVIDUAL_STOCK': 'Equities',
+  'ETF': 'Equities (Funds)',
+  'STOCK_FUND': 'Equities (Funds)',
+  'BOND_FUND': 'Fixed Income',
+  'CASH': 'Cash & Equivalents',
+  'TERM_DEPOSIT': 'Cash & Equivalents',
+  'CRYPTO': 'Cryptocurrency',
+  'REAL_ESTATE': 'Real Estate',
+  'GOLD': 'Commodities',
+};
+
+export const formatMacroCategory = (slug: string): string => {
+  return MACRO_MAPPING[slug] || formatAssetClass(slug);
 };

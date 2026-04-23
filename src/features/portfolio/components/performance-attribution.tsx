@@ -1,91 +1,96 @@
-import { Building2, Layers, Bitcoin } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, TrendingUp, Wallet, Landmark, Activity, PiggyBank } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card'
-import { formatCurrency, formatPercentage } from '@/lib/formatters'
+import { formatPercentage } from '@/lib/formatters'
 import { formatVND } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
+import type { PortfolioSummary } from '../utils'
 
 interface PerformanceAttributionProps {
-  data: {
-    name: string;
-    marketValue: number;
-    netInvested: number;
-    roi: number;
-  }[];
-  fxRate?: number;
+  summary: PortfolioSummary;
 }
 
-const icons: Record<string, any> = {
-  'Equities': Building2,
-  'Gold': Layers,
-  'Crypto': Bitcoin
-}
+export function PerformanceAttribution({ summary }: PerformanceAttributionProps) {
+  const {
+    totalValue,
+    totalInvested,
+    totalContributions,
+    totalWithdrawals,
+    netCashFlow
+  } = summary;
 
-const glows: Record<string, string> = {
-  'Equities': 'bg-emerald-500/10',
-  'Gold': 'bg-amber-500/10',
-  'Crypto': 'bg-blue-500/10'
-}
+  const totalCapitalGain = totalValue - totalInvested;
+  const grossReturns = totalInvested > 0 ? (totalCapitalGain / totalInvested) * 100 : 0;
 
-export function PerformanceAttribution({ data, fxRate }: PerformanceAttributionProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {data.map((item) => {
-        const Icon = icons[item.name] || Building2;
-        const glowClass = glows[item.name] || 'bg-slate-500/10';
-        
-        return (
-          <Card key={item.name} className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/5">
-            {/* Subtle Glow */}
-            <div className={cn("absolute -right-4 -top-4 h-24 w-24 rounded-full blur-3xl", glowClass)} />
-            
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
-                  {item.name} Performance
-                </CardDescription>
-                <div className="flex items-center gap-2">
-                  {item.name === 'Crypto' && fxRate && (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20">
-                      <span className="text-[9px] font-black text-blue-400 uppercase tracking-tighter">USD/VND:</span>
-                      <span className="text-[10px] font-bold text-white tabular-nums">{formatVND(fxRate).replace('₫', '')}</span>
-                    </div>
-                  )}
-                  <Icon className="h-4 w-4 text-slate-500/50" />
-                </div>
-              </div>
-            </CardHeader>
+      {/* 1. Net Invested Capital */}
+      <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/5">
+        <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-500/10 blur-3xl" />
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
+              Net Invested Capital
+            </CardDescription>
+            <PiggyBank className="h-4 w-4 text-blue-500/50" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 text-2xl font-black tracking-tight text-white tabular-nums">
+            {formatVND(totalInvested)}
+          </div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+            Total Capital at Risk
+          </div>
+        </CardContent>
+      </Card>
 
-            <CardContent>
-              <div className={cn(
-                "mb-4 text-2xl font-bold tracking-tight tabular-nums",
-                item.roi > 0 ? "text-emerald-500" : item.roi < 0 ? "text-rose-500" : "text-white"
-              )}>
-                {formatPercentage(item.roi)}
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-bold text-slate-500 uppercase tracking-widest">
-                    Exposure
-                  </span>
-                  <span className="font-bold text-white tabular-nums">
-                    {formatVND(item.marketValue)}
-                  </span>
-                </div>
+      {/* 3. Gross Returns */}
+      <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/5">
+        <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-emerald-500/10 blur-3xl" />
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
+              Gross Returns
+            </CardDescription>
+            <Activity className="h-4 w-4 text-emerald-500/50" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={cn(
+            "mb-4 text-2xl font-black tracking-tight tabular-nums",
+            grossReturns >= 0 ? "text-emerald-400" : "text-rose-400"
+          )}>
+            {grossReturns > 0 ? '+' : ''}{formatPercentage(grossReturns)}
+          </div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+            Return on Investment (ROI)
+          </div>
+        </CardContent>
+      </Card>
 
-                <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[11px]">
-                  <span className="font-bold text-slate-500 uppercase tracking-widest">
-                    Cost Basis
-                  </span>
-                  <span className="font-bold text-slate-400 tabular-nums">
-                    {formatVND(item.netInvested)}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )
-      })}
+      {/* 4. Total Capital Gain */}
+      <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/5">
+        <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-amber-500/10 blur-3xl" />
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
+              Total Capital Gain
+            </CardDescription>
+            <TrendingUp className="h-4 w-4 text-amber-500/50" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={cn(
+            "mb-4 text-2xl font-black tracking-tight tabular-nums",
+            totalCapitalGain >= 0 ? "text-emerald-400" : "text-rose-400"
+          )}>
+            {totalCapitalGain >= 0 ? '+' : ''}{formatVND(totalCapitalGain)}
+          </div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+            Unrealized + Realized Value
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

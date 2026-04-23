@@ -1,9 +1,20 @@
 import { z } from "zod"
 
+export const ASSET_CLASSES = [
+  'INDIVIDUAL_STOCK',
+  'ETF',
+  'STOCK_FUND',
+  'BOND_FUND',
+  'CRYPTO',
+  'REAL_ESTATE',
+  'TERM_DEPOSIT',
+  'GOLD',
+] as const;
+
 export const transactionSchema = z.object({
-  symbol: z.string().toUpperCase().optional(),
+  symbol: z.string().optional(),
   name: z.string().min(1, "Name is required"),
-  assetClass: z.enum(['CRYPTO', 'MUTUAL_FUND', 'STOCK', 'GOLD', 'TERM_DEPOSIT', 'REAL_ESTATE']),
+  assetClass: z.enum(ASSET_CLASSES),
   type: z.enum(['BUY', 'SELL', 'DIVIDEND', 'INTEREST']),
   quantity: z.number().positive("Quantity must be positive"),
   price: z.number().positive("Price must be positive"),
@@ -13,7 +24,7 @@ export const transactionSchema = z.object({
   maturityDate: z.string().optional(),
   interestRate: z.number().optional(),
 }).superRefine((data, ctx) => {
-  const TICKER_CLASSES = ['STOCK', 'CRYPTO', 'MUTUAL_FUND'];
+  const TICKER_CLASSES = ['INDIVIDUAL_STOCK', 'ETF', 'STOCK_FUND', 'BOND_FUND', 'CRYPTO'];
   
   // Requirement for Ticker Assets
   if (TICKER_CLASSES.includes(data.assetClass) && !data.symbol) {

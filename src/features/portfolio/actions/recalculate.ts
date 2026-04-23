@@ -67,7 +67,8 @@ export async function recalculateHistoricalSnapshots(startDate: Date, userId: st
   const [assets, cashTransactions] = await Promise.all([
     prisma.asset.findMany({
       where: { userId },
-      include: {
+      select: {
+        id: true,
         transactions: { orderBy: { date: 'asc' } },
         prices: { orderBy: { date: 'asc' } }
       }

@@ -16,10 +16,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
-import { transactionSchema, type TransactionFormValues } from "@/lib/validations"
+import { transactionSchema, type TransactionFormValues, ASSET_CLASSES } from "@/lib/validations"
 import { addTransaction, getUserAssets } from "@/features/transactions/actions"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/utils/format"
+import { formatAssetClass } from "@/lib/formatters"
 
 interface TransactionModalProps {
   trigger?: React.ReactElement;
@@ -30,13 +31,13 @@ interface TransactionModalProps {
   initialCurrency?: string;
 }
 
-const TICKER_CLASSES = ['STOCK', 'CRYPTO', 'MUTUAL_FUND']
+const TICKER_CLASSES = ['INDIVIDUAL_STOCK', 'ETF', 'STOCK_FUND', 'BOND_FUND', 'CRYPTO']
 
 export function TransactionModal({ 
   trigger, 
   fxRate = 25400,
   initialSymbol = "",
-  initialAssetClass = "STOCK",
+  initialAssetClass = "INDIVIDUAL_STOCK",
   initialName = "",
   initialCurrency = "VND"
 }: TransactionModalProps) {
@@ -159,12 +160,11 @@ export function TransactionModal({
                     className={cn(errors.assetClass && "border-red-500/50")}
                     {...field}
                   >
-                    <option value="STOCK">Stock</option>
-                    <option value="CRYPTO">Crypto</option>
-                    <option value="MUTUAL_FUND">Mutual Fund</option>
-                    <option value="GOLD">Gold</option>
-                    <option value="TERM_DEPOSIT">Term Deposit</option>
-                    <option value="REAL_ESTATE">Real Estate</option>
+                    {ASSET_CLASSES.map((ac) => (
+                      <option key={ac} value={ac}>
+                        {formatAssetClass(ac)}
+                      </option>
+                    ))}
                   </Select>
                 )}
               />

@@ -1,8 +1,7 @@
-import { getRebalancingDrift } from "@/features/portfolio/actions/rebalancing";
+import { getRebalancePlan } from "@/features/portfolio/actions/rebalancing";
 import { AllocationSummary } from "@/features/portfolio/components/allocation-summary";
 import { DriftTable } from "@/features/portfolio/components/drift-table";
-import { ExecutionModal } from "@/features/portfolio/components/execution-modal";
-import { ShieldCheck, ArrowLeft } from "lucide-react";
+import { ShieldCheck, ArrowLeft, Info } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -12,7 +11,7 @@ export const metadata = {
 };
 
 export default async function RebalancePage() {
-  const summary = await getRebalancingDrift();
+  const summary = await getRebalancePlan();
 
   return (
     <main className="min-h-screen bg-[#020617] text-slate-200 selection:bg-emerald-500/30">
@@ -41,7 +40,15 @@ export default async function RebalancePage() {
           </div>
 
           <div className="flex shrink-0">
-            <ExecutionModal drifts={summary.drifts} cashBalance={summary.cashBalance} />
+            <div className="glass-premium rounded-xl border border-white/5 p-4 flex items-center gap-3">
+              <div className="bg-emerald-500/10 p-2 rounded-lg">
+                <Info className="h-5 w-5 text-emerald-400" />
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] uppercase font-black tracking-widest text-slate-500">Execution Status</div>
+                <div className="text-sm font-bold text-white">Read-Only Suggestions</div>
+              </div>
+            </div>
           </div>
         </div>
 

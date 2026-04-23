@@ -49,7 +49,12 @@ export async function POST(req: Request) {
     // 3. Pre-fetch all assets that need updating to avoid N+1 queries
     const tickers = body.map((item: any) => item.ticker?.toUpperCase()).filter(Boolean);
     const allAssets = await prisma.asset.findMany({
-      where: { symbol: { in: tickers } }
+      where: { symbol: { in: tickers } },
+      select: {
+        id: true,
+        symbol: true,
+        userId: true
+      }
     });
 
     const assetsBySymbol = allAssets.reduce((acc: Record<string, any[]>, asset: any) => {
@@ -124,10 +129,10 @@ export async function POST(req: Request) {
     // 4. Trigger Portfolio Snapshots for affected users
     let snapshotStatus = "skipped";
     if (updatedUserIds.size > 0) {
-      const { capturePortfolioSnapshot } = await import("@/features/portfolio/actions/rebalancing");
+      const { capturePortfolioSnapshotInternal } = await import("@/features/portfolio/actions/rebalancing");
       try {
         for (const userId of updatedUserIds) {
-          await capturePortfolioSnapshot(userId);
+          await capturePortfolioSnapshotInternal(userId);
         }
         snapshotStatus = "success";
       } catch (err) {

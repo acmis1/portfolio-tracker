@@ -9,50 +9,34 @@ import { getPortfolioSnapshots } from "@/features/portfolio/actions/rebalancing"
 import { cn } from '@/lib/utils'
 import { CashLedgerTable } from '@/features/cash/components/cash-ledger-table'
 import { PerformanceAttribution } from '@/features/portfolio/components/performance-attribution'
-import { formatAssetClass } from "@/lib/formatters"
+import { getCashBalance } from "@/features/cash/actions"
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function DashboardPage() {
-  const [holdings, historyData, summary, fxRate, assetPerformance] = await Promise.all([
+  const [holdings, historyData, summary, fxRate, assetPerformance, cashBalance] = await Promise.all([
     getHoldingsLedger(),
     getPortfolioSnapshots(),
     getPortfolioSummary(),
     getLiveExchangeRate(),
-    getAssetClassPerformance()
+    getAssetClassPerformance(),
+    getCashBalance()
   ]);
 
-  // Transform holdings into chart data
-  const totalMarketValue = holdings.reduce((sum: number, h: any) => sum + (h.marketValue || 0), 0);
-  
-  const allocation = holdings.reduce((acc: any[], h: any) => {
-    const className = formatAssetClass(h.assetClass);
-    const existing = acc.find((a: any) => a.name === className);
-    if (existing) {
-      existing.value += (h.marketValue || 0);
-    } else {
-      const colors: Record<string, string> = {
-        'CRYPTO': '#3b82f6',
-        'STOCK': '#10b981',
-        'MUTUAL_FUND': '#8b5cf6',
-        'GOLD': '#fbbf24',
-        'TERM_DEPOSIT': '#f472b6',
-        'REAL_ESTATE': '#64748b'
-      };
-      acc.push({ 
-        name: className, 
-        value: h.marketValue || 0,
-        color: colors[h.assetClass] || '#94a3b8'
-      });
-    }
-    return acc;
-  }, [] as { name: string; value: number; color: string }[]);
+  // Prepare granular allocation data for the chart component to aggregate
+  const allocationData = holdings.map(h => ({
+    name: h.assetClass,
+    value: h.marketValue || 0
+  }));
 
-  const allocationData = allocation.map((a: any) => ({
-    ...a,
-    value: totalMarketValue > 0 ? (a.value / totalMarketValue) * 100 : 0
-  })).filter((a: any) => a.value > 0);
+  // Inject cash as a granular class for grouping
+  if (cashBalance > 0) {
+    allocationData.push({
+      name: 'CASH',
+      value: cashBalance
+    });
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 lg:p-10">
@@ -90,7 +74,7 @@ export default async function DashboardPage() {
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
             Performance Attribution
           </h2>
-          <PerformanceAttribution data={assetPerformance} fxRate={fxRate} />
+          <PerformanceAttribution summary={summary} />
         </div>
 
         {/* Row 3: Analytics Grid (Growth + Allocation) */}

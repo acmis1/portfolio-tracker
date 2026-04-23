@@ -1,5 +1,6 @@
 export interface AssetDrift {
   assetId: string;
+  type: 'SYMBOL' | 'CLASS' | 'UNMANAGED';
   symbol: string;
   name: string;
   currentQuantity: number;

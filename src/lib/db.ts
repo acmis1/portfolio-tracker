@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-
+// Re-initializing to pick up new TargetAllocation model from generated client
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const prisma =

@@ -14,12 +14,24 @@ model Asset {
   symbol       String
   name         String
   assetClass   String
-  targetWeight Float?
   currency     String        @default("VND")
   prices       DailyPrice[]
   termDeposits TermDeposit[]
   transactions Transaction[]
 
+  @@index([userId])
+}
+
+model TargetAllocation {
+  id           String   @id @default(cuid())
+  userId       String
+  type         String   // 'SYMBOL' | 'CLASS'
+  assetClass   String?
+  symbol       String?
+  targetWeight Float
+
+  @@unique([userId, assetClass])
+  @@unique([userId, symbol])
   @@index([userId])
 }
 

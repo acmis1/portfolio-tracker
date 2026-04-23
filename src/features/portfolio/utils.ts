@@ -11,34 +11,61 @@ export async function getPortfolioSummary() {
     xirr: 0,
     assetCount: 0,
     totalRealizedPnL: 0,
-    lastPriceDate: null
+    lastPriceDate: null,
+    totalContributions: 0,
+    totalWithdrawals: 0,
+    netCashFlow: 0
   }
 
   return await getPortfolioSummaryInternal(userId)
 }
 
+export type PortfolioSummary = Awaited<ReturnType<typeof getPortfolioSummaryInternal>>;
+
+
 export async function getPortfolioSummaryInternal(userId: string) {
-  const assets = await prisma.asset.findMany({
-    where: { userId },
-    include: {
-      transactions: true,
-      prices: {
-        orderBy: { date: 'desc' },
-        take: 1
-      },
-      termDeposits: {
-        take: 1,
-        orderBy: { startDate: 'desc' }
+  const [assets, cashTransactions] = await Promise.all([
+    prisma.asset.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        symbol: true,
+        name: true,
+        assetClass: true,
+        transactions: true,
+        prices: {
+          orderBy: { date: 'desc' },
+          take: 1
+        },
+        termDeposits: {
+          take: 1,
+          orderBy: { startDate: 'desc' }
+        }
       }
-    }
-  });
+    }),
+    prisma.cashTransaction.findMany({
+      where: { userId }
+    })
+  ]);
+
+  let totalContributions = 0;
+  let totalWithdrawals = 0;
+  
+  const cashBalance = cashTransactions.reduce((acc: number, tx: any) => {
+    if (tx.type === 'DEPOSIT') totalContributions += tx.amount;
+    if (tx.type === 'WITHDRAWAL') totalWithdrawals += tx.amount;
+
+    if (['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL_ASSET'].includes(tx.type)) return acc + tx.amount;
+    if (['WITHDRAWAL', 'BUY_ASSET'].includes(tx.type)) return acc - tx.amount;
+    return acc;
+  }, 0);
 
   const latestPrice = await prisma.dailyPrice.findFirst({
     where: { asset: { userId } },
     orderBy: { date: 'desc' }
   });
 
-  let totalValue = 0;
+  let totalValue = cashBalance;
   let totalInvested = 0;
   let totalRealizedPnL = 0;
   let activeAssetCount = 0;
@@ -47,22 +74,28 @@ export async function getPortfolioSummaryInternal(userId: string) {
 
   for (const asset of assets) {
     let currentQty = 0;
+    let netInvestedForAsset = 0;
+
     for (const tx of asset.transactions) {
       if (tx.type === 'BUY') currentQty += tx.quantity;
       else if (tx.type === 'SELL') currentQty -= tx.quantity;
       
-      const amount = Number(tx.grossAmount);
-      totalInvested -= amount; 
-
       if ((tx as any).realizedPnL) {
         totalRealizedPnL += (tx as any).realizedPnL;
       }
+
+      // In our ledger, BUY is capital out (positive invested), SELL is capital back (negative)
+      // Transaction grossAmount is negative for BUY and positive for SELL
+      const amount = Number(tx.grossAmount);
+      netInvestedForAsset -= amount;
 
       cashflows.push({
         amount: tx.grossAmount.toString(),
         date: tx.date.toISOString().split('T')[0]
       });
     }
+
+    totalInvested += netInvestedForAsset;
 
     if (currentQty > 0.000001) {
       activeAssetCount++;
@@ -124,7 +157,10 @@ export async function getPortfolioSummaryInternal(userId: string) {
     xirr: portfolioXirr,
     assetCount: activeAssetCount,
     totalRealizedPnL,
-    lastPriceDate: latestPrice?.date || null
+    lastPriceDate: latestPrice?.date || null,
+    totalContributions,
+    totalWithdrawals,
+    netCashFlow: totalContributions - totalWithdrawals
   };
 }
 
@@ -184,7 +220,12 @@ export async function getHoldingsLedger(): Promise<AssetHolding[]> {
 
   const assets = await prisma.asset.findMany({
     where: { userId },
-    include: {
+    select: {
+      id: true,
+      symbol: true,
+      name: true,
+      assetClass: true,
+      currency: true,
       transactions: {
         orderBy: { date: 'asc' }
       },
@@ -322,7 +363,9 @@ export async function getPortfolioHistory(days = 365) {
   // We fetch a generous amount of history by default to allow client-side range toggles
   const assets = await prisma.asset.findMany({
     where: { userId },
-    include: {
+    select: {
+      id: true,
+      assetClass: true,
       transactions: {
         orderBy: { date: 'asc' }
       },
@@ -428,7 +471,11 @@ export async function getAssetClassPerformance() {
 
   const assets = await prisma.asset.findMany({
     where: { userId },
-    include: {
+    select: {
+      id: true,
+      assetClass: true,
+      symbol: true,
+      name: true,
       transactions: {
         orderBy: { date: 'asc' }
       },
@@ -439,19 +486,22 @@ export async function getAssetClassPerformance() {
     }
   });
 
-  const buckets = {
+  const buckets: Record<string, { marketValue: number, netInvested: number }> = {
     Equities: { marketValue: 0, netInvested: 0 },
+    'Fixed Income': { marketValue: 0, netInvested: 0 },
     Gold: { marketValue: 0, netInvested: 0 },
     Crypto: { marketValue: 0, netInvested: 0 },
+    'Real Estate': { marketValue: 0, netInvested: 0 },
   };
 
   for (const asset of assets) {
-    let bucketKey: keyof typeof buckets | null = null;
+    let bucketKey: string | null = null;
     
-    // 1) Audit bucket string alignment
-    if (asset.assetClass === 'STOCK' || asset.assetClass === 'MUTUAL_FUND') bucketKey = 'Equities';
+    if (['INDIVIDUAL_STOCK', 'ETF', 'STOCK_FUND'].includes(asset.assetClass)) bucketKey = 'Equities';
     else if (asset.assetClass === 'GOLD') bucketKey = 'Gold';
     else if (asset.assetClass === 'CRYPTO') bucketKey = 'Crypto';
+    else if (asset.assetClass === 'BOND_FUND') bucketKey = 'Fixed Income';
+    else if (asset.assetClass === 'REAL_ESTATE') bucketKey = 'Real Estate';
 
     if (!bucketKey) continue;
 
