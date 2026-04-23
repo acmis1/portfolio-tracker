@@ -7,7 +7,7 @@ const FALLBACK_USD_VND_RATE = 25400;
 
 /**
  * Fetches the current USD to VND exchange rate.
- * Uses Next.js data caching for 1-hour revalidation.
+ * Uses Next.js data caching for 24-hour revalidation.
  */
 export async function getLiveExchangeRate(): Promise<number> {
   try {
@@ -21,8 +21,8 @@ export async function getLiveExchangeRate(): Promise<number> {
     
     const response = await fetch(url, {
       next: { 
-        revalidate: 0, // Force fresh fetch for audit
-        tags: ['usd-vnd-rate-v3'] 
+        revalidate: 86400, // 24-hour cache for API quota optimization
+        tags: ['usd-vnd-rate-v4'] 
       },
     });
 
