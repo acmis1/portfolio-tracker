@@ -80,8 +80,8 @@ export function TransactionModal({
     if (!symbol || symbol.length < 2) return
     const match = assets.find(a => a.symbol.toLowerCase() === symbol.toLowerCase())
     if (match) {
-      form.setValue("name", match.name)
-      form.setValue("assetClass", match.assetClass as any)
+      form.setValue("name", match.name, { shouldValidate: true })
+      form.setValue("assetClass", match.assetClass as any, { shouldValidate: true })
     }
   }, [symbol, assets, form])
 
@@ -150,18 +150,24 @@ export function TransactionModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="assetClass">Asset Class</Label>
-              <Select 
-                id="assetClass" 
-                className={cn(errors.assetClass && "border-red-500/50")}
-                {...form.register("assetClass")}
-              >
-                <option value="STOCK">Stock</option>
-                <option value="CRYPTO">Crypto</option>
-                <option value="MUTUAL_FUND">Mutual Fund</option>
-                <option value="GOLD">Gold</option>
-                <option value="TERM_DEPOSIT">Term Deposit</option>
-                <option value="REAL_ESTATE">Real Estate</option>
-              </Select>
+              <Controller
+                name="assetClass"
+                control={form.control}
+                render={({ field }) => (
+                  <Select 
+                    id="assetClass" 
+                    className={cn(errors.assetClass && "border-red-500/50")}
+                    {...field}
+                  >
+                    <option value="STOCK">Stock</option>
+                    <option value="CRYPTO">Crypto</option>
+                    <option value="MUTUAL_FUND">Mutual Fund</option>
+                    <option value="GOLD">Gold</option>
+                    <option value="TERM_DEPOSIT">Term Deposit</option>
+                    <option value="REAL_ESTATE">Real Estate</option>
+                  </Select>
+                )}
+              />
             </div>
 
             <div className="space-y-2">
@@ -211,27 +217,39 @@ export function TransactionModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="type">Transaction Type</Label>
-              <Select 
-                id="type" 
-                className={cn(errors.type && "border-red-500/50")}
-                {...form.register("type")}
-              >
-                <option value="BUY">Buy/Deposit</option>
-                <option value="SELL">Sell/Withdraw</option>
-                <option value="DIVIDEND">Dividend</option>
-                <option value="INTEREST">Interest</option>
-              </Select>
+              <Controller
+                name="type"
+                control={form.control}
+                render={({ field }) => (
+                  <Select 
+                    id="type" 
+                    className={cn(errors.type && "border-red-500/50")}
+                    {...field}
+                  >
+                    <option value="BUY">Buy/Deposit</option>
+                    <option value="SELL">Sell/Withdraw</option>
+                    <option value="DIVIDEND">Dividend</option>
+                    <option value="INTEREST">Interest</option>
+                  </Select>
+                )}
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
-              <Select 
-                id="currency" 
-                {...form.register("currency")}
-              >
-                <option value="VND">VND</option>
-                <option value="USD">USD</option>
-              </Select>
+              <Controller
+                name="currency"
+                control={form.control}
+                render={({ field }) => (
+                  <Select 
+                    id="currency" 
+                    {...field}
+                  >
+                    <option value="VND">VND</option>
+                    <option value="USD">USD</option>
+                  </Select>
+                )}
+              />
             </div>
           </div>
 
