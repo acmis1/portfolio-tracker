@@ -66,7 +66,8 @@ export async function getRebalancePlan(): Promise<EnhancedRebalancePlan | null> 
   ]);
 
   const cashBalance = summary.cashBalance;
-  const globalPortfolioAum = summary.portfolioValue;
+  // AUM for rebalancing should include cash if cash is part of the allocation strategy
+  const globalPortfolioAum = summary.portfolioValue + cashBalance;
 
   const symbolTargetsSet = new Set(targets.filter((t: any) => t.type === 'SYMBOL').map((t: any) => t.symbol));
   const aggregatedHoldings: Holding[] = [];
@@ -175,7 +176,7 @@ export async function getRebalancePlan(): Promise<EnhancedRebalancePlan | null> 
   return {
     ...plan,
     cashBalance,
-    investedValue: globalPortfolioAum - cashBalance
+    investedValue: summary.portfolioValue
   };
 }
 
@@ -327,9 +328,9 @@ export async function getPortfolioSnapshots() {
   const snapshots = await prisma.portfolioSnapshot.findMany({ where: { userId }, orderBy: { date: 'asc' } });
   return snapshots.map((s: any) => ({
     date: s.date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
-    value: s.totalValue,
+    value: s.investedValue,
     invested: s.costBasis,
-    marketValue: s.investedValue,
+    netWorth: s.totalValue,
     fullDate: s.date
   }));
 }
@@ -343,8 +344,6 @@ export async function forcePortfolioSnapshot() {
 export async function capturePortfolioSnapshotInternal(userId: string) {
   const { getPortfolioSummaryInternal } = await import("../utils");
   const summary = await getPortfolioSummaryInternal(userId);
-  const plan = await getRebalancePlan();
-  if (!plan) return { success: false };
 
   const today = new Date();
   const midnight = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
@@ -352,16 +351,16 @@ export async function capturePortfolioSnapshotInternal(userId: string) {
   await prisma.portfolioSnapshot.upsert({
     where: { userId_date: { userId, date: midnight } },
     update: {
-      totalValue: plan.totalAum,
-      investedValue: plan.investedValue,
-      cashBalance: plan.cashBalance,
+      totalValue: summary.netWorth,
+      investedValue: summary.portfolioValue,
+      cashBalance: summary.cashBalance,
       costBasis: summary.totalInvested
     },
     create: {
       userId, date: midnight,
-      totalValue: plan.totalAum,
-      investedValue: plan.investedValue,
-      cashBalance: plan.cashBalance,
+      totalValue: summary.netWorth,
+      investedValue: summary.portfolioValue,
+      cashBalance: summary.cashBalance,
       costBasis: summary.totalInvested
     }
   });

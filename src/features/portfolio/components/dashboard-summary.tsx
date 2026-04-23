@@ -83,38 +83,27 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
           </CardContent>
         </Card>
 
-        {/* 3. Cash Balance */}
-        <Card className={cn(
-          "glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/10",
-          cashBalance < -1000 && "border-amber-500/30"
-        )}>
+        {/* 3. Realized PnL */}
+        <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/10">
           <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-indigo-500/10 blur-3xl" />
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
-                Cash Balance
+                Realized PnL
               </CardDescription>
-              <Wallet className="h-4 w-4 text-indigo-500/50" />
+              <ShieldCheck className="h-4 w-4 text-indigo-500/50" />
             </div>
           </CardHeader>
           <CardContent>
             <div className={cn(
               "text-2xl font-black tracking-tight mb-1",
-              cashBalance < 0 ? "text-amber-400" : "text-white"
+              totalRealizedPnL >= 0 ? "text-emerald-400" : "text-rose-400"
             )}>
-              {formatVND(cashBalance)}
+              {totalRealizedPnL >= 0 ? '+' : ''}{formatVND(totalRealizedPnL)}
             </div>
-            {cashBalance < -1000 ? (
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] bg-amber-500/10 text-amber-500 border border-amber-500/20 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter animate-pulse">
-                  Ledger Unfunded
-                </span>
-              </div>
-            ) : (
-              <div className="text-[10px] uppercase font-black tracking-wider text-slate-500">
-                Available Liquidity
-              </div>
-            )}
+            <div className="text-[10px] uppercase font-black tracking-wider text-slate-500 flex items-center gap-1.5">
+              Actual Profit Taken
+            </div>
           </CardContent>
         </Card>
 
@@ -167,18 +156,19 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
         </div>
 
         <div className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Net Worth (Equity)</span>
-          <span className="text-sm font-black text-slate-200 tabular-nums">{formatVND(netWorth)}</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Cash Balance</span>
+          <span className={cn(
+            "text-sm font-black tabular-nums",
+            cashBalance < 0 ? "text-amber-500/70" : "text-slate-200"
+          )}>
+            {formatVND(cashBalance)}
+            {cashBalance < -1000 && <span className="ml-2 text-[8px] bg-amber-500/10 text-amber-500 px-1 rounded">UNFUNDED</span>}
+          </span>
         </div>
 
         <div className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Realized PnL</span>
-          <span className={cn(
-            "text-sm font-black tabular-nums",
-            totalRealizedPnL >= 0 ? "text-emerald-500/70" : "text-rose-500/70"
-          )}>
-            {totalRealizedPnL >= 0 ? '+' : ''}{formatVND(totalRealizedPnL)}
-          </span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Net Worth (Equity)</span>
+          <span className="text-sm font-black text-slate-400 tabular-nums">{formatVND(netWorth)}</span>
         </div>
       </div>
     </div>

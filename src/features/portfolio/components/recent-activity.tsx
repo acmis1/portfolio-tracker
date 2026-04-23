@@ -1,6 +1,6 @@
 import { formatVND } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
-import { Landmark, ArrowRight } from 'lucide-react'
+import { Activity, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 interface RecentActivityProps {
@@ -18,15 +18,15 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
   return (
     <div className="glass-premium rounded-2xl overflow-hidden border border-white/5 shadow-xl flex flex-col h-full">
       <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between shrink-0">
-         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recent Cash Flows</h3>
-         <Landmark className="h-3 w-3 text-slate-500" />
+         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recent Activity</h3>
+         <Activity className="h-3 w-3 text-slate-500" />
       </div>
       
       <div className="flex-1 divide-y divide-white/5">
         {recent.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-center p-6 space-y-2">
             <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center">
-               <Landmark className="h-4 w-4 text-slate-600" />
+               <Activity className="h-4 w-4 text-slate-600" />
             </div>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">No recent activity</p>
           </div>

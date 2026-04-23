@@ -7,15 +7,16 @@ import { cn } from "@/lib/utils";
 
 interface HoldingsLedgerProps {
   holdings: AssetHolding[];
+  cashHolding?: AssetHolding | null;
   fxRate: number;
 }
 
-export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
-  const assetMarketValue = holdings.filter(h => h.assetClass !== 'CASH').reduce((sum, h) => sum + h.marketValue, 0);
-  const cashBalance = holdings.find(h => h.assetClass === 'CASH')?.marketValue || 0;
+export function HoldingsLedger({ holdings, cashHolding, fxRate }: HoldingsLedgerProps) {
+  const assetMarketValue = holdings.reduce((sum, h) => sum + h.marketValue, 0);
+  const cashBalance = cashHolding?.marketValue || 0;
   const netWorth = assetMarketValue + cashBalance;
 
-  const liquidAssets = holdings.filter(h => h.type === 'LIQUID' || h.type === 'GOLD' || h.type === 'CASH');
+  const liquidAssets = holdings.filter(h => h.type === 'LIQUID' || h.type === 'GOLD');
   const termDeposits = holdings.filter(h => h.type === 'TERM_DEPOSIT');
   const realEstate = holdings.filter(h => h.type === 'REAL_ESTATE');
 
@@ -68,6 +69,30 @@ export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
+                  {cashHolding && (
+                    <tr key={cashHolding.id} className="hover:bg-white/5 transition-colors group bg-indigo-500/5">
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-white">{cashHolding.symbol}</span>
+                          <span className="text-xs text-slate-500">{cashHolding.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right font-medium text-slate-300">—</td>
+                      <td className="px-6 py-4 text-right font-medium text-slate-300">—</td>
+                      <td className="px-6 py-4 text-right font-medium text-slate-300">—</td>
+                      <td className="px-6 py-4 text-right font-bold text-white">
+                        {formatVND(cashHolding.marketValue)}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className={cn(
+                          "text-xs font-black uppercase tracking-widest",
+                          cashHolding.marketValue >= 0 ? "text-emerald-400" : "text-amber-400"
+                        )}>
+                          {cashHolding.status}
+                        </span>
+                      </td>
+                    </tr>
+                  )}
                   {liquidAssets.map((h) => {
                     const holding = h as any; // Liquid or Gold
                     const isUSD = holding.currency === 'USD';
@@ -77,39 +102,25 @@ export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
                     return (
                       <tr key={holding.id} className="hover:bg-white/5 transition-colors group">
                         <td className="px-6 py-4">
-                          {holding.type === 'CASH' ? (
-                            <div className="flex flex-col">
-                              <span className="font-bold text-white">{holding.symbol}</span>
-                              <span className="text-xs text-slate-500">{holding.name}</span>
-                            </div>
-                          ) : (
-                            <Link href={`/holdings/${holding.id}`} className="flex flex-col group/link">
-                              <span className="font-bold text-white group-hover/link:text-emerald-400 transition-colors">{holding.symbol}</span>
-                              <span className="text-xs text-slate-500">{holding.name}</span>
-                            </Link>
-                          )}
+                          <Link href={`/holdings/${holding.id}`} className="flex flex-col group/link">
+                            <span className="font-bold text-white group-hover/link:text-emerald-400 transition-colors">{holding.symbol}</span>
+                            <span className="text-xs text-slate-500">{holding.name}</span>
+                          </Link>
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-slate-300">
-                          {holding.type === 'CASH' ? '—' : formatNumberDots(holding.quantity)}
+                          {formatNumberDots(holding.quantity)}
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-slate-300">
-                          {holding.type === 'CASH' ? '—' : formatCurrency(displayAvgCost, holding.currency)}
+                          {formatCurrency(displayAvgCost, holding.currency)}
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-slate-300">
-                          {holding.type === 'CASH' ? '—' : (displayLivePrice !== null ? formatCurrency(displayLivePrice, holding.currency) : "N/A")}
+                          {displayLivePrice !== null ? formatCurrency(displayLivePrice, holding.currency) : "N/A"}
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-white">
                           {formatVND(holding.marketValue)}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {holding.type === 'CASH' ? (
-                            <span className={cn(
-                              "text-xs font-black uppercase tracking-widest",
-                              holding.marketValue >= 0 ? "text-emerald-400" : "text-amber-400"
-                            )}>
-                              {holding.status}
-                            </span>
-                          ) : holding.unrealizedPnLPctg !== null ? (
+                          {holding.unrealizedPnLPctg !== null ? (
                             <div className={cn(
                               "inline-flex items-center gap-1 font-black px-2 py-0.5 rounded-full text-[10px]",
                               holding.unrealizedPnLPctg >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"

@@ -17,7 +17,8 @@ export async function getPortfolioSummary() {
     totalContributions: 0,
     totalWithdrawals: 0,
     netCashFlow: 0,
-    holdings: []
+    holdings: [],
+    cashHolding: null
   }
 
   return await getPortfolioSummaryInternal(userId)
@@ -198,23 +199,6 @@ export async function getPortfolioSummaryInternal(userId: string) {
 
   const netWorth = portfolioValue + cashBalance;
 
-  // Add Cash as a position
-  if (Math.abs(cashBalance) > 0.01) {
-    holdings.push({
-      id: 'cash-balance',
-      symbol: 'CASH',
-      name: 'Cash Balance',
-      currency: 'VND',
-      assetClass: 'CASH',
-      type: 'CASH',
-      marketValue: cashBalance,
-      balance: cashBalance,
-      quantity: 1,
-      weight: 0,
-      status: cashBalance >= 0 ? 'Liquid' : 'Overdrawn',
-    });
-  }
-
   let portfolioXirr = 0;
   const hasNegative = cashflows.some(cf => parseFloat(cf.amount) < 0);
   const hasPositive = cashflows.some(cf => parseFloat(cf.amount) > 0);
@@ -238,10 +222,12 @@ export async function getPortfolioSummaryInternal(userId: string) {
   }
 
   // Finalize weights based on Portfolio Market Value (Assets Only)
-  const holdingsWithWeights = holdings.map(h => ({
-    ...h,
-    weight: portfolioValue > 0 ? (h.marketValue / portfolioValue) * 100 : 0
-  })).sort((a, b) => b.marketValue - a.marketValue);
+  const holdingsWithWeights = holdings
+    .filter(h => h.assetClass !== 'CASH')
+    .map(h => ({
+      ...h,
+      weight: portfolioValue > 0 ? (h.marketValue / portfolioValue) * 100 : 0
+    })).sort((a, b) => b.marketValue - a.marketValue);
 
   return {
     portfolioValue,
@@ -255,7 +241,20 @@ export async function getPortfolioSummaryInternal(userId: string) {
     totalContributions,
     totalWithdrawals,
     netCashFlow: totalContributions - totalWithdrawals,
-    holdings: holdingsWithWeights
+    holdings: holdingsWithWeights,
+    cashHolding: Math.abs(cashBalance) > 0.01 ? {
+      id: 'cash-balance',
+      symbol: 'CASH',
+      name: 'Cash Balance',
+      currency: 'VND',
+      assetClass: 'CASH',
+      type: 'CASH' as const,
+      marketValue: cashBalance,
+      balance: cashBalance,
+      quantity: 1,
+      weight: 0,
+      status: cashBalance >= 0 ? 'Liquid' : 'Overdrawn',
+    } : null
   };
 }
 
