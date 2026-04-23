@@ -11,14 +11,14 @@ interface PerformanceAttributionProps {
 
 export function PerformanceAttribution({ summary }: PerformanceAttributionProps) {
   const {
-    totalValue,
+    portfolioValue,
     totalInvested,
     totalContributions,
     totalWithdrawals,
     netCashFlow
   } = summary;
 
-  const totalCapitalGain = totalValue - totalInvested;
+  const totalCapitalGain = portfolioValue - totalInvested;
   const grossReturns = totalInvested > 0 ? (totalCapitalGain / totalInvested) * 100 : 0;
 
   return (

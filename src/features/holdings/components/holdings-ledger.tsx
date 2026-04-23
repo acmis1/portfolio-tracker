@@ -11,6 +11,10 @@ interface HoldingsLedgerProps {
 }
 
 export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
+  const assetMarketValue = holdings.filter(h => h.assetClass !== 'CASH').reduce((sum, h) => sum + h.marketValue, 0);
+  const cashBalance = holdings.find(h => h.assetClass === 'CASH')?.marketValue || 0;
+  const netWorth = assetMarketValue + cashBalance;
+
   const liquidAssets = holdings.filter(h => h.type === 'LIQUID' || h.type === 'GOLD' || h.type === 'CASH');
   const termDeposits = holdings.filter(h => h.type === 'TERM_DEPOSIT');
   const realEstate = holdings.filter(h => h.type === 'REAL_ESTATE');
@@ -18,22 +22,28 @@ export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
   return (
     <div className="space-y-12">
       {/* Portfolio Summary Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="glass-premium p-6 rounded-2xl border border-white/5">
-          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Total Market Value</div>
+          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Asset Market Value</div>
           <div className="text-2xl font-black text-white">
-            {formatVND(holdings.reduce((sum, h) => sum + h.marketValue, 0))}
+            {formatVND(assetMarketValue)}
           </div>
         </div>
         <div className="glass-premium p-6 rounded-2xl border border-white/5">
-          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Liquid Breakdown</div>
+          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Cash Balance</div>
           <div className="text-2xl font-black text-white">
-             {formatVND(liquidAssets.reduce((sum, h) => sum + h.marketValue, 0))}
+            {formatVND(cashBalance)}
           </div>
         </div>
         <div className="glass-premium p-6 rounded-2xl border border-white/5">
-          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Total Assets</div>
-          <div className="text-2xl font-black text-white">{holdings.length} Positions</div>
+          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Net Worth</div>
+          <div className="text-2xl font-black text-white">
+            {formatVND(netWorth)}
+          </div>
+        </div>
+        <div className="glass-premium p-6 rounded-2xl border border-white/5">
+          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Total Positions</div>
+          <div className="text-2xl font-black text-white">{holdings.filter(h => h.assetClass !== 'CASH').length} Assets</div>
         </div>
       </div>
 

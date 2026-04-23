@@ -1,11 +1,12 @@
-import { getCashTransactions } from '../actions'
-import { formatCurrency } from '@/lib/formatters'
 import { formatVND } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { EditCashModal } from './edit-cash-modal'
 
-export async function CashLedgerTable() {
-  const transactions = await getCashTransactions()
+interface CashLedgerTableProps {
+  transactions: any[];
+}
+
+export function CashLedgerTable({ transactions }: CashLedgerTableProps) {
 
   if (transactions.length === 0) {
     return (

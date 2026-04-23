@@ -11,32 +11,29 @@ import { CashLedgerTable } from '@/features/cash/components/cash-ledger-table'
 import { PerformanceAttribution } from '@/features/portfolio/components/performance-attribution'
 import { getCashBalance } from "@/features/cash/actions"
 
+import { getVietnamMacro } from "@/features/portfolio/actions/macro"
+import { getCashTransactions } from "@/features/cash/actions"
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function DashboardPage() {
-  const [holdings, historyData, summary, fxRate, assetPerformance, cashBalance] = await Promise.all([
-    getHoldingsLedger(),
+  const [historyData, summary, fxRate, assetPerformance, macro, cashTransactions] = await Promise.all([
     getPortfolioSnapshots(),
     getPortfolioSummary(),
     getLiveExchangeRate(),
     getAssetClassPerformance(),
-    getCashBalance()
+    getVietnamMacro(),
+    getCashTransactions()
   ]);
 
-  // Prepare granular allocation data for the chart component to aggregate
-  const allocationData = holdings.map(h => ({
-    name: h.assetClass,
-    value: h.marketValue || 0
-  }));
-
-  // Inject cash as a granular class for grouping
-  if (cashBalance > 0) {
-    allocationData.push({
-      name: 'CASH',
-      value: cashBalance
-    });
-  }
+  // Prepare allocation data from unified holdings (excluding CASH for clean visualization)
+  const allocationData = summary.holdings
+    .filter(h => h.assetClass !== 'CASH' && h.marketValue > 0)
+    .map(h => ({
+      name: h.assetClass,
+      value: h.marketValue || 0
+    }));
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 lg:p-10">
@@ -65,7 +62,7 @@ export default async function DashboardPage() {
             Portfolio Overview
           </h2>
           <Suspense fallback={<div className="h-32 w-full animate-pulse rounded-2xl glass-premium" />}>
-            <OverviewCards />
+            <OverviewCards summary={summary} macro={macro} />
           </Suspense>
         </div>
 
@@ -104,7 +101,7 @@ export default async function DashboardPage() {
               Top Holdings
             </h2>
             <Suspense fallback={<div className="h-full min-h-[400px] w-full animate-pulse rounded-2xl glass-premium" />}>
-              <TopHoldings />
+              <TopHoldings holdings={summary.holdings} />
             </Suspense>
           </div>
           
@@ -113,7 +110,7 @@ export default async function DashboardPage() {
               Cash Ledger
             </h2>
             <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
-              <CashLedgerTable />
+              <CashLedgerTable transactions={cashTransactions} />
             </Suspense>
           </div>
         </div>

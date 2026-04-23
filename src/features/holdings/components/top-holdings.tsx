@@ -1,15 +1,21 @@
-import { getHoldingsLedger } from "@/features/portfolio/utils";
-import { formatCurrency, formatPercentage } from "@/lib/formatters";
+import { formatPercentage } from "@/lib/formatters";
 import { formatVND } from "@/lib/utils/format";
 import { Trophy, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { type AssetHolding } from "@/features/portfolio/utils";
 
-export async function TopHoldings() {
-  const allHoldings = await getHoldingsLedger();
-  const topHoldings = allHoldings.slice(0, 5);
+interface TopHoldingsProps {
+  holdings: AssetHolding[];
+}
+
+export function TopHoldings({ holdings }: TopHoldingsProps) {
+  // Filter out CASH and zero/negative market values for the leaderboard
+  const topHoldings = holdings
+    .filter(h => h.assetClass !== 'CASH' && h.marketValue > 0)
+    .slice(0, 5);
 
   if (topHoldings.length === 0) {
     return (
@@ -40,12 +46,18 @@ export async function TopHoldings() {
                 className="flex items-center justify-between px-6 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors group"
               >
                 <div className="flex flex-col min-w-0">
-                  <Link 
-                    href={`/holdings/${holding.id}`}
-                    className="font-bold text-white hover:text-emerald-400 transition-colors truncate"
-                  >
-                    {holding.symbol.replace(/_/g, ' ')}
-                  </Link>
+                  {holding.type === 'CASH' ? (
+                    <span className="font-bold text-white truncate">
+                      {holding.symbol.replace(/_/g, ' ')}
+                    </span>
+                  ) : (
+                    <Link 
+                      href={`/holdings/${holding.id}`}
+                      className="font-bold text-white hover:text-emerald-400 transition-colors truncate"
+                    >
+                      {holding.symbol.replace(/_/g, ' ')}
+                    </Link>
+                  )}
                   <span className="text-[11px] text-slate-500 font-medium truncate max-w-[140px]">
                     {holding.name.replace(/_/g, ' ')}
                   </span>

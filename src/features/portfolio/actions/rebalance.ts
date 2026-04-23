@@ -66,7 +66,7 @@ export async function getRebalancePlan(): Promise<EnhancedRebalancePlan | null> 
   ]);
 
   const cashBalance = summary.cashBalance;
-  const globalPortfolioAum = summary.totalValue;
+  const globalPortfolioAum = summary.portfolioValue;
 
   const symbolTargetsSet = new Set(targets.filter((t: any) => t.type === 'SYMBOL').map((t: any) => t.symbol));
   const aggregatedHoldings: Holding[] = [];
