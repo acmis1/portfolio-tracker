@@ -61,7 +61,7 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
       case 'YTD': {
         const currentYear = new Date().getFullYear()
         return data.filter((d: any) => {
-          // Simplistic matching for now, would ideally check fullDate
+          // Simplistic matching for now
           return true
         })
       }
@@ -84,65 +84,79 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
   return (
     <div className={cn(
       "w-full rounded-2xl glass-premium p-6 glow-card transition-all duration-500",
-      !hasData ? "h-[180px]" : "h-[350px]"
+      !hasData ? "h-[200px]" : "h-[350px]"
     )}>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between w-full sm:w-auto">
           <div>
             <h3 className="text-lg font-bold text-white tracking-tight">Portfolio Performance</h3>
             <p className="text-xs text-slate-400">Total valuation vs. Net Invested capital</p>
           </div>
-          <button
-            onClick={handleCapture}
-            disabled={isCapturing || hasCaptured}
-            className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-300",
-              hasCaptured 
-                ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-500" 
-                : "border-white/5 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
-            )}
-            title="Capture Snapshot"
-          >
-            {isCapturing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : hasCaptured ? (
-              <Check className="h-4 w-4" />
-            ) : (
-              <Camera className="h-4 w-4" />
-            )}
-          </button>
+          
+          <div className="sm:hidden flex p-1 bg-white/5 rounded-lg border border-white/5 ml-4">
+             <button
+              onClick={handleCapture}
+              disabled={isCapturing || hasCaptured}
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-md transition-all duration-300",
+                hasCaptured 
+                  ? "bg-emerald-500 text-slate-950 shadow-lg" 
+                  : "text-slate-500 hover:text-white"
+              )}
+            >
+              {isCapturing ? <Loader2 className="h-3 w-3 animate-spin" /> : hasCaptured ? <Check className="h-3 w-3" /> : <Camera className="h-3 w-3" />}
+            </button>
+          </div>
         </div>
         
-        {hasData && (
-          <div className="flex items-center gap-1 rounded-lg bg-slate-900/50 p-1 border border-white/5">
-            {ranges.map((r: any) => (
-              <button
-                key={r}
-                onClick={() => setRange(r)}
-                className={cn(
-                  "rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition-all",
-                  range === r
-                    ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
-                    : "text-slate-500 hover:text-slate-300"
-                )}
-              >
-                {r}
-              </button>
-            ))}
+        <div className="flex items-center gap-4">
+          {hasData && (
+            <div className="flex items-center gap-1 rounded-lg bg-slate-900/50 p-1 border border-white/5">
+              {ranges.map((r: any) => (
+                <button
+                  key={r}
+                  onClick={() => setRange(r)}
+                  className={cn(
+                    "rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition-all",
+                    range === r
+                      ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
+                      : "text-slate-500 hover:text-slate-300"
+                  )}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="hidden sm:flex p-1 bg-white/5 rounded-lg border border-white/5">
+             <button
+              onClick={handleCapture}
+              disabled={isCapturing || hasCaptured}
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-md transition-all duration-300",
+                hasCaptured 
+                  ? "bg-emerald-500 text-slate-950 shadow-lg" 
+                  : "text-slate-500 hover:text-white"
+              )}
+              title="Force Refresh Snapshot"
+            >
+              {isCapturing ? <Loader2 className="h-3 w-3 animate-spin" /> : hasCaptured ? <Check className="h-3 w-3" /> : <Camera className="h-3 w-3" />}
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
       {!hasData ? (
-        <div className="flex items-center justify-center h-[calc(100%-80px)] gap-6 px-4">
+        <div className="flex items-center justify-center h-[calc(100%-100px)] gap-6 px-4">
           <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
             <TrendingUp className="w-6 h-6 text-emerald-500/50" />
           </div>
           <div className="space-y-1">
-            <p className="text-slate-200 font-bold text-sm">Accumulating performance history</p>
+            <p className="text-slate-200 font-bold text-sm">Tracking performance history</p>
             <p className="text-xs text-slate-500 leading-relaxed max-w-sm">
               We need at least two daily snapshots to calculate your growth curve. 
-              Click the <Camera className="inline h-3 w-3" /> icon above to capture your first snapshot today.
+              The system captures snapshots automatically once prices are updated each night.
             </p>
           </div>
         </div>

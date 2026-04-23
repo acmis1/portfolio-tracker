@@ -38,7 +38,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
                     {new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                   <span className="text-xs font-black text-slate-200 truncate pr-2">
-                    {tx.type.replace('_', ' ')}
+                    {tx.description?.split(' @ ')[0] || tx.type.replace('_', ' ')}
                   </span>
                </div>
                <div className="flex flex-col items-end shrink-0">

@@ -1,17 +1,13 @@
-import { getLiveExchangeRate } from "@/lib/fx"
+import { Suspense } from 'react'
 import { DashboardSummary } from '@/features/portfolio/components/dashboard-summary'
 import { GrowthChart } from '@/features/portfolio/components/growth-chart'
 import { AllocationChart } from '@/features/portfolio/components/allocation-chart'
-import { Suspense } from 'react'
 import { TopHoldings } from '@/features/holdings/components/top-holdings'
-import { getPortfolioSummary } from "@/features/portfolio/utils"
-import { getPortfolioSnapshots } from "@/features/portfolio/actions/rebalance"
-import { getVietnamMacro } from "@/features/portfolio/actions/macro"
-import { getCashTransactions } from "@/features/cash/actions"
 import { RecentActivity } from '@/features/portfolio/components/recent-activity'
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+import { getPortfolioSnapshots } from '@/features/portfolio/actions/rebalance'
+import { getPortfolioSummary } from '@/features/portfolio/utils'
+import { getVietnamMacro } from '@/features/portfolio/actions/macro'
+import { getCashTransactions } from '@/features/cash/actions'
 
 export default async function DashboardPage() {
   const [historyData, summary, macro, cashTransactions] = await Promise.all([
@@ -20,14 +16,6 @@ export default async function DashboardPage() {
     getVietnamMacro(),
     getCashTransactions()
   ]);
-
-  // Prepare allocation data from unified holdings
-  const allocationData = summary.holdings
-    .filter(h => h.assetClass !== 'CASH' && h.marketValue > 0)
-    .map(h => ({
-      name: h.assetClass,
-      value: h.marketValue || 0
-    }));
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 lg:p-10">
@@ -69,7 +57,7 @@ export default async function DashboardPage() {
             <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
               Asset Allocation
             </h2>
-            <AllocationChart data={allocationData} />
+            <AllocationChart holdings={summary.holdings} />
           </div>
         </div>
 
