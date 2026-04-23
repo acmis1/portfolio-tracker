@@ -9,14 +9,24 @@ import { TransactionModal } from "@/features/transactions/components/transaction
 import { PlusCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-interface AssetTransactionTableProps {
-  asset: any;
+export interface AssetTransactionTableProps {
+  transactions: any[];
+  symbol: string;
+  assetName: string;
+  assetClass: string;
+  assetCurrency: string;
   fxRate: number;
 }
 
-export function AssetTransactionTable({ asset, fxRate }: AssetTransactionTableProps) {
-  const isUSD = asset.currency === 'USD';
-  const transactions = asset.transactions || [];
+export function AssetTransactionTable({ 
+  transactions, 
+  symbol, 
+  assetName, 
+  assetClass, 
+  assetCurrency, 
+  fxRate 
+}: AssetTransactionTableProps) {
+  const isUSD = assetCurrency === 'USD';
 
   // Stable trigger for the "Log Transaction" modal to avoid hydration mismatches
   const addTransactionTrigger = (
@@ -30,10 +40,10 @@ export function AssetTransactionTable({ asset, fxRate }: AssetTransactionTablePr
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">Recent Transactions</h3>
         <TransactionModal 
-          initialSymbol={asset.symbol} 
-          initialName={asset.name}
-          initialAssetClass={asset.assetClass}
-          initialCurrency={asset.currency}
+          initialSymbol={symbol} 
+          initialName={assetName}
+          initialAssetClass={assetClass}
+          initialCurrency={assetCurrency}
           fxRate={fxRate}
           trigger={addTransactionTrigger}
         />
@@ -46,8 +56,8 @@ export function AssetTransactionTable({ asset, fxRate }: AssetTransactionTablePr
                 <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Date</th>
                 <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Type</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Quantity</th>
-                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Price ({asset.currency})</th>
-                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Fees ({asset.currency})</th>
+                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Price ({assetCurrency})</th>
+                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Fees ({assetCurrency})</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Total (VND)</th>
                 <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400"></th>
               </tr>
@@ -91,10 +101,10 @@ export function AssetTransactionTable({ asset, fxRate }: AssetTransactionTablePr
                         {tx.quantity.toLocaleString(undefined, { maximumFractionDigits: 8 })}
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-slate-300 tabular-nums">
-                        {formatCurrency(displayPrice, asset.currency)}
+                        {formatCurrency(displayPrice, assetCurrency)}
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-slate-500 tabular-nums">
-                        {formatCurrency(displayFees, asset.currency)}
+                        {formatCurrency(displayFees, assetCurrency)}
                       </td>
                       <td className="px-6 py-4 text-right font-bold text-white tabular-nums">
                         {formatCurrency(displayTotal, 'VND')}
@@ -103,10 +113,10 @@ export function AssetTransactionTable({ asset, fxRate }: AssetTransactionTablePr
                         <EditTransactionModal 
                           transaction={tx} 
                           asset={{
-                            symbol: asset.symbol,
-                            name: asset.name,
-                            assetClass: asset.assetClass as any,
-                            currency: asset.currency as any
+                            symbol: symbol,
+                            name: assetName,
+                            assetClass: assetClass as any,
+                            currency: assetCurrency as any
                           }}
                           fxRate={fxRate}
                         />
