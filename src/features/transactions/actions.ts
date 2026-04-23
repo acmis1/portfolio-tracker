@@ -52,7 +52,17 @@ export async function addTransaction(formData: TransactionFormValues) {
         where: { symbol: effectiveSymbol, userId }
       })
 
-      if (!asset) {
+      if (asset) {
+        // Update existing asset to match current transaction's metadata
+        // This handles cases where an asset class changes (e.g. STOCK -> CRYPTO)
+        asset = await tx.asset.update({
+          where: { id: asset.id },
+          data: {
+            assetClass,
+            name,
+          }
+        })
+      } else {
         asset = await tx.asset.create({
           data: {
             symbol: effectiveSymbol,
