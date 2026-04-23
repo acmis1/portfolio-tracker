@@ -2,6 +2,7 @@ import { TrendingUp, TrendingDown, DollarSign, PieChart, Activity } from 'lucide
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { getPortfolioSummary } from '../utils'
 import { formatCurrency, formatPercentage } from '@/lib/formatters'
+import { formatVND } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 
 export async function OverviewCards() {
@@ -22,7 +23,7 @@ export async function OverviewCards() {
         </CardHeader>
         <CardContent>
           <div className="mb-4 text-2xl font-black tracking-tight text-white glow-emerald">
-            {formatCurrency(totalValue)}
+            {formatVND(totalValue)}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-slate-500">
@@ -81,7 +82,7 @@ export async function OverviewCards() {
             "mb-4 text-2xl font-black tracking-tight",
             totalRealizedPnL >= 0 ? "text-white glow-emerald" : "text-red-400"
           )}>
-            {formatCurrency(totalRealizedPnL)}
+            {formatVND(totalRealizedPnL)}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-slate-500">
@@ -104,7 +105,7 @@ export async function OverviewCards() {
         </CardHeader>
         <CardContent>
           <div className="mb-4 text-2xl font-black tracking-tight text-white">
-            {formatCurrency(totalInvested)}
+            {formatVND(totalInvested)}
           </div>
           <div className="text-sm font-medium text-slate-500 flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />

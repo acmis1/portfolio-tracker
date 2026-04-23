@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Pencil, Loader2, Trash2 } from "lucide-react"
+import { NumericFormat } from 'react-number-format'
 import { 
   Dialog, 
   DialogContent, 
@@ -115,7 +116,22 @@ export function EditCashModal({ transaction }: EditCashModalProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="amount">Amount (VND)</Label>
-              <Input id="amount" type="number" step="any" {...form.register("amount", { valueAsNumber: true })} />
+              <Controller
+                name="amount"
+                control={form.control}
+                render={({ field }) => (
+                  <NumericFormat
+                    id="amount"
+                    customInput={Input}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    value={field.value}
+                    onValueChange={(values) => {
+                      field.onChange(values.floatValue || 0);
+                    }}
+                  />
+                )}
+              />
             </div>
           </div>
 

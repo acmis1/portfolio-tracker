@@ -1,5 +1,6 @@
 import { getHoldingsLedger } from "@/features/portfolio/utils";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
+import { formatVND } from "@/lib/utils/format";
 import { Trophy, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -52,7 +53,7 @@ export async function TopHoldings() {
 
                 <div className="text-right flex flex-col items-end shrink-0">
                   <div className="font-bold text-white tabular-nums">
-                    {formatCurrency(holding.marketValue, 'VND')}
+                    {formatVND(holding.marketValue)}
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-[10px] font-black text-slate-500/60 uppercase tracking-tighter">

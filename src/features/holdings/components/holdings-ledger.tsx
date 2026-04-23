@@ -1,5 +1,6 @@
 import { AssetHolding } from "@/features/portfolio/utils";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
+import { formatVND, formatNumberDots } from "@/lib/utils/format";
 import { TrendingUp, TrendingDown, Clock, MapPin, Building2, Wallet } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -21,13 +22,13 @@ export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
         <div className="glass-premium p-6 rounded-2xl border border-white/5">
           <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Total Market Value</div>
           <div className="text-2xl font-black text-white">
-            {formatCurrency(holdings.reduce((sum, h) => sum + h.marketValue, 0), 'VND')}
+            {formatVND(holdings.reduce((sum, h) => sum + h.marketValue, 0))}
           </div>
         </div>
         <div className="glass-premium p-6 rounded-2xl border border-white/5">
           <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Liquid Breakdown</div>
           <div className="text-2xl font-black text-white">
-             {formatCurrency(liquidAssets.reduce((sum, h) => sum + h.marketValue, 0), 'VND')}
+             {formatVND(liquidAssets.reduce((sum, h) => sum + h.marketValue, 0))}
           </div>
         </div>
         <div className="glass-premium p-6 rounded-2xl border border-white/5">
@@ -72,7 +73,7 @@ export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
                           </Link>
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-slate-300">
-                          {holding.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                          {formatNumberDots(holding.quantity)}
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-slate-300">
                           {formatCurrency(displayAvgCost, holding.currency)}
@@ -81,7 +82,7 @@ export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
                           {displayLivePrice !== null ? formatCurrency(displayLivePrice, holding.currency) : "N/A"}
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-white">
-                          {formatCurrency(holding.marketValue, 'VND')}
+                          {formatVND(holding.marketValue)}
                         </td>
                         <td className="px-6 py-4 text-right">
                           {holding.unrealizedPnLPctg !== null ? (
@@ -138,15 +139,15 @@ export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
                    <div className="space-y-2">
                     <div className="flex justify-between items-end">
                       <span className="text-xs text-slate-500 font-medium italic">Principal</span>
-                      <span className="font-bold text-slate-300">{formatCurrency(holding.principal, 'VND')}</span>
+                      <span className="font-bold text-slate-300">{formatVND(holding.principal)}</span>
                     </div>
                     <div className="flex justify-between items-end">
                       <span className="text-xs text-slate-500 font-medium italic">Accrued Int.</span>
-                      <span className="font-bold text-emerald-400">+{formatCurrency(holding.accruedInterest, 'VND')}</span>
+                      <span className="font-bold text-emerald-400">+{formatVND(holding.accruedInterest)}</span>
                     </div>
                     <div className="pt-2 border-t border-white/5 flex justify-between items-end">
                       <span className="text-xs font-black uppercase text-slate-400">Current Value</span>
-                      <span className="text-lg font-black text-white">{formatCurrency(holding.marketValue, 'VND')}</span>
+                      <span className="text-lg font-black text-white">{formatVND(holding.marketValue)}</span>
                     </div>
                    </div>
                 </div>
@@ -181,11 +182,11 @@ export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
                           {holding.name}
                         </Link>
                         <div className="text-xs text-slate-500 font-medium italic">
-                          Purchased @ {formatCurrency(holding.purchasePrice, 'VND')}
+                          Purchased @ {formatVND(holding.purchasePrice)}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xl font-black text-white">{formatCurrency(holding.marketValue, 'VND')}</div>
+                        <div className="text-xl font-black text-white">{formatVND(holding.marketValue)}</div>
                         <div className={cn(
                           "text-[10px] font-black uppercase",
                           appreciation >= 0 ? "text-emerald-400" : "text-red-400"

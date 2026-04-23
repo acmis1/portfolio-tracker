@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Pencil, Loader2, Info, Trash2 } from "lucide-react"
+import { NumericFormat } from 'react-number-format'
 import { 
   Dialog, 
   DialogContent, 
@@ -19,6 +20,7 @@ import { transactionSchema, type TransactionFormValues } from "@/lib/validations
 import { editTransaction, deleteTransaction } from "@/features/transactions/actions"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/formatters"
+import { formatVND } from "@/lib/utils/format"
 
 interface EditTransactionModalProps {
   transaction: any;
@@ -137,7 +139,22 @@ export function EditTransactionModal({ transaction, asset, fxRate = 25400 }: Edi
             </div>
             <div className="space-y-2">
               <Label htmlFor="quantity">Quantity</Label>
-              <Input id="quantity" type="number" step="any" {...form.register("quantity", { valueAsNumber: true })} />
+              <Controller
+                name="quantity"
+                control={form.control}
+                render={({ field }) => (
+                  <NumericFormat
+                    id="quantity"
+                    customInput={Input}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    value={field.value}
+                    onValueChange={(values) => {
+                      field.onChange(values.floatValue || 0);
+                    }}
+                  />
+                )}
+              />
             </div>
           </div>
 
@@ -151,11 +168,26 @@ export function EditTransactionModal({ transaction, asset, fxRate = 25400 }: Edi
             </div>
             <div className="space-y-2 relative">
               <Label htmlFor="price">Price</Label>
-              <Input id="price" type="number" step="any" {...form.register("price", { valueAsNumber: true })} />
+              <Controller
+                name="price"
+                control={form.control}
+                render={({ field }) => (
+                  <NumericFormat
+                    id="price"
+                    customInput={Input}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    value={field.value}
+                    onValueChange={(values) => {
+                      field.onChange(values.floatValue || 0);
+                    }}
+                  />
+                )}
+              />
               {isUSD && inputPrice > 0 && (
                 <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-emerald-500/80">
                   <Info className="h-2.5 w-2.5" />
-                  Est. {formatCurrency(inputPrice * fxRate, 'VND')}
+                  Est. {formatVND(inputPrice * fxRate)}
                 </div>
               )}
             </div>
@@ -163,7 +195,22 @@ export function EditTransactionModal({ transaction, asset, fxRate = 25400 }: Edi
 
           <div className="space-y-2">
              <Label htmlFor="fees">Fees ({selectedCurrency})</Label>
-             <Input id="fees" type="number" step="any" {...form.register("fees", { valueAsNumber: true })} />
+             <Controller
+               name="fees"
+               control={form.control}
+               render={({ field }) => (
+                 <NumericFormat
+                   id="fees"
+                   customInput={Input}
+                   thousandSeparator="."
+                   decimalSeparator=","
+                   value={field.value}
+                   onValueChange={(values) => {
+                     field.onChange(values.floatValue || 0);
+                   }}
+                 />
+               )}
+             />
           </div>
 
           <Button 

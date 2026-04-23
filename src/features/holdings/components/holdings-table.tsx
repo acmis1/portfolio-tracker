@@ -1,5 +1,6 @@
 import { getHoldingsLedger } from "@/features/portfolio/utils";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
+import { formatNumberDots } from "@/lib/utils/format";
 import { TrendingUp, TrendingDown, Info, Plus } from "lucide-react";
 import { TransactionModal } from "@/features/transactions/components/transaction-modal";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,7 @@ export async function HoldingsTable({ fxRate }: HoldingsTableProps) {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right font-medium text-slate-300">
-                    {holding.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                    {formatNumberDots(holding.quantity)}
                   </td>
                   <td className="px-6 py-4 text-right font-medium text-slate-300">
                     {formatCurrency(displayAvgCost, holding.currency)}

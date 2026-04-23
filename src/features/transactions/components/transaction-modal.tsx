@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus, Loader2, Info } from "lucide-react"
+import { NumericFormat } from 'react-number-format'
 import { 
   Dialog, 
   DialogContent, 
@@ -19,6 +20,7 @@ import { transactionSchema, type TransactionFormValues } from "@/lib/validations
 import { addTransaction, getUserAssets } from "@/features/transactions/actions"
 import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/formatters"
+import { formatVND } from "@/lib/utils/format"
 
 interface TransactionModalProps {
   trigger?: React.ReactElement;
@@ -238,13 +240,23 @@ export function TransactionModal({
             <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
                <div className="space-y-2">
                 <Label htmlFor="interestRate">Interest Rate (%)</Label>
-                <Input 
-                  id="interestRate" 
-                  type="number" 
-                  step="any"
-                  placeholder="8.5"
-                  className={cn(errors.interestRate && "border-red-500/50")}
-                  {...form.register("interestRate", { valueAsNumber: true })}
+                <Controller
+                  name="interestRate"
+                  control={form.control}
+                  render={({ field }) => (
+                    <NumericFormat
+                      id="interestRate"
+                      className={cn(errors.interestRate && "border-red-500/50")}
+                      customInput={Input}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      placeholder="8.5"
+                      value={field.value}
+                      onValueChange={(values) => {
+                        field.onChange(values.floatValue || 0);
+                      }}
+                    />
+                  )}
                 />
                 {errors.interestRate && (
                   <p className="text-[10px] font-medium text-red-400">{errors.interestRate.message}</p>
@@ -269,12 +281,22 @@ export function TransactionModal({
             {!isTermDeposit && !isRealEstate && (
               <div className="space-y-2">
                 <Label htmlFor="quantity">Quantity</Label>
-                <Input 
-                  id="quantity" 
-                  type="number" 
-                  step="any"
-                  className={cn(errors.quantity && "border-red-500/50")}
-                  {...form.register("quantity", { valueAsNumber: true })}
+                <Controller
+                  name="quantity"
+                  control={form.control}
+                  render={({ field }) => (
+                    <NumericFormat
+                      id="quantity"
+                      className={cn(errors.quantity && "border-red-500/50")}
+                      customInput={Input}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      value={field.value}
+                      onValueChange={(values) => {
+                        field.onChange(values.floatValue || 0);
+                      }}
+                    />
+                  )}
                 />
                 {errors.quantity && (
                   <p className="text-[10px] font-medium text-red-400">{errors.quantity.message}</p>
@@ -284,17 +306,27 @@ export function TransactionModal({
             
             <div className={cn("space-y-2 relative", (isTermDeposit || isRealEstate) ? "col-span-2" : "")}>
               <Label htmlFor="price">{getPriceLabel()}</Label>
-              <Input 
-                id="price" 
-                type="number" 
-                step="any"
-                className={cn(errors.price && "border-red-500/50")}
-                {...form.register("price", { valueAsNumber: true })}
+              <Controller
+                name="price"
+                control={form.control}
+                render={({ field }) => (
+                  <NumericFormat
+                    id="price"
+                    className={cn(errors.price && "border-red-500/50")}
+                    customInput={Input}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    value={field.value}
+                    onValueChange={(values) => {
+                      field.onChange(values.floatValue || 0);
+                    }}
+                  />
+                )}
               />
               {isUSD && inputPrice > 0 && (
                 <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-emerald-500/80 animate-in fade-in slide-in-from-top-1">
                   <Info className="h-2.5 w-2.5" />
-                  Est. {formatCurrency(inputPrice * fxRate, 'VND')}
+                  Est. {formatVND(inputPrice * fxRate)}
                 </div>
               )}
               {errors.price && (
@@ -305,12 +337,22 @@ export function TransactionModal({
             {!isTermDeposit && !isGold && (
               <div className="space-y-2">
                 <Label htmlFor="fees">Fees ({selectedCurrency})</Label>
-                <Input 
-                  id="fees" 
-                  type="number" 
-                  step="any"
-                  className={cn(errors.fees && "border-red-500/50")}
-                  {...form.register("fees", { valueAsNumber: true })}
+                <Controller
+                  name="fees"
+                  control={form.control}
+                  render={({ field }) => (
+                    <NumericFormat
+                      id="fees"
+                      className={cn(errors.fees && "border-red-500/50")}
+                      customInput={Input}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      value={field.value}
+                      onValueChange={(values) => {
+                        field.onChange(values.floatValue || 0);
+                      }}
+                    />
+                  )}
                 />
                 {errors.fees && (
                   <p className="text-[10px] font-medium text-red-400">{errors.fees.message}</p>

@@ -1,5 +1,6 @@
 import { getCashTransactions } from '../actions'
 import { formatCurrency } from '@/lib/formatters'
+import { formatVND } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { EditCashModal } from './edit-cash-modal'
 
@@ -49,7 +50,7 @@ export async function CashLedgerTable() {
                   "px-6 py-4 text-right text-xs font-black tabular-nums",
                   isInflow(tx.type) ? "text-emerald-400" : "text-slate-400"
                 )}>
-                  {isInflow(tx.type) ? '+' : '-'} {formatCurrency(tx.amount)}
+                  {isInflow(tx.type) ? '+' : '-'} {formatVND(tx.amount)}
                 </td>
                 <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
                   <EditCashModal transaction={tx} />

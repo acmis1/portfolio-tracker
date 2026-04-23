@@ -1,6 +1,7 @@
 import { Building2, Layers, Bitcoin } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card'
 import { formatCurrency, formatPercentage } from '@/lib/formatters'
+import { formatVND } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 
 interface PerformanceAttributionProps {
@@ -59,7 +60,7 @@ export function PerformanceAttribution({ data }: PerformanceAttributionProps) {
                     Exposure
                   </span>
                   <span className="font-bold text-white tabular-nums">
-                    {formatCurrency(item.marketValue)}
+                    {formatVND(item.marketValue)}
                   </span>
                 </div>
 
@@ -68,7 +69,7 @@ export function PerformanceAttribution({ data }: PerformanceAttributionProps) {
                     Cost Basis
                   </span>
                   <span className="font-bold text-slate-400 tabular-nums">
-                    {formatCurrency(item.netInvested)}
+                    {formatVND(item.netInvested)}
                   </span>
                 </div>
               </div>
