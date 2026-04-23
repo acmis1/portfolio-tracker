@@ -40,7 +40,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
         suppressHydrationWarning
       >
-        <body className="min-h-full flex flex-col bg-slate-950">
+        <body className="min-h-full flex flex-col bg-slate-950" suppressHydrationWarning={true}>
           <TooltipProvider>
             <Navigation fxRate={fxRate} lastSync={lastSync} />
             <div className="flex-1">{children}</div>

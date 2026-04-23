@@ -19,7 +19,6 @@ import { Select } from "@/components/ui/select"
 import { transactionSchema, type TransactionFormValues } from "@/lib/validations"
 import { addTransaction, getUserAssets } from "@/features/transactions/actions"
 import { cn } from "@/lib/utils"
-import { formatCurrency } from "@/lib/formatters"
 import { formatVND } from "@/lib/utils/format"
 
 interface TransactionModalProps {
@@ -137,7 +136,7 @@ export function TransactionModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger || (
+        {trigger ? trigger : (
           <Button variant="premium" size="sm">
             <Plus className="mr-2 h-4 w-4" /> Add Transaction
           </Button>
