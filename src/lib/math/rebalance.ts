@@ -12,6 +12,7 @@ export interface Target {
   symbol?: string;
   assetClass?: string;
   targetWeight: number; // 0.0 to 1.0
+  id?: string;
 }
 
 export interface RebalanceNode {
@@ -24,6 +25,7 @@ export interface RebalanceNode {
   deltaShares: number;
   action: 'BUY' | 'SELL' | 'HOLD';
   assetId?: string;
+  targetId?: string;
   currentPrice?: number;
 }
 
@@ -76,6 +78,7 @@ export function calculateRebalancePlan(
       deltaShares,
       action: Math.abs(deltaCash) >= 1.0 ? (deltaCash > 0 ? 'BUY' : 'SELL') : 'HOLD',
       assetId,
+      targetId: target.id,
       currentPrice: matchingHoldings[0]?.currentPrice
     });
 
@@ -101,6 +104,7 @@ export function calculateRebalancePlan(
       deltaCash,
       deltaShares: 0, // Cannot calculate shares for a bucket aggregate
       action: Math.abs(deltaCash) >= 1.0 ? (deltaCash > 0 ? 'BUY' : 'SELL') : 'HOLD',
+      targetId: target.id
     });
 
     matchingHoldings.forEach(h => assignedAssetIds.add(h.assetId));
@@ -117,7 +121,7 @@ export function calculateRebalancePlan(
     nodes.push({
       key: `UNMANAGED:${h.assetId}`,
       symbol: h.symbol,
-      name: `${h.name} (Unmanaged)`,
+      name: h.name,
       currentValue,
       targetValue,
       deltaCash,

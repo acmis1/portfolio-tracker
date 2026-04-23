@@ -14,7 +14,8 @@ export async function getPortfolioSummary() {
     lastPriceDate: null,
     totalContributions: 0,
     totalWithdrawals: 0,
-    netCashFlow: 0
+    netCashFlow: 0,
+    cashBalance: 0
   }
 
   return await getPortfolioSummaryInternal(userId)
@@ -160,7 +161,8 @@ export async function getPortfolioSummaryInternal(userId: string) {
     lastPriceDate: latestPrice?.date || null,
     totalContributions,
     totalWithdrawals,
-    netCashFlow: totalContributions - totalWithdrawals
+    netCashFlow: totalContributions - totalWithdrawals,
+    cashBalance
   };
 }
 
