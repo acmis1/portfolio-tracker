@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from "@/lib/db"
+import { Prisma } from "@prisma/client"
 import { auth } from "@clerk/nextjs/server"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
@@ -22,44 +23,30 @@ export async function upsertTargetAllocation(input: TargetAllocationInput) {
   const data = targetAllocationSchema.parse(input)
 
   try {
-    if (data.id) {
-      await prisma.targetAllocation.update({
-        where: { id: data.id, userId },
-        data: {
-          type: data.type,
-          symbol: data.symbol,
-          assetClass: data.assetClass,
-          targetWeight: data.targetWeight
-        }
-      })
-    } else {
-      // Check for duplicates
-      const existing = await prisma.targetAllocation.findFirst({
-        where: {
-          userId,
-          type: data.type,
-          symbol: data.symbol,
-          assetClass: data.assetClass
-        }
-      })
+    // Determine the unique selector based on type
+    const where: Prisma.TargetAllocationWhereUniqueInput = data.id 
+      ? { id: data.id } 
+      : data.type === 'SYMBOL'
+        ? { userId_symbol: { userId, symbol: data.symbol! } }
+        : { userId_assetClass: { userId, assetClass: data.assetClass! } };
 
-      if (existing) {
-        await prisma.targetAllocation.update({
-          where: { id: existing.id },
-          data: { targetWeight: data.targetWeight }
-        })
-      } else {
-        await prisma.targetAllocation.create({
-          data: {
-            userId,
-            type: data.type,
-            symbol: data.symbol,
-            assetClass: data.assetClass,
-            targetWeight: data.targetWeight
-          }
-        })
+    await prisma.targetAllocation.upsert({
+      where,
+      update: {
+        type: data.type,
+        symbol: data.symbol,
+        assetClass: data.assetClass,
+        targetWeight: Number(data.targetWeight),
+        userId // Ensure userId is preserved
+      },
+      create: {
+        userId,
+        type: data.type,
+        symbol: data.symbol,
+        assetClass: data.assetClass,
+        targetWeight: Number(data.targetWeight)
       }
-    }
+    })
 
     revalidatePath('/rebalance')
     return { success: true }

@@ -22,7 +22,7 @@ export function PerformanceAttribution({ summary }: PerformanceAttributionProps)
   const grossReturns = totalInvested > 0 ? (totalCapitalGain / totalInvested) * 100 : 0;
 
   return (
-    <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
       {/* 1. Net Invested Capital */}
       <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/5">
         <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-500/10 blur-3xl" />
@@ -40,6 +40,27 @@ export function PerformanceAttribution({ summary }: PerformanceAttributionProps)
           </div>
           <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
             Total Capital at Risk
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 2. Net Cash Flow */}
+      <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/5">
+        <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-indigo-500/10 blur-3xl" />
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
+              Net Cash Flow
+            </CardDescription>
+            <Landmark className="h-4 w-4 text-indigo-500/50" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 text-2xl font-black tracking-tight text-white tabular-nums">
+            {formatVND(netCashFlow)}
+          </div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+            Deposits - Withdrawals
           </div>
         </CardContent>
       </Card>

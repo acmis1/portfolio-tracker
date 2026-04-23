@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { getCashBalanceInternal } from "@/features/cash/actions";
 import { auth } from "@clerk/nextjs/server";
 import { calculateRebalancePlan, Holding, Target, RebalancePlan, RebalanceNode } from "@/lib/math/rebalance";
@@ -13,21 +14,20 @@ import { getPortfolioSummaryInternal } from "../utils";
  * Enforces macro-bucket aggregation for Core/Satellite strategy.
  */
 function getBucketName(assetClass: string) {
-  let bucketName = assetClass; 
-  if (['INDIVIDUAL_STOCK', 'ETF', 'STOCK_FUND'].includes(assetClass)) {
-    bucketName = 'Equities (Funds)';
+  if (['ETF', 'STOCK_FUND'].includes(assetClass)) {
+    return 'Equities (Funds)';
   } else if (assetClass === 'BOND_FUND') {
-    bucketName = 'Fixed Income';
+    return 'Fixed Income';
   } else if (assetClass === 'CRYPTO') {
-    bucketName = 'Cryptocurrency';
+    return 'Cryptocurrency';
   } else if (assetClass === 'REAL_ESTATE') {
-    bucketName = 'Real Estate';
+    return 'Real Estate';
   } else if (assetClass === 'TERM_DEPOSIT') {
-    bucketName = 'Cash & Equivalents';
+    return 'Cash & Equivalents';
   } else if (assetClass === 'GOLD') {
-    bucketName = 'Commodities';
+    return 'Commodities';
   }
-  return bucketName;
+  return assetClass;
 }
 
 export type EnhancedRebalancePlan = RebalancePlan & {
@@ -100,7 +100,7 @@ export async function getRebalancePlan(): Promise<EnhancedRebalancePlan | null> 
       value = currentQty * price;
     }
 
-    if (symbolTargetsSet.has(asset.symbol)) {
+    if (symbolTargetsSet.has(asset.symbol) || asset.assetClass === 'INDIVIDUAL_STOCK') {
       aggregatedHoldings.push({
         assetId: asset.id,
         symbol: asset.symbol,
@@ -116,6 +116,13 @@ export async function getRebalancePlan(): Promise<EnhancedRebalancePlan | null> 
         value: existing.value + value
       });
     }
+  });
+
+  // Add liquid cash to 'Cash & Equivalents' bucket
+  const cashBucket = 'Cash & Equivalents';
+  const existingCash = classAggregationMap.get(cashBucket) || { value: 0 };
+  classAggregationMap.set(cashBucket, {
+    value: existingCash.value + cashBalance
   });
 
   classAggregationMap.forEach((data, bucketName) => {
@@ -190,17 +197,20 @@ export async function updateTargetWeight(key: string, newWeight: number) {
         await prisma.targetAllocation.deleteMany({ where: { userId, assetClass: value } });
       }
     } else {
+      const weight = Number(newWeight);
       if (type === 'SYMBOL') {
+        const where: Prisma.TargetAllocationWhereUniqueInput = { userId_symbol: { userId, symbol: value } };
         await prisma.targetAllocation.upsert({
-          where: { userId_symbol: { userId, symbol: value } },
-          update: { targetWeight: newWeight, type: 'SYMBOL' },
-          create: { userId, symbol: value, targetWeight: newWeight, type: 'SYMBOL' }
+          where,
+          update: { targetWeight: weight, type: 'SYMBOL' },
+          create: { userId, symbol: value, targetWeight: weight, type: 'SYMBOL' }
         });
       } else if (type === 'CLASS') {
+        const where: Prisma.TargetAllocationWhereUniqueInput = { userId_assetClass: { userId, assetClass: value } };
         await prisma.targetAllocation.upsert({
-          where: { userId_assetClass: { userId, assetClass: value } },
-          update: { targetWeight: newWeight, type: 'CLASS' },
-          create: { userId, assetClass: value, targetWeight: newWeight, type: 'CLASS' }
+          where,
+          update: { targetWeight: weight, type: 'CLASS' },
+          create: { userId, assetClass: value, targetWeight: weight, type: 'CLASS' }
         });
       }
     }
@@ -222,7 +232,7 @@ export async function executeRebalancePlan(nodes: RebalanceNode[]) {
   if (actionable.length === 0) return { success: false, error: "No actionable trades found" };
 
   try {
-    await prisma.$transaction(async (tx: any) => {
+    await prisma.$transaction(async (tx) => {
       for (const node of actionable) {
         const parts = node.key.split(':');
         let type = parts[0];
@@ -253,10 +263,13 @@ export async function executeRebalancePlan(nodes: RebalanceNode[]) {
           }, 0);
 
           for (const asset of classAssets) {
-            const qty = asset.transactions.reduce((acc: number, t: any) => t.type === 'BUY' ? acc + t.quantity : acc - t.quantity, 0);
+            const currentQty = asset.transactions.reduce((acc: number, t) => 
+              t.type === 'BUY' ? acc + t.quantity : acc - t.quantity, 0);
             const price = asset.prices[0]?.closePrice || 0;
-            const share = totalValue > 0 ? (qty * price) / totalValue : (1 / classAssets.length);
+            const assetValue = currentQty * price;
+            const share = totalValue > 0 ? assetValue / totalValue : (1 / classAssets.length);
             const amount = node.deltaCash * share;
+            
             if (Math.abs(amount) >= 1) {
               await executeTrade(tx, userId, asset.id, asset.symbol, amount, price);
             }
