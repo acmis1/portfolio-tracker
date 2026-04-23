@@ -72,10 +72,10 @@ export async function getRebalancePlan(): Promise<EnhancedRebalancePlan | null> 
   const aggregatedHoldings: Holding[] = [];
   const classAggregationMap = new Map<string, { value: number }>();
 
-  assets.forEach(asset => {
+  assets.forEach((asset) => {
     let currentQty = 0;
     let avgCost = 0;
-    asset.transactions.forEach(tx => {
+    asset.transactions.forEach((tx) => {
       if (tx.type === 'BUY') {
         const newQty = currentQty + tx.quantity;
         avgCost = (currentQty * avgCost + tx.quantity * tx.pricePerUnit) / newQty;
@@ -139,7 +139,7 @@ export async function getRebalancePlan(): Promise<EnhancedRebalancePlan | null> 
   const targetList: Target[] = [];
   const classTargetsWeights = new Map<string, { weight: number, id: string }>();
 
-  targets.forEach(t => {
+  targets.forEach((t) => {
     if (t.type === 'CLASS' && t.assetClass) {
       const bucketName = getBucketName(t.assetClass);
       // We take the first ID found for a bucket if multiple exist (unlikely but safe)
@@ -256,9 +256,9 @@ export async function executeRebalancePlan(nodes: RebalanceNode[]) {
               prices: { orderBy: { date: 'desc' }, take: 1 }
             }
           });
-          const classAssets = allAssets.filter((a: any) => getBucketName(a.assetClass) === value);
-          const totalValue = classAssets.reduce((sum: number, a: any) => {
-            const qty = a.transactions.reduce((acc: number, t: any) => t.type === 'BUY' ? acc + t.quantity : acc - t.quantity, 0);
+          const classAssets = allAssets.filter(a => getBucketName(a.assetClass) === value);
+          const totalValue = classAssets.reduce((sum, a) => {
+            const qty = a.transactions.reduce((acc: number, t) => t.type === 'BUY' ? acc + t.quantity : acc - t.quantity, 0);
             return sum + qty * (a.prices[0]?.closePrice || 0);
           }, 0);
 
@@ -281,12 +281,13 @@ export async function executeRebalancePlan(nodes: RebalanceNode[]) {
     revalidatePath('/');
     revalidatePath('/rebalance');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Trade execution failed";
+    return { success: false, error: message };
   }
 }
 
-async function executeTrade(tx: any, userId: string, assetId: string, symbol: string, amount: number, price: number) {
+async function executeTrade(tx: Prisma.TransactionClient, userId: string, assetId: string, symbol: string, amount: number, price: number) {
   if (price <= 0) return;
   const absAmount = Math.abs(amount);
   const quantity = absAmount / price;
@@ -317,7 +318,7 @@ export async function getPortfolioSnapshots() {
   const { userId } = await auth();
   if (!userId) return [];
   const snapshots = await prisma.portfolioSnapshot.findMany({ where: { userId }, orderBy: { date: 'asc' } });
-  return snapshots.map((s: any) => ({
+  return snapshots.map((s) => ({
     date: s.date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
     value: s.totalValue,
     invested: s.costBasis,
