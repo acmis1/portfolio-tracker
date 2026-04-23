@@ -90,7 +90,7 @@ export default async function DashboardPage() {
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 px-1">
             Performance Attribution
           </h2>
-          <PerformanceAttribution data={assetPerformance} />
+          <PerformanceAttribution data={assetPerformance} fxRate={fxRate} />
         </div>
 
         {/* Row 3: Analytics Grid (Growth + Allocation) */}

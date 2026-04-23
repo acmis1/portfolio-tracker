@@ -11,6 +11,7 @@ interface PerformanceAttributionProps {
     netInvested: number;
     roi: number;
   }[];
+  fxRate?: number;
 }
 
 const icons: Record<string, any> = {
@@ -25,7 +26,7 @@ const glows: Record<string, string> = {
   'Crypto': 'bg-blue-500/10'
 }
 
-export function PerformanceAttribution({ data }: PerformanceAttributionProps) {
+export function PerformanceAttribution({ data, fxRate }: PerformanceAttributionProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {data.map((item) => {
@@ -42,7 +43,15 @@ export function PerformanceAttribution({ data }: PerformanceAttributionProps) {
                 <CardDescription className="text-slate-400 font-medium tracking-wide uppercase text-xs">
                   {item.name} Performance
                 </CardDescription>
-                <Icon className="h-4 w-4 text-slate-500/50" />
+                <div className="flex items-center gap-2">
+                  {item.name === 'Crypto' && fxRate && (
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20">
+                      <span className="text-[9px] font-black text-blue-400 uppercase tracking-tighter">USD/VND:</span>
+                      <span className="text-[10px] font-bold text-white tabular-nums">{formatVND(fxRate).replace('₫', '')}</span>
+                    </div>
+                  )}
+                  <Icon className="h-4 w-4 text-slate-500/50" />
+                </div>
               </div>
             </CardHeader>
 

@@ -57,6 +57,12 @@ export function AssetHeader({ asset, fxRate }: AssetHeaderProps) {
             <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold uppercase tracking-widest text-slate-400">
               {asset.assetClass.replace('_', ' ')}
             </span>
+            {asset.assetClass === 'CRYPTO' && (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">USD/VND:</span>
+                <span className="text-xs font-bold text-white tabular-nums">{fxRate.toLocaleString()}</span>
+              </div>
+            )}
           </div>
           {!isTD && !isRE && (
             <p className="text-slate-400 font-medium">

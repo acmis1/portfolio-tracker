@@ -64,7 +64,7 @@ export async function TopHoldings() {
                         "text-[10px] font-black tabular-nums",
                         pnlValue! >= 0 ? "text-emerald-500" : "text-rose-500"
                       )}>
-                        {pnlValue! >= 0 ? '+' : ''}{formatPercentage(pnlValue!)}
+                        {formatPercentage(pnlValue!)}
                       </span>
                     ) : (
                       <span className="text-[10px] font-black text-slate-600 uppercase tracking-tight">

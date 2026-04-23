@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/layout/navigation";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { getLiveExchangeRate } from "@/lib/fx";
 import { ClerkProvider } from "@clerk/nextjs";
 
 const geistSans = Geist({
@@ -21,18 +20,11 @@ export const metadata: Metadata = {
   description: "Institutional-grade wealth management and portfolio intelligence",
 };
 
-import { getLastSyncTime } from "@/features/portfolio/actions/stats";
-
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [fxRate, lastSync] = await Promise.all([
-    getLiveExchangeRate(),
-    getLastSyncTime(),
-  ]);
-
   return (
     <ClerkProvider>
       <html
@@ -42,7 +34,7 @@ export default async function RootLayout({
       >
         <body className="min-h-full flex flex-col bg-slate-950" suppressHydrationWarning={true}>
           <TooltipProvider>
-            <Navigation fxRate={fxRate} lastSync={lastSync} />
+            <Navigation />
             <div className="flex-1">{children}</div>
           </TooltipProvider>
         </body>
