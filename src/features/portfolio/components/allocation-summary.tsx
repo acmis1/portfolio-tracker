@@ -1,15 +1,16 @@
-import { RebalancingSummary } from "../types";
+import { EnhancedRebalancePlan } from "../actions/rebalance";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency, formatPercentage } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
 import { AlertCircle, CheckCircle2, Wallet } from "lucide-react";
 
 interface AllocationSummaryProps {
-  summary: RebalancingSummary;
+  plan: EnhancedRebalancePlan;
 }
 
-export function AllocationSummary({ summary }: AllocationSummaryProps) {
-  const totalTargetWeight = summary.drifts.reduce((acc: number, drift: any) => acc + drift.targetWeight, 0);
-  const isOverAllocated = totalTargetWeight > 100.01; // Small epsilon for float math
+export function AllocationSummary({ plan }: AllocationSummaryProps) {
+  const totalTargetValue = plan.nodes.reduce((acc: number, node: any) => acc + node.targetValue, 0);
+  const totalTargetWeight = plan.totalAum > 0 ? (totalTargetValue / plan.totalAum) * 100 : 0;
+  const isOverAllocated = totalTargetWeight > 100.01; 
   const cashReserveTarget = Math.max(0, 100 - totalTargetWeight);
 
   return (
@@ -22,9 +23,9 @@ export function AllocationSummary({ summary }: AllocationSummaryProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-black text-white">{formatCurrency(summary.totalPortfolioValue || 0)}</div>
+          <div className="text-2xl font-black text-white">{formatCurrency(plan.totalAum || 0)}</div>
           <div className="text-xs text-slate-400 mt-1">
-            Includes <span className="text-emerald-400 font-bold">{formatCurrency(summary.cashBalance)}</span> unallocated cash
+            Includes <span className="text-emerald-400 font-bold">{formatCurrency(plan.cashBalance)}</span> unallocated cash
           </div>
         </CardContent>
       </Card>
@@ -62,10 +63,10 @@ export function AllocationSummary({ summary }: AllocationSummaryProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-black text-white">
-            {summary.drifts.filter((d: any) => Math.abs(d.drift) > 5).length > 0 ? "Drifting" : "Aligned"}
+            {plan.nodes.filter((d: any) => Math.abs(d.deltaCash) > (plan.totalAum * 0.05)).length > 0 ? "Drifting" : "Aligned"}
           </div>
           <div className="text-xs text-slate-400 mt-1">
-          {summary.drifts.filter((d: any) => Math.abs(d.drift) > 5).length} assets deviate by {'>'} 5%
+          {plan.nodes.filter((d: any) => Math.abs(d.deltaCash) > (plan.totalAum * 0.05)).length} buckets deviate by {'>'} 5%
           </div>
         </CardContent>
       </Card>

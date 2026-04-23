@@ -12,7 +12,7 @@ import {
 } from 'recharts'
 import { cn } from '@/lib/utils'
 import { TrendingUp, Camera, Check, Loader2 } from 'lucide-react'
-import { forcePortfolioSnapshot } from '../actions/rebalancing'
+import { forcePortfolioSnapshot } from '../actions/rebalance'
 import { useRouter } from 'next/navigation'
 
 interface GrowthChartProps {

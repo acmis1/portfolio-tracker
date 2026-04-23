@@ -129,7 +129,7 @@ export async function POST(req: Request) {
     // 4. Trigger Portfolio Snapshots for affected users
     let snapshotStatus = "skipped";
     if (updatedUserIds.size > 0) {
-      const { capturePortfolioSnapshotInternal } = await import("@/features/portfolio/actions/rebalancing");
+      const { capturePortfolioSnapshotInternal } = await import("@/features/portfolio/actions/rebalance");
       try {
         for (const userId of updatedUserIds) {
           await capturePortfolioSnapshotInternal(userId);

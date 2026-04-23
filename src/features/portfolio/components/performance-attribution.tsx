@@ -22,7 +22,7 @@ export function PerformanceAttribution({ summary }: PerformanceAttributionProps)
   const grossReturns = totalInvested > 0 ? (totalCapitalGain / totalInvested) * 100 : 0;
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
       {/* 1. Net Invested Capital */}
       <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/5">
         <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-500/10 blur-3xl" />

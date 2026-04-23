@@ -1,9 +1,11 @@
-import { getRebalancePlan } from "@/features/portfolio/actions/rebalancing";
+import { getRebalancePlan } from "@/features/portfolio/actions/rebalance";
 import { AllocationSummary } from "@/features/portfolio/components/allocation-summary";
 import { DriftTable } from "@/features/portfolio/components/drift-table";
 import { ShieldCheck, ArrowLeft, Info } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+
+import { getTargetAllocations } from "@/features/portfolio/actions/allocations";
 
 export const metadata = {
   title: "Rebalancing & Drift Analysis | Aegis Ledger",
@@ -11,7 +13,12 @@ export const metadata = {
 };
 
 export default async function RebalancePage() {
-  const summary = await getRebalancePlan();
+  const [plan, targets] = await Promise.all([
+    getRebalancePlan(),
+    getTargetAllocations()
+  ]);
+
+  if (!plan) return <div>Unauthorized</div>;
 
   return (
     <main className="min-h-screen bg-[#020617] text-slate-200 selection:bg-emerald-500/30">
@@ -53,17 +60,17 @@ export default async function RebalancePage() {
         </div>
 
         {/* Performance & Allocation Logic */}
-        <AllocationSummary summary={summary} />
+        <AllocationSummary plan={plan} />
 
         {/* Drift Analysis Table */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-black text-white px-1">Holding Deviations</h2>
             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-              Live calculated based on {summary.drifts.length} assets
+              Live calculated based on {plan.nodes.length} nodes
             </span>
           </div>
-          <DriftTable drifts={summary.drifts} />
+          <DriftTable nodes={plan.nodes} initialTargets={targets} />
         </div>
 
         {/* Footer Audit Trail Notice */}

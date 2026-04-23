@@ -5,7 +5,7 @@ import { AllocationChart } from '@/features/portfolio/components/allocation-char
 import { Suspense } from 'react'
 import { TopHoldings } from '@/features/holdings/components/top-holdings'
 import { getHoldingsLedger, getPortfolioSummary, getAssetClassPerformance } from "@/features/portfolio/utils"
-import { getPortfolioSnapshots } from "@/features/portfolio/actions/rebalancing"
+import { getPortfolioSnapshots } from "@/features/portfolio/actions/rebalance"
 import { cn } from '@/lib/utils'
 import { CashLedgerTable } from '@/features/cash/components/cash-ledger-table'
 import { PerformanceAttribution } from '@/features/portfolio/components/performance-attribution'
