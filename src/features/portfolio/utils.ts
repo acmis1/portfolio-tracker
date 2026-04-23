@@ -171,7 +171,8 @@ export type AssetHolding =
   | (LiquidHolding & { type: 'LIQUID' })
   | (TermDepositHolding & { type: 'TERM_DEPOSIT' })
   | (RealEstateHolding & { type: 'REAL_ESTATE' })
-  | (GoldHolding & { type: 'GOLD' });
+  | (GoldHolding & { type: 'GOLD' })
+  | (CashHolding & { type: 'CASH' });
 
 interface BaseHolding {
   id: string;
@@ -216,11 +217,17 @@ interface GoldHolding extends BaseHolding {
   unit: string;
 }
 
+interface CashHolding extends BaseHolding {
+  balance: number;
+  quantity: number;
+}
+
 export async function getHoldingsLedger(): Promise<AssetHolding[]> {
   const { userId } = await auth()
   if (!userId) return []
 
-  const assets = await prisma.asset.findMany({
+  const [assets, cashTransactions] = await Promise.all([
+    prisma.asset.findMany({
     where: { userId },
     select: {
       id: true,
@@ -239,8 +246,18 @@ export async function getHoldingsLedger(): Promise<AssetHolding[]> {
         take: 1,
         orderBy: { startDate: 'desc' }
       }
-    }
-  });
+      }
+    }),
+    prisma.cashTransaction.findMany({
+      where: { userId }
+    })
+  ]);
+
+  const cashBalance = cashTransactions.reduce((acc, tx) => {
+    if (['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL_ASSET'].includes(tx.type)) return acc + tx.amount;
+    if (['WITHDRAWAL', 'BUY_ASSET'].includes(tx.type)) return acc - tx.amount;
+    return acc;
+  }, 0);
 
   const holdings: AssetHolding[] = [];
   const now = new Date();
@@ -349,6 +366,23 @@ export async function getHoldingsLedger(): Promise<AssetHolding[]> {
         });
       }
     }
+  }
+
+  // Add Cash as a position
+  if (Math.abs(cashBalance) > 0.01) {
+    holdings.push({
+      id: 'cash-balance',
+      symbol: 'CASH',
+      name: 'Cash Balance',
+      currency: 'VND',
+      assetClass: 'CASH',
+      type: 'CASH',
+      marketValue: cashBalance,
+      balance: cashBalance,
+      quantity: 1,
+      weight: 0,
+      status: cashBalance >= 0 ? 'Liquid' : 'Overdrawn',
+    });
   }
 
   const finalTotalValue = holdings.reduce((sum, h) => sum + h.marketValue, 0);

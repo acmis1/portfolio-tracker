@@ -11,7 +11,7 @@ interface HoldingsLedgerProps {
 }
 
 export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
-  const liquidAssets = holdings.filter(h => h.type === 'LIQUID' || h.type === 'GOLD');
+  const liquidAssets = holdings.filter(h => h.type === 'LIQUID' || h.type === 'GOLD' || h.type === 'CASH');
   const termDeposits = holdings.filter(h => h.type === 'TERM_DEPOSIT');
   const realEstate = holdings.filter(h => h.type === 'REAL_ESTATE');
 
@@ -67,25 +67,39 @@ export function HoldingsLedger({ holdings, fxRate }: HoldingsLedgerProps) {
                     return (
                       <tr key={holding.id} className="hover:bg-white/5 transition-colors group">
                         <td className="px-6 py-4">
-                          <Link href={`/holdings/${holding.id}`} className="flex flex-col group/link">
-                            <span className="font-bold text-white group-hover/link:text-emerald-400 transition-colors">{holding.symbol}</span>
-                            <span className="text-xs text-slate-500">{holding.name}</span>
-                          </Link>
+                          {holding.type === 'CASH' ? (
+                            <div className="flex flex-col">
+                              <span className="font-bold text-white">{holding.symbol}</span>
+                              <span className="text-xs text-slate-500">{holding.name}</span>
+                            </div>
+                          ) : (
+                            <Link href={`/holdings/${holding.id}`} className="flex flex-col group/link">
+                              <span className="font-bold text-white group-hover/link:text-emerald-400 transition-colors">{holding.symbol}</span>
+                              <span className="text-xs text-slate-500">{holding.name}</span>
+                            </Link>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-slate-300">
-                          {formatNumberDots(holding.quantity)}
+                          {holding.type === 'CASH' ? '—' : formatNumberDots(holding.quantity)}
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-slate-300">
-                          {formatCurrency(displayAvgCost, holding.currency)}
+                          {holding.type === 'CASH' ? '—' : formatCurrency(displayAvgCost, holding.currency)}
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-slate-300">
-                          {displayLivePrice !== null ? formatCurrency(displayLivePrice, holding.currency) : "N/A"}
+                          {holding.type === 'CASH' ? '—' : (displayLivePrice !== null ? formatCurrency(displayLivePrice, holding.currency) : "N/A")}
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-white">
                           {formatVND(holding.marketValue)}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {holding.unrealizedPnLPctg !== null ? (
+                          {holding.type === 'CASH' ? (
+                            <span className={cn(
+                              "text-xs font-black uppercase tracking-widest",
+                              holding.marketValue >= 0 ? "text-emerald-400" : "text-amber-400"
+                            )}>
+                              {holding.status}
+                            </span>
+                          ) : holding.unrealizedPnLPctg !== null ? (
                             <div className={cn(
                               "inline-flex items-center gap-1 font-black px-2 py-0.5 rounded-full text-[10px]",
                               holding.unrealizedPnLPctg >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
