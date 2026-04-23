@@ -14,7 +14,7 @@ model Asset {
   symbol       String
   name         String
   assetClass   String
-  targetWeight Float?        @default(0)
+  targetWeight Float?
   currency     String        @default("VND")
   prices       DailyPrice[]
   termDeposits TermDeposit[]
