@@ -16,6 +16,7 @@ export async function getPortfolioSummary() {
     lastPriceDate: null,
     totalContributions: 0,
     totalWithdrawals: 0,
+    totalPassiveIncome: 0,
     netCashFlow: 0,
     holdings: [],
     cashHolding: null
@@ -55,10 +56,12 @@ export async function getPortfolioSummaryInternal(userId: string) {
 
   let totalContributions = 0;
   let totalWithdrawals = 0;
+  let totalPassiveIncome = 0;
   
   const cashBalance = cashTransactions.reduce((acc: number, tx: any) => {
     if (tx.type === 'DEPOSIT') totalContributions += tx.amount;
     if (tx.type === 'WITHDRAWAL') totalWithdrawals += tx.amount;
+    if (['DIVIDEND', 'INTEREST'].includes(tx.type)) totalPassiveIncome += tx.amount;
 
     if (['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL_ASSET'].includes(tx.type)) return acc + tx.amount;
     if (['WITHDRAWAL', 'BUY_ASSET'].includes(tx.type)) return acc - tx.amount;
@@ -240,6 +243,7 @@ export async function getPortfolioSummaryInternal(userId: string) {
     lastPriceDate: latestPrice?.date || null,
     totalContributions,
     totalWithdrawals,
+    totalPassiveIncome,
     netCashFlow: totalContributions - totalWithdrawals,
     holdings: holdingsWithWeights,
     cashHolding: Math.abs(cashBalance) > 0.01 ? {

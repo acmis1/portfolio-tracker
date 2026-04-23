@@ -4,6 +4,7 @@ import { type PortfolioSummary } from '../utils'
 import { formatPercentage } from '@/lib/formatters'
 import { formatVND } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 interface DashboardSummaryProps {
   summary: PortfolioSummary;
@@ -166,10 +167,16 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
           </span>
         </div>
 
-        <div className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Net Worth (Equity)</span>
-          <span className="text-sm font-black text-slate-400 tabular-nums">{formatVND(netWorth)}</span>
-        </div>
+        <Link 
+          href="/income"
+          className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1 hover:bg-white/5 transition-colors group"
+        >
+          <div className="flex items-center justify-between pr-2">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Passive Income</span>
+            <TrendingUp className="h-2.5 w-2.5 text-slate-600 group-hover:text-emerald-400 transition-colors" />
+          </div>
+          <span className="text-sm font-black text-slate-200 tabular-nums">{formatVND(summary.totalPassiveIncome)}</span>
+        </Link>
       </div>
     </div>
   )

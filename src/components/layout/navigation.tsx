@@ -28,8 +28,7 @@ export function Navigation() {
           <div className="hidden lg:flex items-center gap-6 border-white/10 pr-6">
             <Link href="/" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors border-r border-white/10 pr-6">Dashboard</Link>
             <Link href="/holdings" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors border-r border-white/10 pr-6">Holdings</Link>
-            <Link href="/rebalance" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors border-r border-white/10 pr-6">Rebalance</Link>
-            <Link href="/income" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors pr-6">Income</Link>
+            <Link href="/rebalance" className="text-sm font-bold text-white hover:text-emerald-400 cursor-pointer transition-colors pr-6">Rebalance</Link>
           </div>
           
           <TransactionModal />
