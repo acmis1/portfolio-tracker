@@ -23,30 +23,35 @@ export async function upsertTargetAllocation(input: TargetAllocationInput) {
   const data = targetAllocationSchema.parse(input)
 
   try {
-    // Determine the unique selector based on type
-    const where: Prisma.TargetAllocationWhereUniqueInput = data.id 
-      ? { id: data.id } 
-      : data.type === 'SYMBOL'
-        ? { userId_symbol: { userId, symbol: data.symbol! } }
-        : { userId_assetClass: { userId, assetClass: data.assetClass! } };
-
-    await prisma.targetAllocation.upsert({
-      where,
-      update: {
-        type: data.type,
-        symbol: data.symbol,
-        assetClass: data.assetClass,
-        targetWeight: Number(data.targetWeight),
-        userId // Ensure userId is preserved
-      },
-      create: {
-        userId,
-        type: data.type,
-        symbol: data.symbol,
-        assetClass: data.assetClass,
-        targetWeight: Number(data.targetWeight)
-      }
+    const existing = await prisma.targetAllocation.findFirst({
+      where: data.id 
+        ? { id: data.id, userId } 
+        : data.type === 'SYMBOL' 
+          ? { userId, symbol: data.symbol } 
+          : { userId, assetClass: data.assetClass }
     })
+
+    if (existing) {
+      await prisma.targetAllocation.update({
+        where: { id: existing.id },
+        data: { 
+          type: data.type, 
+          symbol: data.symbol, 
+          assetClass: data.assetClass, 
+          targetWeight: Number(data.targetWeight) 
+        }
+      })
+    } else {
+      await prisma.targetAllocation.create({
+        data: { 
+          userId, 
+          type: data.type, 
+          symbol: data.symbol, 
+          assetClass: data.assetClass, 
+          targetWeight: Number(data.targetWeight) 
+        }
+      })
+    }
 
     revalidatePath('/rebalance')
     return { success: true }

@@ -198,19 +198,26 @@ export async function updateTargetWeight(key: string, newWeight: number) {
       }
     } else {
       const weight = Number(newWeight);
-      if (type === 'SYMBOL') {
-        const where: Prisma.TargetAllocationWhereUniqueInput = { userId_symbol: { userId, symbol: value } };
-        await prisma.targetAllocation.upsert({
-          where,
-          update: { targetWeight: weight, type: 'SYMBOL' },
-          create: { userId, symbol: value, targetWeight: weight, type: 'SYMBOL' }
+      const existing = await prisma.targetAllocation.findFirst({
+        where: type === 'SYMBOL' 
+          ? { userId, symbol: value } 
+          : { userId, assetClass: value }
+      });
+
+      if (existing) {
+        await prisma.targetAllocation.update({
+          where: { id: existing.id },
+          data: { targetWeight: weight, type: type as any }
         });
-      } else if (type === 'CLASS') {
-        const where: Prisma.TargetAllocationWhereUniqueInput = { userId_assetClass: { userId, assetClass: value } };
-        await prisma.targetAllocation.upsert({
-          where,
-          update: { targetWeight: weight, type: 'CLASS' },
-          create: { userId, assetClass: value, targetWeight: weight, type: 'CLASS' }
+      } else {
+        await prisma.targetAllocation.create({
+          data: { 
+            userId, 
+            targetWeight: weight, 
+            type: type as any,
+            symbol: type === 'SYMBOL' ? value : null,
+            assetClass: type === 'CLASS' ? value : null
+          }
         });
       }
     }
