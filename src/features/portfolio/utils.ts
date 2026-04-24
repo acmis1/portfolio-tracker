@@ -138,9 +138,12 @@ export async function getPortfolioSummaryInternal(userId: string) {
           marketValue: assetValue,
           principal: td.principal,
           interestRate: td.interestRate,
+          startDate: td.startDate,
           maturityDate: td.maturityDate,
           accruedInterest,
           daysToMaturity,
+          unrealizedPnL: accruedInterest,
+          unrealizedPnLPctg: td.interestRate,
           status: daysToMaturity <= 0 ? 'Matured' : `Matures in ${daysToMaturity}d`,
         });
       } else if (asset.assetClass === 'REAL_ESTATE') {
@@ -158,6 +161,8 @@ export async function getPortfolioSummaryInternal(userId: string) {
           currentValuation: livePrice,
           valuationDate: asset.prices[0]?.date ?? null,
           appraisalAgeDays,
+          unrealizedPnL: livePrice - runningAvgCost,
+          unrealizedPnLPctg: runningAvgCost > 0 ? ((livePrice - runningAvgCost) / runningAvgCost) * 100 : 0,
           status: appraisalAgeDays !== null ? `Appraisal ${appraisalAgeDays}d old` : 'Manual Valuation',
         });
       } else {
@@ -292,9 +297,12 @@ interface LiquidHolding extends BaseHolding {
 interface TermDepositHolding extends BaseHolding {
   principal: number;
   interestRate: number;
+  startDate: Date;
   maturityDate: Date;
   accruedInterest: number;
   daysToMaturity: number;
+  unrealizedPnL: number; // The accrued interest is the "gain"
+  unrealizedPnLPctg: number; // The interest rate is the "ROI"
 }
 
 interface RealEstateHolding extends BaseHolding {
@@ -302,6 +310,8 @@ interface RealEstateHolding extends BaseHolding {
   currentValuation: number;
   valuationDate: Date | null;
   appraisalAgeDays: number | null;
+  unrealizedPnL: number;
+  unrealizedPnLPctg: number;
 }
 
 interface GoldHolding extends BaseHolding {

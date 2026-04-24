@@ -28,6 +28,21 @@ export function formatNumberDots(value: number | undefined | null): string {
     maximumFractionDigits: 0,
   }).format(value);
 }
+
+/**
+ * Formats an asset quantity with appropriate precision (up to 6 decimals)
+ * Prevents showing "0" for small positions like Crypto or Gold.
+ */
+export function formatQuantity(value: number | undefined | null): string {
+  if (value === undefined || value === null) return '0';
+  
+  // For very small numbers, we want to see the decimals.
+  // For large numbers, we might still want some decimals if they exist.
+  return new Intl.NumberFormat('vi-VN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 6,
+  }).format(value);
+}
 /**
  * Formats a number as a compact VND currency (e.g., 1.4B ₫)
  */
