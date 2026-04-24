@@ -1,12 +1,33 @@
+'use client'
+
+import { useState, useMemo } from 'react'
 import { formatVND } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { EditCashModal } from './edit-cash-modal'
+import { Search, Filter, ArrowUpRight, ArrowDownLeft, Wallet, Landmark, TrendingUp, CircleDollarSign } from 'lucide-react'
 
 interface CashLedgerTableProps {
   transactions: any[];
 }
 
+type TxType = 'ALL' | 'DEPOSIT' | 'WITHDRAWAL' | 'BUY_ASSET' | 'SELL_ASSET' | 'DIVIDEND' | 'INTEREST';
+
 export function CashLedgerTable({ transactions }: CashLedgerTableProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeType, setActiveType] = useState<TxType>('ALL')
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(tx => {
+      const matchesSearch = 
+        tx.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tx.transaction?.asset?.symbol?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tx.transaction?.asset?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesType = activeType === 'ALL' || tx.type === activeType;
+      
+      return matchesSearch && matchesType;
+    })
+  }, [transactions, searchQuery, activeType])
 
   if (transactions.length === 0) {
     return (
@@ -20,80 +41,141 @@ export function CashLedgerTable({ transactions }: CashLedgerTableProps) {
     return ['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL_ASSET'].includes(type)
   }
 
-  return (
-    <div className="glass-premium overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-white/5 bg-white/5">
-              <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Date</th>
-              <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Type</th>
-              <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Asset / Activity</th>
-              <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Details</th>
-              <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Cash Flow</th>
-              <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {transactions.map((tx: any) => {
-              const asset = tx.transaction?.asset;
-              const isAssetTx = !!tx.transaction;
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'DEPOSIT': return <ArrowDownLeft className="h-3 w-3 text-emerald-400" />
+      case 'WITHDRAWAL': return <ArrowUpRight className="h-3 w-3 text-rose-400" />
+      case 'BUY_ASSET': return <CircleDollarSign className="h-3 w-3 text-blue-400" />
+      case 'SELL_ASSET': return <TrendingUp className="h-3 w-3 text-emerald-400" />
+      case 'DIVIDEND': return <Wallet className="h-3 w-3 text-amber-400" />
+      case 'INTEREST': return <Landmark className="h-3 w-3 text-indigo-400" />
+      default: return null
+    }
+  }
 
-              return (
-                <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
-                  <td className="px-6 py-4 text-xs font-medium text-slate-300">
-                    {new Date(tx.date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={cn(
-                      "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest",
-                      isAssetTx ? "bg-blue-500/10 text-blue-400" : "bg-slate-800 text-slate-400"
-                    )}>
-                      {tx.type.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-black text-slate-200">
-                        {asset ? asset.symbol : (tx.description || tx.type.replace('_', ' '))}
-                      </span>
-                      {asset && (
-                        <span className="text-[10px] text-slate-500 font-medium truncate max-w-[200px]">
-                          {asset.name}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {tx.transaction ? (
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-slate-400">
-                          {tx.transaction.quantity > 0 ? `${tx.transaction.quantity.toLocaleString()} units` : '-'}
-                        </span>
-                        <span className="text-[10px] text-slate-500">
-                          @ {formatVND(tx.transaction.pricePerUnit)}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-[10px] text-slate-500 italic">
-                        {tx.referenceId ? `Ref: ${tx.referenceId}` : 'Cash operation'}
-                      </span>
-                    )}
-                  </td>
-                  <td className={cn(
-                    "px-6 py-4 text-right text-xs font-black tabular-nums",
-                    isInflow(tx.type) ? "text-emerald-400" : "text-slate-400"
-                  )}>
-                    {isInflow(tx.type) ? '+' : '-'} {formatVND(tx.amount)}
-                  </td>
-                  <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                    <EditCashModal transaction={tx} />
+  return (
+    <div className="space-y-6">
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="relative w-full md:w-96 group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+          <input
+            type="text"
+            placeholder="Search assets, activities, descriptions..."
+            className="w-full bg-slate-900/50 border border-white/5 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
+          {(['ALL', 'DEPOSIT', 'WITHDRAWAL', 'BUY_ASSET', 'SELL_ASSET', 'DIVIDEND', 'INTEREST'] as TxType[]).map((type) => (
+            <button
+              key={type}
+              onClick={() => setActiveType(type)}
+              className={cn(
+                "whitespace-nowrap px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border",
+                activeType === type
+                  ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                  : "bg-slate-900/50 border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10"
+              )}
+            >
+              {type.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="glass-premium overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/5 bg-white/5">
+                <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400 text-[10px]">Date</th>
+                <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400 text-[10px]">Type</th>
+                <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400 text-[10px]">Activity / Asset</th>
+                <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400 text-[10px]">Details</th>
+                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400 text-[10px]">Amount</th>
+                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400 text-[10px]"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {filteredTransactions.length > 0 ? (
+                filteredTransactions.map((tx: any) => {
+                  const asset = tx.transaction?.asset;
+                  const isAssetTx = !!tx.transaction;
+
+                  return (
+                    <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
+                      <td className="px-6 py-4 text-[11px] font-medium text-slate-400 tabular-nums">
+                        {new Date(tx.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className={cn(
+                            "p-1.5 rounded-lg",
+                            isInflow(tx.type) ? "bg-emerald-500/10" : "bg-rose-500/10"
+                          )}>
+                            {getTypeIcon(tx.type)}
+                          </div>
+                          <span className={cn(
+                            "text-[10px] font-bold uppercase tracking-widest",
+                            isAssetTx ? "text-blue-400" : "text-slate-400"
+                          )}>
+                            {tx.type.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-black text-slate-200">
+                            {asset ? asset.symbol : (tx.description || tx.type.replace('_', ' '))}
+                          </span>
+                          {asset && (
+                            <span className="text-[10px] text-slate-500 font-medium truncate max-w-[200px]">
+                              {asset.name}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {tx.transaction ? (
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-slate-400">
+                              {tx.transaction.quantity > 0 ? `${tx.transaction.quantity.toLocaleString()} units` : '-'}
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              @ {formatVND(tx.transaction.pricePerUnit)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 italic max-w-[200px] truncate block">
+                            {tx.description || (tx.referenceId ? `Ref: ${tx.referenceId}` : 'Cash operation')}
+                          </span>
+                        )}
+                      </td>
+                      <td className={cn(
+                        "px-6 py-4 text-right text-xs font-black tabular-nums",
+                        isInflow(tx.type) ? "text-emerald-400" : "text-slate-300"
+                      )}>
+                        {isInflow(tx.type) ? '+' : '-'} {formatVND(tx.amount)}
+                      </td>
+                      <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                        <EditCashModal transaction={tx} />
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 text-sm">
+                    No transactions match your search criteria.
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

@@ -20,10 +20,10 @@ export default async function LedgerPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
-              Portfolio Ledger
+              Transaction Ledger
             </h1>
             <p className="text-slate-400 font-medium">
-              Complete historical record of all transactions and cash flows
+              Comprehensive record of all cash flows, asset trades, and passive income events
             </p>
           </div>
         </div>

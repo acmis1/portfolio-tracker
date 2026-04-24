@@ -167,18 +167,13 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
           </span>
         </div>
 
-        {summary.totalPassiveIncome > 0 && (
-          <Link 
-            href="/income"
-            className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1 hover:bg-white/5 transition-colors group"
-          >
-            <div className="flex items-center justify-between pr-2">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Passive Income</span>
-              <TrendingUp className="h-2.5 w-2.5 text-slate-600 group-hover:text-emerald-400 transition-colors" />
-            </div>
-            <span className="text-sm font-black text-slate-200 tabular-nums">{formatVND(summary.totalPassiveIncome)}</span>
-          </Link>
-        )}
+        <div className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1">
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Net Worth</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-black text-white tabular-nums">{formatVND(netWorth)}</span>
+            <span className="text-[8px] bg-blue-500/10 text-blue-400 px-1 py-0.5 rounded font-black tracking-tighter">LIQUID + CASH</span>
+          </div>
+        </div>
       </div>
     </div>
   )
