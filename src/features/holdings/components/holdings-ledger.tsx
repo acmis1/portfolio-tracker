@@ -1,20 +1,17 @@
-import { AssetHolding } from "@/features/portfolio/utils";
+import { type PortfolioSummary } from "@/features/portfolio/utils";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
 import { formatVND, formatNumberDots } from "@/lib/utils/format";
-import { TrendingUp, TrendingDown, Clock, MapPin, Building2, Wallet } from "lucide-react";
+import { TrendingUp, TrendingDown, Clock, MapPin, Building2, Wallet, ShieldCheck, PieChart } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface HoldingsLedgerProps {
-  holdings: AssetHolding[];
-  cashHolding?: AssetHolding | null;
+  summary: PortfolioSummary;
   fxRate: number;
 }
 
-export function HoldingsLedger({ holdings, cashHolding, fxRate }: HoldingsLedgerProps) {
-  const assetMarketValue = holdings.reduce((sum, h) => sum + h.marketValue, 0);
-  const cashBalance = cashHolding?.marketValue || 0;
-  const netWorth = assetMarketValue + cashBalance;
+export function HoldingsLedger({ summary, fxRate }: HoldingsLedgerProps) {
+  const { holdings, portfolioValue, totalRealizedPnL, assetCount } = summary;
 
   const liquidAssets = holdings.filter(h => h.type === 'LIQUID' || h.type === 'GOLD');
   const termDeposits = holdings.filter(h => h.type === 'TERM_DEPOSIT');
@@ -22,29 +19,42 @@ export function HoldingsLedger({ holdings, cashHolding, fxRate }: HoldingsLedger
 
   return (
     <div className="space-y-12">
-      {/* Portfolio Summary Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="glass-premium p-6 rounded-2xl border border-white/5">
-          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Asset Market Value</div>
-          <div className="text-2xl font-black text-white">
-            {formatVND(assetMarketValue)}
+      {/* Portfolio Summary Bar - Assets First */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="glass-premium p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-emerald-500/5 blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
+          <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-2">
+            <PieChart className="h-3 w-3" />
+            Asset Market Value
+          </div>
+          <div className="text-3xl font-black text-white">
+            {formatVND(portfolioValue)}
           </div>
         </div>
-        <div className="glass-premium p-6 rounded-2xl border border-white/5">
-          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Cash Balance</div>
-          <div className="text-2xl font-black text-white">
-            {formatVND(cashBalance)}
+
+        <div className="glass-premium p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-indigo-500/5 blur-2xl group-hover:bg-indigo-500/10 transition-colors" />
+          <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-2">
+            <ShieldCheck className="h-3 w-3" />
+            Realized Profit
+          </div>
+          <div className={cn(
+            "text-3xl font-black",
+            totalRealizedPnL >= 0 ? "text-emerald-400" : "text-rose-400"
+          )}>
+            {totalRealizedPnL >= 0 ? '+' : ''}{formatVND(totalRealizedPnL)}
           </div>
         </div>
-        <div className="glass-premium p-6 rounded-2xl border border-white/5">
-          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Net Worth</div>
-          <div className="text-2xl font-black text-white">
-            {formatVND(netWorth)}
+
+        <div className="glass-premium p-6 rounded-2xl border border-white/5 relative overflow-hidden group">
+          <div className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-blue-500/5 blur-2xl group-hover:bg-blue-500/10 transition-colors" />
+          <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-2 flex items-center gap-2">
+            <Building2 className="h-3 w-3" />
+            Active Positions
           </div>
-        </div>
-        <div className="glass-premium p-6 rounded-2xl border border-white/5">
-          <div className="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Total Positions</div>
-          <div className="text-2xl font-black text-white">{holdings.filter(h => h.assetClass !== 'CASH').length} Assets</div>
+          <div className="text-3xl font-black text-white">
+            {assetCount} <span className="text-sm font-bold text-slate-500 uppercase tracking-widest ml-1">Assets</span>
+          </div>
         </div>
       </div>
 
@@ -69,30 +79,6 @@ export function HoldingsLedger({ holdings, cashHolding, fxRate }: HoldingsLedger
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {cashHolding && (
-                    <tr key={cashHolding.id} className="hover:bg-white/5 transition-colors group bg-indigo-500/5">
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-white">{cashHolding.symbol}</span>
-                          <span className="text-xs text-slate-500">{cashHolding.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right font-medium text-slate-300">—</td>
-                      <td className="px-6 py-4 text-right font-medium text-slate-300">—</td>
-                      <td className="px-6 py-4 text-right font-medium text-slate-300">—</td>
-                      <td className="px-6 py-4 text-right font-bold text-white">
-                        {formatVND(cashHolding.marketValue)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className={cn(
-                          "text-xs font-black uppercase tracking-widest",
-                          cashHolding.marketValue >= 0 ? "text-emerald-400" : "text-amber-400"
-                        )}>
-                          {cashHolding.status}
-                        </span>
-                      </td>
-                    </tr>
-                  )}
                   {liquidAssets.map((h) => {
                     const holding = h as any; // Liquid or Gold
                     const isUSD = holding.currency === 'USD';

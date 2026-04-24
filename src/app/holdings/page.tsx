@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { getHoldingsLedger } from "@/features/portfolio/utils"
+import { getPortfolioSummary } from "@/features/portfolio/utils"
 import { getLiveExchangeRate } from "@/lib/fx"
 import { HoldingsLedger } from "@/features/holdings/components/holdings-ledger"
 
@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function HoldingsPage() {
-  const [holdings, fxRate] = await Promise.all([
-    getHoldingsLedger(),
+  const [summary, fxRate] = await Promise.all([
+    getPortfolioSummary(),
     getLiveExchangeRate()
   ]);
 
@@ -31,7 +31,7 @@ export default async function HoldingsPage() {
         </div>
 
         <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
-          <HoldingsLedger holdings={holdings} fxRate={fxRate} />
+          <HoldingsLedger summary={summary} fxRate={fxRate} />
         </Suspense>
       </div>
     </main>
