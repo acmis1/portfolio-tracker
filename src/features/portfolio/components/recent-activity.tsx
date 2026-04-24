@@ -59,7 +59,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
 
       <div className="p-3 border-t border-white/5 bg-white/5 shrink-0">
         <Link 
-          href="/holdings" 
+          href="/ledger" 
           className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
         >
           View Full Ledger

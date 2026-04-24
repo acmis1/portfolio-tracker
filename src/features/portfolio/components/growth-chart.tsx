@@ -11,7 +11,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { cn } from '@/lib/utils'
-import { TrendingUp, Camera, Check, Loader2 } from 'lucide-react'
+import { TrendingUp, Check, Loader2 } from 'lucide-react'
 import { forcePortfolioSnapshot } from '../actions/rebalance'
 import { useRouter } from 'next/navigation'
 
@@ -28,25 +28,6 @@ type TimeRange = '7D' | '1M' | '3M' | 'YTD' | 'ALL'
 
 export function GrowthChart({ data = [] }: GrowthChartProps) {
   const [range, setRange] = useState<TimeRange>('1M')
-  const [isCapturing, setIsCapturing] = useState(false)
-  const [hasCaptured, setHasCaptured] = useState(false)
-  const router = useRouter()
-
-  const handleCapture = async () => {
-    setIsCapturing(true)
-    try {
-      const res = await forcePortfolioSnapshot()
-      if (res.success) {
-        setHasCaptured(true)
-        router.refresh()
-        setTimeout(() => setHasCaptured(false), 3000)
-      }
-    } catch (e: any) {
-      console.error(e)
-    } finally {
-      setIsCapturing(false)
-    }
-  }
 
   const filteredData = useMemo(() => {
     if (!data.length) return []
@@ -92,59 +73,33 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
             <h3 className="text-lg font-bold text-white tracking-tight">Portfolio Performance</h3>
             <p className="text-xs text-slate-400">Total valuation vs. Net Invested capital</p>
           </div>
-          
-          <div className="sm:hidden flex p-1 bg-white/5 rounded-lg border border-white/5 ml-4">
-             <button
-              onClick={handleCapture}
-              disabled={isCapturing || hasCaptured}
-              className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-md transition-all duration-300",
-                hasCaptured 
-                  ? "bg-emerald-500 text-slate-950 shadow-lg" 
-                  : "text-slate-500 hover:text-white"
-              )}
-            >
-              {isCapturing ? <Loader2 className="h-3 w-3 animate-spin" /> : hasCaptured ? <Check className="h-3 w-3" /> : <Camera className="h-3 w-3" />}
-            </button>
-          </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          {hasData && (
-            <div className="flex items-center gap-1 rounded-lg bg-slate-900/50 p-1 border border-white/5">
-              {ranges.map((r: any) => (
-                <button
-                  key={r}
-                  onClick={() => setRange(r)}
-                  className={cn(
-                    "rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition-all",
-                    range === r
-                      ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
-                      : "text-slate-500 hover:text-slate-300"
-                  )}
-                >
-                  {r}
-                </button>
-              ))}
+          <div className="flex items-center gap-4">
+            {hasData && (
+              <div className="flex items-center gap-1 rounded-lg bg-slate-900/50 p-1 border border-white/5">
+                {ranges.map((r: any) => (
+                  <button
+                    key={r}
+                    onClick={() => setRange(r)}
+                    className={cn(
+                      "rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition-all",
+                      range === r
+                        ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20"
+                        : "text-slate-500 hover:text-slate-300"
+                    )}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Live Analytics</span>
             </div>
-          )}
-
-          <div className="hidden sm:flex p-1 bg-white/5 rounded-lg border border-white/5">
-             <button
-              onClick={handleCapture}
-              disabled={isCapturing || hasCaptured}
-              className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-md transition-all duration-300",
-                hasCaptured 
-                  ? "bg-emerald-500 text-slate-950 shadow-lg" 
-                  : "text-slate-500 hover:text-white"
-              )}
-              title="Force Refresh Snapshot"
-            >
-              {isCapturing ? <Loader2 className="h-3 w-3 animate-spin" /> : hasCaptured ? <Check className="h-3 w-3" /> : <Camera className="h-3 w-3" />}
-            </button>
           </div>
-        </div>
       </div>
 
       {!hasData ? (
