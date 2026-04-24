@@ -15,6 +15,25 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
     return ['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL_ASSET'].includes(type)
   }
 
+  const formatActivityLabel = (tx: any) => {
+    // 1. If it's a trade, try to extract the action (BUY/SELL) from the description
+    const parts = tx.description?.split(' @ ') || [];
+    const mainPart = parts[0] || '';
+    
+    // 2. If the description is already high-fidelity (handled by recent backend fix), use it
+    // But check for underscores or TD_ as a sign of legacy data
+    if (!mainPart.includes('_') && !mainPart.includes('TD_')) {
+      return mainPart || tx.type.replace('_', ' ');
+    }
+
+    // 3. Evidence-based cleanup for legacy data
+    // Remove underscores and mask synthetic Term Deposit IDs
+    return mainPart
+      .replace(/_/g, ' ')
+      .replace(/TD_\d+/g, 'Term Deposit')
+      || tx.type.replace('_', ' ');
+  }
+
   return (
     <div className="glass-premium rounded-2xl overflow-hidden border border-white/5 shadow-xl flex flex-col h-full">
       <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between shrink-0">
@@ -38,7 +57,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
                     {new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                   <span className="text-xs font-black text-slate-200 truncate pr-2">
-                    {tx.description?.split(' @ ')[0] || tx.type.replace('_', ' ')}
+                    {formatActivityLabel(tx)}
                   </span>
                </div>
                <div className="flex flex-col items-end shrink-0">

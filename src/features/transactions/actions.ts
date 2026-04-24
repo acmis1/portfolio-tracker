@@ -95,13 +95,20 @@ export async function addTransaction(formData: TransactionFormValues) {
         maximumFractionDigits: currency === 'VND' ? 0 : 2,
       }).format(rawPrice);
 
+      // 1.5 Generate human-readable label
+      let displayLabel = symbol || name;
+      if (assetClass === 'TERM_DEPOSIT' && maturityDate) {
+        const tenor = Math.round((new Date(maturityDate).getTime() - dateObj.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+        displayLabel = `${name} ${tenor}-Month Term Deposit`;
+      }
+
       // 2. Create associated CashTransaction for accurate cash ledger
       const cashTx = await tx.cashTransaction.create({
         data: {
           amount: Math.abs(grossAmount),
           date: dateObj,
           type: type === 'BUY' ? 'BUY_ASSET' : 'SELL_ASSET',
-          description: `${type} ${quantity} ${effectiveSymbol} @ ${formattedPrice}`,
+          description: `${type} ${quantity} ${displayLabel} @ ${formattedPrice}`,
           currency: 'VND',
           userId,
         }
@@ -185,7 +192,7 @@ export async function editTransaction(id: string, formData: TransactionFormValue
   const result = transactionSchema.safeParse(formData)
   if (!result.success) return { success: false, error: "Invalid data" }
 
-  const { symbol, type, quantity, price: rawPrice, fees: rawFees, date, currency } = result.data
+  const { symbol, name, assetClass, type, quantity, price: rawPrice, fees: rawFees, date, currency, maturityDate } = result.data
   const dateObj = new Date(date)
 
   const { getLiveExchangeRate } = await import("@/lib/fx")
@@ -216,7 +223,13 @@ export async function editTransaction(id: string, formData: TransactionFormValue
     const earliestDate = existing.date < dateObj ? existing.date : dateObj
 
     await prisma.$transaction(async (tx) => {
-      // 1. Update cash transaction if it exists
+      // 1. Update Asset metadata if name/class changed
+      await tx.asset.update({
+        where: { id: existing.assetId },
+        data: { name, assetClass }
+      })
+
+      // 2. Update cash transaction if it exists
       if (existing.cashTransactionId) {
         const locale = currency === 'VND' ? 'vi-VN' : 'en-US';
         const formattedPrice = new Intl.NumberFormat(locale, {
@@ -225,18 +238,25 @@ export async function editTransaction(id: string, formData: TransactionFormValue
           maximumFractionDigits: currency === 'VND' ? 0 : 2,
         }).format(rawPrice);
 
+        // Generate human-readable label
+        let displayLabel = symbol || name;
+        if (assetClass === 'TERM_DEPOSIT' && maturityDate) {
+          const tenor = Math.round((new Date(maturityDate).getTime() - dateObj.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+          displayLabel = `${name} ${tenor}-Month Term Deposit`;
+        }
+
         await tx.cashTransaction.update({
           where: { id: existing.cashTransactionId },
           data: {
             amount: Math.abs(grossAmount),
             date: dateObj,
             type: type === 'BUY' ? 'BUY_ASSET' : 'SELL_ASSET',
-            description: `${type} ${quantity} ${symbol} @ ${formattedPrice}`,
+            description: `${type} ${quantity} ${displayLabel} @ ${formattedPrice}`,
           }
         })
       }
 
-      // 2. Update the asset transaction
+      // 3. Update the asset transaction
       await tx.transaction.update({
         where: { id },
         data: {
