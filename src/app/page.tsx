@@ -74,7 +74,7 @@ export default async function DashboardPage() {
           
           <div className="lg:col-span-2 space-y-4">
             <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
-              Recent Activity
+              Recent Cash Activity
             </h2>
             <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
               <RecentActivity transactions={cashTransactions} />

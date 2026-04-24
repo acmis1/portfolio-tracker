@@ -18,7 +18,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
   return (
     <div className="glass-premium rounded-2xl overflow-hidden border border-white/5 shadow-xl flex flex-col h-full">
       <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between shrink-0">
-         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recent Activity</h3>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recent Cash Activity</h3>
          <Activity className="h-3 w-3 text-slate-500" />
       </div>
       
@@ -28,7 +28,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
             <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center">
                <Activity className="h-4 w-4 text-slate-600" />
             </div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">No recent activity</p>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">No recent cash activity</p>
           </div>
         ) : (
           recent.map((tx: any) => (
