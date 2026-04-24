@@ -13,6 +13,13 @@ export async function getCashTransactions() {
   try {
     return await prisma.cashTransaction.findMany({
       where: { userId },
+      include: {
+        transaction: {
+          include: {
+            asset: true
+          }
+        }
+      },
       orderBy: { date: 'desc' }
     })
   } catch (error: any) {

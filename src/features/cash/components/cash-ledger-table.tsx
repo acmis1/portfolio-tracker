@@ -11,7 +11,7 @@ export function CashLedgerTable({ transactions }: CashLedgerTableProps) {
   if (transactions.length === 0) {
     return (
       <div className="glass-premium rounded-2xl p-12 text-center">
-        <p className="text-sm text-slate-500 font-medium">No cash transactions recorded</p>
+        <p className="text-sm text-slate-500 font-medium">No transactions recorded in the ledger</p>
       </div>
     )
   }
@@ -28,36 +28,70 @@ export function CashLedgerTable({ transactions }: CashLedgerTableProps) {
             <tr className="border-b border-white/5 bg-white/5">
               <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Date</th>
               <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Type</th>
-              <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Description</th>
-              <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Amount</th>
+              <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Asset / Activity</th>
+              <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-400">Details</th>
+              <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400">Cash Flow</th>
               <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-400"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {transactions.map((tx: any) => (
-              <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
-                <td className="px-6 py-4 text-xs font-medium text-slate-300">
-                  {new Date(tx.date).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4">
-                  <span className="inline-flex rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    {tx.type.replace('_', ' ')}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-xs text-slate-400 italic">
-                  {tx.description || '-'}
-                </td>
-                <td className={cn(
-                  "px-6 py-4 text-right text-xs font-black tabular-nums",
-                  isInflow(tx.type) ? "text-emerald-400" : "text-slate-400"
-                )}>
-                  {isInflow(tx.type) ? '+' : '-'} {formatVND(tx.amount)}
-                </td>
-                <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                  <EditCashModal transaction={tx} />
-                </td>
-              </tr>
-            ))}
+            {transactions.map((tx: any) => {
+              const asset = tx.transaction?.asset;
+              const isAssetTx = !!tx.transaction;
+
+              return (
+                <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
+                  <td className="px-6 py-4 text-xs font-medium text-slate-300">
+                    {new Date(tx.date).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={cn(
+                      "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest",
+                      isAssetTx ? "bg-blue-500/10 text-blue-400" : "bg-slate-800 text-slate-400"
+                    )}>
+                      {tx.type.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black text-slate-200">
+                        {asset ? asset.symbol : (tx.description || tx.type.replace('_', ' '))}
+                      </span>
+                      {asset && (
+                        <span className="text-[10px] text-slate-500 font-medium truncate max-w-[200px]">
+                          {asset.name}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {tx.transaction ? (
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400">
+                          {tx.transaction.quantity > 0 ? `${tx.transaction.quantity.toLocaleString()} units` : '-'}
+                        </span>
+                        <span className="text-[10px] text-slate-500">
+                          @ {formatVND(tx.transaction.pricePerUnit)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-slate-500 italic">
+                        {tx.referenceId ? `Ref: ${tx.referenceId}` : 'Cash operation'}
+                      </span>
+                    )}
+                  </td>
+                  <td className={cn(
+                    "px-6 py-4 text-right text-xs font-black tabular-nums",
+                    isInflow(tx.type) ? "text-emerald-400" : "text-slate-400"
+                  )}>
+                    {isInflow(tx.type) ? '+' : '-'} {formatVND(tx.amount)}
+                  </td>
+                  <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                    <EditCashModal transaction={tx} />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
