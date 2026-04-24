@@ -55,3 +55,24 @@ export function formatCompactVND(value: number | undefined | null): string {
     maximumFractionDigits: 1,
   }).format(value) + ' ₫';
 }
+/**
+ * Determines the best display labels for an asset to avoid "ugly" internal symbols.
+ * Returns { primary: string, secondary?: string }
+ */
+export function formatAssetDisplay(symbol: string, name: string): { primary: string; secondary?: string } {
+  const isInternal = symbol.includes('_') || symbol.startsWith('TD_');
+  const normalizedName = name.toUpperCase().replace(/\s+/g, '_');
+  
+  // Rule 1: Hide ugly internal symbols that are just normalized names or TD identifiers
+  if (isInternal && (symbol === normalizedName || symbol.startsWith('TD_'))) {
+    return { primary: name };
+  }
+
+  // Rule 2: If symbol and name are identical, show only one
+  if (symbol.toUpperCase() === name.toUpperCase()) {
+    return { primary: name };
+  }
+
+  // Rule 3: For real tickers, show both if they differ
+  return { primary: symbol, secondary: name };
+}

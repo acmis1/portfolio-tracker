@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { type AssetHolding, type PortfolioSummary } from "@/features/portfolio/utils";
 import { formatCurrency } from "@/lib/formatters";
-import { formatVND, formatQuantity, formatCompactVND } from "@/lib/utils/format";
+import { formatVND, formatQuantity, formatCompactVND, formatAssetDisplay } from "@/lib/utils/format";
 import { 
   TrendingUp, TrendingDown, Clock, MapPin, Building2, Wallet, 
   ShieldCheck, PieChart, Search, Filter, X, ArrowUpDown, 
@@ -250,8 +250,17 @@ export function HoldingsLedger({ summary, fxRate }: HoldingsLedgerProps) {
                         <tr key={holding.id} className="hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => window.location.href = `/holdings/${holding.id}`}>
                           <td className="px-6 py-4">
                             <div className="flex flex-col">
-                              <span className="font-bold text-white group-hover:text-emerald-400 transition-colors">{holding.symbol}</span>
-                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter truncate max-w-[150px]">{holding.name}</span>
+                              {(() => {
+                                const labels = formatAssetDisplay(holding.symbol, holding.name);
+                                return (
+                                  <>
+                                    <span className="font-bold text-white group-hover:text-emerald-400 transition-colors">{labels.primary}</span>
+                                    {labels.secondary && (
+                                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter truncate max-w-[150px]">{labels.secondary}</span>
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right font-medium text-slate-300 tabular-nums">
@@ -338,7 +347,17 @@ export function HoldingsLedger({ summary, fxRate }: HoldingsLedgerProps) {
                       {termDeposits.map((holding: any) => (
                         <tr key={holding.id} className="hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => window.location.href = `/holdings/${holding.id}`}>
                           <td className="px-6 py-4">
-                            <div className="font-bold text-white group-hover:text-blue-400 transition-colors">{holding.name}</div>
+                            {(() => {
+                              const labels = formatAssetDisplay(holding.symbol, holding.name);
+                              return (
+                                <>
+                                  <div className="font-bold text-white group-hover:text-blue-400 transition-colors">{labels.primary}</div>
+                                  {labels.secondary && (
+                                    <div className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-0.5">{labels.secondary}</div>
+                                  )}
+                                </>
+                              );
+                            })()}
                             <div className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-0.5">Started {new Date(holding.startDate).toLocaleDateString('vi-VN')}</div>
                           </td>
                           <td className="px-6 py-4 text-right font-black text-emerald-400 tabular-nums">
@@ -407,7 +426,19 @@ export function HoldingsLedger({ summary, fxRate }: HoldingsLedgerProps) {
                               <div className="p-2 rounded-lg bg-white/5 group-hover:bg-purple-500/10 transition-colors">
                                 <MapPin className="h-3 w-3 text-slate-500 group-hover:text-purple-400" />
                               </div>
-                              <span className="font-bold text-white group-hover:text-purple-400 transition-colors">{holding.name}</span>
+                              <div className="flex flex-col">
+                                {(() => {
+                                  const labels = formatAssetDisplay(holding.symbol, holding.name);
+                                  return (
+                                    <>
+                                      <span className="font-bold text-white group-hover:text-purple-400 transition-colors">{labels.primary}</span>
+                                      {labels.secondary && (
+                                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{labels.secondary}</span>
+                                      )}
+                                    </>
+                                  );
+                                })()}
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">

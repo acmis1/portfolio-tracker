@@ -1,5 +1,5 @@
 import { formatPercentage } from "@/lib/formatters";
-import { formatVND } from "@/lib/utils/format";
+import { formatVND, formatAssetDisplay } from "@/lib/utils/format";
 import { Trophy, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -46,15 +46,24 @@ export function TopHoldings({ holdings }: TopHoldingsProps) {
                 className="flex items-center justify-between px-6 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors group"
               >
                 <div className="flex flex-col min-w-0">
-                  <Link 
-                    href={`/holdings/${holding.id}`}
-                    className="font-bold text-white hover:text-emerald-400 transition-colors truncate"
-                  >
-                    {holding.symbol.replace(/_/g, ' ')}
-                  </Link>
-                  <span className="text-[11px] text-slate-500 font-medium truncate max-w-[140px]">
-                    {holding.name.replace(/_/g, ' ')}
-                  </span>
+                  {(() => {
+                    const labels = formatAssetDisplay(holding.symbol, holding.name);
+                    return (
+                      <>
+                        <Link 
+                          href={`/holdings/${holding.id}`}
+                          className="font-bold text-white hover:text-emerald-400 transition-colors truncate"
+                        >
+                          {labels.primary}
+                        </Link>
+                        {labels.secondary && (
+                          <span className="text-[11px] text-slate-500 font-medium truncate max-w-[140px]">
+                            {labels.secondary}
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="text-right flex flex-col items-end shrink-0">

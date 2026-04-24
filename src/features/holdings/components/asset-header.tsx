@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCurrency, formatPercentage } from "@/lib/formatters"
+import { formatAssetDisplay } from "@/lib/utils/format"
 import { TrendingUp, TrendingDown, LayoutDashboard, Home, Calculator } from "lucide-react"
 import Link from "next/link"
 import { PriceUpdateModal } from "./price-update-modal"
@@ -50,25 +51,32 @@ export function AssetHeader({ asset, fxRate }: AssetHeaderProps) {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-4xl font-black tracking-tight text-white">
-              {isRE || isTD ? asset.name : asset.symbol}
-            </h1>
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold uppercase tracking-widest text-slate-400">
-              {asset.assetClass.replace('_', ' ')}
-            </span>
-            {asset.assetClass === 'CRYPTO' && (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
-                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">USD/VND:</span>
-                <span className="text-xs font-bold text-white tabular-nums">{fxRate.toLocaleString()}</span>
-              </div>
-            )}
-          </div>
-          {!isTD && !isRE && (
-            <p className="text-slate-400 font-medium">
-              {asset.name}
-            </p>
-          )}
+          {(() => {
+            const labels = formatAssetDisplay(asset.symbol, asset.name);
+            return (
+              <>
+                <div className="flex items-center gap-3 mb-1">
+                  <h1 className="text-4xl font-black tracking-tight text-white">
+                    {labels.primary}
+                  </h1>
+                  <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold uppercase tracking-widest text-slate-400">
+                    {asset.assetClass.replace('_', ' ')}
+                  </span>
+                  {asset.assetClass === 'CRYPTO' && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+                      <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">USD/VND:</span>
+                      <span className="text-xs font-bold text-white tabular-nums">{fxRate.toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+                {labels.secondary && (
+                  <p className="text-slate-400 font-medium">
+                    {labels.secondary}
+                  </p>
+                )}
+              </>
+            );
+          })()}
         </div>
         <div className="flex items-center gap-3">
           {isRE && (

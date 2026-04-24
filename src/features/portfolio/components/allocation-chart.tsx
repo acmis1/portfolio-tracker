@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
-import { formatVND, formatCompactVND } from '@/lib/utils/format'
+import { formatVND, formatCompactVND, formatAssetDisplay } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { PieChart as PieIcon, Layers, ChevronRight } from 'lucide-react'
 
@@ -85,11 +85,14 @@ export function AllocationChart({ holdings }: AllocationChartProps) {
       const top5 = equityHoldings.slice(0, 5);
       const remainingCount = Math.max(0, equityHoldings.length - 5);
       
-      data = top5.map((h, i) => ({
-        name: h.symbol,
-        value: h.marketValue,
-        color: EQUITY_COLORS[i]
-      }));
+      data = top5.map((h, i) => {
+        const labels = formatAssetDisplay(h.symbol, h.name);
+        return {
+          name: labels.primary,
+          value: h.marketValue,
+          color: EQUITY_COLORS[i]
+        };
+      });
 
       if (remainingCount > 0) {
         const othersValue = equityHoldings.slice(5).reduce((sum, h) => sum + h.marketValue, 0);
