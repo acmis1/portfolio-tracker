@@ -11,9 +11,7 @@ import {
   CartesianGrid,
 } from 'recharts'
 import { cn } from '@/lib/utils'
-import { TrendingUp, Check, Loader2 } from 'lucide-react'
-import { forcePortfolioSnapshot } from '../actions/rebalance'
-import { useRouter } from 'next/navigation'
+import { TrendingUp } from 'lucide-react'
 
 interface GrowthChartProps {
   data?: { 
@@ -108,10 +106,10 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
             <TrendingUp className="w-6 h-6 text-emerald-500/50" />
           </div>
           <div className="space-y-1">
-            <p className="text-slate-200 font-bold text-sm">Tracking performance history</p>
+            <p className="text-slate-200 font-bold text-sm">History is building...</p>
             <p className="text-xs text-slate-500 leading-relaxed max-w-sm">
-              We need at least two daily snapshots to calculate your growth curve. 
-              The system captures snapshots automatically once prices are updated each night.
+              Aegis Ledger captures daily snapshots of your portfolio value automatically. 
+              Your performance curve will appear here once we have a few days of data.
             </p>
           </div>
         </div>
