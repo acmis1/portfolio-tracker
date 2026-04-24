@@ -41,7 +41,14 @@ const COLORS: Record<string, string> = {
 };
 
 const EQUITY_CLASSES = ['INDIVIDUAL_STOCK', 'ETF', 'STOCK_FUND'];
-const EQUITY_COLORS = ['#10B981', '#34D399', '#059669', '#6EE7B7', '#065F46', '#A7F3D0'];
+const EQUITY_COLORS = [
+  '#10B981', // Emerald
+  '#3B82F6', // Blue
+  '#8B5CF6', // Violet
+  '#F59E0B', // Amber
+  '#F43F5E', // Rose
+  '#0EA5E9', // Sky
+];
 
 export function AllocationChart({ holdings }: AllocationChartProps) {
   const [view, setView] = useState<'macro' | 'equity'>('macro');
@@ -190,11 +197,14 @@ export function AllocationChart({ holdings }: AllocationChartProps) {
                 verticalAlign="bottom" 
                 height={60} 
                 iconType="circle" 
-                formatter={(value) => (
-                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 ml-1 hover:text-slate-300 transition-colors">
-                    {value}
-                  </span>
-                )}
+                formatter={(value, entry: any) => {
+                  const percentage = totalValue > 0 ? (entry.payload.value / totalValue) * 100 : 0;
+                  return (
+                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 ml-1 hover:text-slate-300 transition-colors">
+                      {value} <span className="text-slate-600 ml-1">({percentage.toFixed(0)}%)</span>
+                    </span>
+                  )
+                }}
                 wrapperStyle={{ 
                   paddingTop: '20px'
                 }} 
