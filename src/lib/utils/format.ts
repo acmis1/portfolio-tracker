@@ -28,3 +28,15 @@ export function formatNumberDots(value: number | undefined | null): string {
     maximumFractionDigits: 0,
   }).format(value);
 }
+/**
+ * Formats a number as a compact VND currency (e.g., 1.4B ₫)
+ */
+export function formatCompactVND(value: number | undefined | null): string {
+  if (value === undefined || value === null) return '0 ₫';
+  
+  return new Intl.NumberFormat('vi-VN', {
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: 1,
+  }).format(value) + ' ₫';
+}
