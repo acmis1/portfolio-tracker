@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { PriceUpdateModal } from "@/features/holdings/components/price-update-modal"
 import { AssetTransactionTable } from "@/features/holdings/components/asset-transaction-table"
 import { getLiveExchangeRate } from "@/lib/fx"
+import { LiquidHolding, GoldHolding, RealEstateHolding, TermDepositHolding } from "@/features/portfolio/types"
 
 interface AssetDetailPageProps {
   params: Promise<{
@@ -76,7 +77,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
             </div>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-8 border-t border-white/5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-8 pt-8 border-t border-white/5">
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Quantity</span>
               <span className="text-sm font-bold text-slate-200">{formatQuantity(holding?.quantity ?? 0)}</span>
@@ -84,6 +85,23 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Avg Cost</span>
               <span className="text-sm font-bold text-slate-200">{formatVND(holding?.avgCost ?? 0)}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                {asset.assetClass === 'TERM_DEPOSIT' ? 'Accrued Value' :
+                 asset.assetClass === 'REAL_ESTATE' ? 'Latest Valuation' : 'Live Price'}
+              </span>
+              <span className="text-sm font-bold text-slate-200">
+                {(() => {
+                  if (!holding) return "—";
+                  let val: number | null = null;
+                  if (holding.type === 'TERM_DEPOSIT') val = (holding as TermDepositHolding).marketValue;
+                  else if (holding.type === 'REAL_ESTATE') val = (holding as RealEstateHolding).currentValuation;
+                  else if (holding.type === 'GOLD' || holding.type === 'LIQUID') val = (holding as LiquidHolding | GoldHolding).livePrice;
+
+                  return val !== null && val !== 0 ? formatVND(val) : "—";
+                })()}
+              </span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Unrealized PnL</span>
@@ -119,6 +137,22 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Currency</span>
               <span className="text-xs font-bold text-slate-200">{asset.currency}</span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-white/5">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                {asset.assetClass === 'TERM_DEPOSIT' ? 'Accrued Value' :
+                 asset.assetClass === 'REAL_ESTATE' ? 'Valuation' : 'Live Price'}
+              </span>
+              <span className="text-xs font-bold text-emerald-400">
+                {(() => {
+                  if (!holding) return "—";
+                  let val: number | null = null;
+                  if (holding.type === 'TERM_DEPOSIT') val = (holding as TermDepositHolding).marketValue;
+                  else if (holding.type === 'REAL_ESTATE') val = (holding as RealEstateHolding).currentValuation;
+                  else if (holding.type === 'GOLD' || holding.type === 'LIQUID') val = (holding as LiquidHolding | GoldHolding).livePrice;
+                  return val !== null && val !== 0 ? formatVND(val) : "—";
+                })()}
+              </span>
             </div>
           </div>
 
