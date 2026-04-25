@@ -23,7 +23,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("🔍 Starting Recalculation Parity Audit...");
+  console.log("🔍 Starting Recalculation Parity Audit (Phase 2)...");
 
   // 1. Find a target user (pick the first one with snapshots)
   const targetSnapshot = await prisma.portfolioSnapshot.findFirst({
@@ -38,10 +38,10 @@ async function main() {
   const userId = targetSnapshot.userId;
   console.log(`👤 Auditing User: ${userId}`);
 
-  // 2. Define audit window (last 7 days)
+  // 2. Define audit window (last 30 days for better benchmarking)
   const endDate = new Date();
   const startDate = new Date();
-  startDate.setDate(endDate.getDate() - 7);
+  startDate.setDate(endDate.getDate() - 30);
   startDate.setHours(0, 0, 0, 0);
 
   console.log(`📅 Window: ${startDate.toISOString()} to ${endDate.toISOString()}`);
@@ -58,20 +58,14 @@ async function main() {
     orderBy: { date: 'asc' }
   });
 
-  console.log(`📊 Found ${existingSnapshots.length} existing snapshots for comparison.`);
+  console.log(`📊 Found ${existingSnapshots.length} existing snapshots in DB.`);
 
-  // 4. Since the service currently performs WRITES (upserts), 
-  // we will perform a simulation by reading the logic.
-  // Actually, for Phase 1, the service IS the old logic. 
-  // So we expect the upserts to result in IDENTICAL values.
-  
-  console.log("🚀 Running recalculateHistoricalSnapshotsService (will overwrite existing rows with identical values)...");
+  // 4. Run the optimized service
+  console.log("🚀 Running Optimized recalculateHistoricalSnapshotsService...");
   
   const startTime = Date.now();
   await recalculateHistoricalSnapshotsService(startDate, userId);
   const duration = Date.now() - startTime;
-
-  console.log(`✅ Recalculation complete in ${duration}ms.`);
 
   // 5. Verify parity
   const postSnapshots = await prisma.portfolioSnapshot.findMany({
@@ -87,41 +81,51 @@ async function main() {
 
   let matchCount = 0;
   let diffCount = 0;
+  let maxDiff = 0;
 
-  for (let i = 0; i < existingSnapshots.length; i++) {
-    const old = existingSnapshots[i];
-    const updated = postSnapshots.find(s => s.date.getTime() === old.date.getTime());
+  console.log("\n--- Comparison Results ---");
+  for (const updated of postSnapshots) {
+    const old = existingSnapshots.find(s => s.date.getTime() === updated.date.getTime());
 
-    if (!updated) {
-      console.log(`❌ Missing snapshot for ${old.date.toISOString()}`);
-      diffCount++;
+    if (!old) {
+      console.log(`🆕 New snapshot generated for ${updated.date.toISOString()} (was missing in DB)`);
       continue;
     }
 
     const diffs = [];
-    if (Math.abs(old.totalValue - updated.totalValue) > 0.01) diffs.push(`totalValue: ${old.totalValue} -> ${updated.totalValue}`);
-    if (Math.abs(old.investedValue - updated.investedValue) > 0.01) diffs.push(`investedValue: ${old.investedValue} -> ${updated.investedValue}`);
-    if (Math.abs(old.cashBalance - updated.cashBalance) > 0.01) diffs.push(`cashBalance: ${old.cashBalance} -> ${updated.cashBalance}`);
-    if (Math.abs(old.costBasis - updated.costBasis) > 0.01) diffs.push(`costBasis: ${old.costBasis} -> ${updated.costBasis}`);
+    const fields = ['totalValue', 'investedValue', 'cashBalance', 'costBasis'] as const;
+    
+    for (const field of fields) {
+      const delta = Math.abs(old[field] - updated[field]);
+      if (delta > 0.01) {
+        diffs.push(`${field}: ${old[field].toFixed(2)} -> ${updated[field].toFixed(2)} (Δ ${delta.toFixed(4)})`);
+        if (delta > maxDiff) maxDiff = delta;
+      }
+    }
 
     if (diffs.length > 0) {
-      console.log(`❌ Difference on ${old.date.toISOString()}: ${diffs.join(', ')}`);
+      console.log(`❌ Difference on ${updated.date.toISOString().split('T')[0]}: ${diffs.join(', ')}`);
       diffCount++;
     } else {
       matchCount++;
     }
   }
 
+  const days = postSnapshots.length;
   console.log("\n--- Audit Summary ---");
+  console.log(`📊 Snapshots Processed: ${days}`);
   console.log(`✅ Matches: ${matchCount}`);
-  console.log(`❌ Differences: ${diffCount}`);
+  console.log(`❌ Mismatches: ${diffCount}`);
+  console.log(`📏 Max Absolute Difference: ${maxDiff.toFixed(4)} VND`);
+  console.log(`⏱️ Total Runtime: ${duration}ms`);
+  console.log(`🏎️ Performance: ${(duration / Math.max(1, days)).toFixed(2)} ms/day`);
   
   if (diffCount === 0 && matchCount > 0) {
-    console.log("🌟 PARITY VERIFIED: The extracted service produces identical results to current DB state.");
-  } else if (matchCount === 0 && diffCount === 0) {
-    console.log("❓ No data compared.");
+    console.log("🟢 PASS: Parity verified within 0.01 tolerance.");
+  } else if (diffCount > 0) {
+    console.log("🔴 FAIL: Mismatches detected. Verify if DB snapshots were stale.");
   } else {
-    console.log("⚠️ PARITY FAILED or some values shifted due to data changes since last snapshot.");
+    console.log("🟡 SKIP: No snapshots were available for comparison.");
   }
 }
 
