@@ -93,7 +93,8 @@ export function calculatePortfolioSummary(
       let assetValue = 0;
       if (asset.assetClass === 'TERM_DEPOSIT' && asset.termDeposits[0]) {
         const td = asset.termDeposits[0];
-        const daysElapsed = Math.max(0, (now.getTime() - td.startDate.getTime()) / (1000 * 60 * 60 * 24));
+        const effectiveEndDate = now < td.maturityDate ? now : td.maturityDate;
+        const daysElapsed = Math.max(0, (effectiveEndDate.getTime() - td.startDate.getTime()) / (1000 * 60 * 60 * 24));
         const accruedInterest = (td.principal * (td.interestRate / 100) * daysElapsed) / 365;
         assetValue = td.principal + accruedInterest;
         const daysToMaturity = Math.ceil((td.maturityDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -112,9 +113,10 @@ export function calculatePortfolioSummary(
           daysToMaturity,
           unrealizedPnL: accruedInterest,
           unrealizedPnLPctg: td.interestRate,
-          status: daysToMaturity <= 0 ? 'Matured' : `Matures in ${daysToMaturity}d`,
+          status: daysToMaturity <= 0 ? 'Matured — Action Required' : `Matures in ${daysToMaturity}d`,
         });
-      } else if (asset.assetClass === 'REAL_ESTATE') {
+      }
+ else if (asset.assetClass === 'REAL_ESTATE') {
         const livePrice = asset.prices[0]?.closePrice ?? runningAvgCost;
         assetValue = currentQty * livePrice;
         const appraisalAgeDays = asset.prices[0] 

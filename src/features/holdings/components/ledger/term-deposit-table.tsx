@@ -67,7 +67,11 @@ export function TermDepositTable({ assets }: TermDepositTableProps) {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="text-white font-bold text-xs">{new Date(holding.maturityDate).toLocaleDateString('vi-VN')}</div>
-                    <div className="text-[9px] text-slate-500 font-bold uppercase">{holding.daysToMaturity} days left</div>
+                    {holding.daysToMaturity > 0 ? (
+                      <div className="text-[9px] text-slate-500 font-bold uppercase">{holding.daysToMaturity} days left</div>
+                    ) : (
+                      <div className="text-[9px] text-rose-500 font-bold uppercase">Matured</div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right font-black text-white tabular-nums">
                     {formatVND(holding.marketValue)}
@@ -75,7 +79,7 @@ export function TermDepositTable({ assets }: TermDepositTableProps) {
                   <td className="px-6 py-4 text-right">
                     <Badge variant="outline" className={cn(
                       "border-0 text-[9px] uppercase font-black px-2",
-                      holding.daysToMaturity <= 0 ? "bg-rose-500/10 text-rose-400" : "bg-blue-500/10 text-blue-400"
+                      holding.daysToMaturity <= 0 ? "bg-rose-500/20 text-rose-400" : "bg-blue-500/10 text-blue-400"
                     )}>
                       {holding.status}
                     </Badge>

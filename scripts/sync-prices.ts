@@ -229,8 +229,8 @@ async function main() {
     }
   }
   
-  // --- Term Deposit Maturity Automation ---
-  console.log("\nChecking for matured Term Deposits...");
+  // --- Term Deposit Maturity Audit ---
+  console.log("\nAuditing Term Deposits...");
   try {
     const maturedDeposits = await prisma.termDeposit.findMany({
       where: {
@@ -242,57 +242,10 @@ async function main() {
     });
 
     for (const deposit of maturedDeposits) {
-      const principal = deposit.principal;
-      const interest = (principal * deposit.interestRate) / 100;
-      const totalPayout = principal + interest;
-
-      // Avoid double-processing: Check if a SELL transaction already exists for this asset with same amount on same date
-      const existingSell = await prisma.transaction.findFirst({
-        where: {
-          assetId: deposit.assetId,
-          type: "SELL",
-          grossAmount: totalPayout,
-          date: deposit.maturityDate
-        }
-      });
-
-      if (existingSell) {
-        // console.log(`ℹ️ Term Deposit ${deposit.asset.name} already processed.`);
-        continue;
-      }
-
-      await prisma.$transaction(async (tx) => {
-        // 1. Create Cash DEPOSIT for Principal + Interest
-        const cashTx = await tx.cashTransaction.create({
-          data: {
-            userId: deposit.asset.userId,
-            amount: totalPayout,
-            date: deposit.maturityDate,
-            type: "DEPOSIT",
-            description: `Maturity: ${deposit.asset.name} (Principal: ${principal.toLocaleString()}, Interest: ${interest.toLocaleString()})`,
-            currency: "VND",
-          }
-        });
-
-        // 2. Create SELL Transaction to zero out the asset position
-        await tx.transaction.create({
-          data: {
-            userId: deposit.asset.userId,
-            assetId: deposit.assetId,
-            date: deposit.maturityDate,
-            type: "SELL",
-            quantity: 1, // Quantity is always 1 for TD
-            pricePerUnit: principal, // Asset tracks principal
-            grossAmount: totalPayout,
-            cashTransactionId: cashTx.id,
-          }
-        });
-      });
-
-      console.log(`✅ Matured Term Deposit [${deposit.asset.name}]: Principal + Interest returned to cash.`);
+      console.log(`ℹ️  Term Deposit matured and awaiting manual action: [${deposit.asset.name}], principal: ${deposit.principal.toLocaleString()}, maturity: ${deposit.maturityDate.toISOString().split('T')[0]}`);
     }
   } catch (err: any) {
-    console.error("❌ Failed to process matured term deposits:", err.message);
+    console.error("❌ Failed to audit matured term deposits:", err.message);
   }
 
   console.log(`\nSync finished. Success: ${successCount}, Failed: ${failCount}`);
