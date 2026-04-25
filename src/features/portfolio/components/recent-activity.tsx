@@ -32,9 +32,12 @@ export function RecentActivity({ activities }: RecentActivityProps) {
           </div>
         ) : (
           recent.map((tx: any) => {
-            const { primary, secondary } = tx.assetSymbol 
-              ? formatAssetDisplay(tx.assetSymbol, tx.assetName || '') 
-              : { primary: tx.description || tx.type.replace('_', ' '), secondary: undefined };
+            const isConversion = tx.category === 'CONVERSION';
+            const { primary, secondary } = isConversion
+              ? { primary: `Converted ${tx.fromAssetSymbol} → ${tx.toAssetSymbol}`, secondary: 'Internal Conversion' }
+              : tx.assetSymbol 
+                ? formatAssetDisplay(tx.assetSymbol, tx.assetName || '') 
+                : { primary: tx.description || tx.type.replace('_', ' '), secondary: undefined };
 
             return (
               <div key={tx.id} className="p-3 px-5 flex items-center justify-between hover:bg-white/5 transition-colors group">
@@ -54,12 +57,15 @@ export function RecentActivity({ activities }: RecentActivityProps) {
                <div className="flex flex-col items-end shrink-0">
                   <span className={cn(
                     "text-xs font-black tabular-nums transition-transform group-hover:scale-105",
+                    isConversion ? "text-slate-400" :
                     isInflow(tx.type) ? "text-emerald-400" : "text-slate-400"
                   )}>
-                    {isInflow(tx.type) ? '+' : '-'} {formatVND(Math.abs(tx.amount))}
+                    {isConversion ? 'Neutral' : (isInflow(tx.type) ? '+' : '-') + ' ' + formatVND(Math.abs(tx.amount))}
                   </span>
                   <span className="text-[9px] text-slate-500 italic truncate max-w-[120px]">
-                    {tx.category === 'ASSET' ? `${tx.type} ${tx.quantity} units` : (tx.description || 'No description')}
+                    {isConversion 
+                      ? `${tx.fromQuantity} ${tx.fromAssetSymbol} → ${tx.toQuantity} ${tx.toAssetSymbol}`
+                      : tx.category === 'ASSET' ? `${tx.type} ${tx.quantity} units` : (tx.description || 'No description')}
                   </span>
                </div>
               </div>

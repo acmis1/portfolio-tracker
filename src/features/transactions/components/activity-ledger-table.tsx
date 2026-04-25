@@ -4,14 +4,14 @@ import { useState, useMemo } from 'react'
 import { formatVND, formatAssetDisplay } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { EditCashModal } from './edit-cash-modal'
-import { Search, Filter, ArrowUpRight, ArrowDownLeft, Wallet, Landmark, TrendingUp, CircleDollarSign } from 'lucide-react'
+import { Search, Filter, ArrowUpRight, ArrowDownLeft, Wallet, Landmark, TrendingUp, CircleDollarSign, ArrowRightLeft } from 'lucide-react'
 import { ImportWizard } from '@/features/import/components/import-wizard'
 
 interface ActivityLedgerTableProps {
   activities: any[];
 }
 
-type TxType = 'ALL' | 'DEPOSIT' | 'WITHDRAWAL' | 'BUY' | 'SELL' | 'DIVIDEND' | 'INTEREST';
+type TxType = 'ALL' | 'DEPOSIT' | 'WITHDRAWAL' | 'BUY' | 'SELL' | 'DIVIDEND' | 'INTEREST' | 'CONVERSION';
 
 export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -53,6 +53,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
       case 'SELL': return <TrendingUp className="h-3 w-3 text-emerald-400" />
       case 'DIVIDEND': return <Wallet className="h-3 w-3 text-amber-400" />
       case 'INTEREST': return <Landmark className="h-3 w-3 text-indigo-400" />
+      case 'CONVERSION': return <ArrowRightLeft className="h-3 w-3 text-blue-400" />
       default: return null
     }
   }
@@ -76,7 +77,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
-          {(['ALL', 'DEPOSIT', 'WITHDRAWAL', 'BUY', 'SELL', 'DIVIDEND', 'INTEREST'] as TxType[]).map((type) => (
+          {(['ALL', 'DEPOSIT', 'WITHDRAWAL', 'BUY', 'SELL', 'DIVIDEND', 'INTEREST', 'CONVERSION'] as TxType[]).map((type) => (
             <button
               key={type}
               onClick={() => setActiveType(type)}
@@ -110,6 +111,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((tx: any) => {
                   const isAssetTx = tx.category === 'ASSET';
+                  const isConversion = tx.category === 'CONVERSION';
 
                   return (
                     <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
@@ -120,12 +122,14 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                         <div className="flex items-center gap-2">
                           <div className={cn(
                             "p-1.5 rounded-lg",
+                            isConversion ? "bg-blue-500/10" :
                             isInflow(tx.type) ? "bg-emerald-500/10" : "bg-rose-500/10"
                           )}>
                             {getTypeIcon(tx.type)}
                           </div>
                           <span className={cn(
                             "text-[10px] font-bold uppercase tracking-widest",
+                            isConversion ? "text-blue-400" :
                             isAssetTx ? "text-blue-400" : "text-slate-400"
                           )}>
                             {tx.type.replace('_', ' ')}
@@ -134,7 +138,16 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          {tx.assetSymbol ? (() => {
+                          {isConversion ? (
+                            <>
+                              <span className="text-xs font-black text-slate-200">
+                                {tx.fromAssetSymbol} → {tx.toAssetSymbol}
+                              </span>
+                              <span className="text-[10px] text-slate-500 font-medium">
+                                Internal Conversion
+                              </span>
+                            </>
+                          ) : tx.assetSymbol ? (() => {
                             const { primary, secondary } = formatAssetDisplay(tx.assetSymbol, tx.assetName || '');
                             return (
                               <>
@@ -154,7 +167,18 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        {isAssetTx ? (
+                        {isConversion ? (
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-slate-400">
+                              {tx.fromQuantity?.toLocaleString()} {tx.fromAssetSymbol} → {tx.toQuantity?.toLocaleString()} {tx.toAssetSymbol}
+                            </span>
+                            {tx.metadata?.venue && (
+                              <span className="text-[10px] text-slate-500">
+                                Venue: {tx.metadata.venue}
+                              </span>
+                            )}
+                          </div>
+                        ) : isAssetTx ? (
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-slate-400">
                               {tx.quantity > 0 ? `${tx.quantity.toLocaleString()} units` : '-'}
@@ -171,12 +195,22 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                       </td>
                       <td className={cn(
                         "px-6 py-4 text-right text-xs font-black tabular-nums",
+                        isConversion ? "text-slate-400" :
                         isInflow(tx.type) ? "text-emerald-400" : "text-slate-300"
                       )}>
-                        {isInflow(tx.type) ? '+' : '-'} {formatVND(Math.abs(tx.amount))}
+                        {isConversion ? (
+                          <span className="text-[10px] text-slate-500 italic">Neutral</span>
+                        ) : (
+                          <>{isInflow(tx.type) ? '+' : '-'} {formatVND(Math.abs(tx.amount))}</>
+                        )}
+                        {isConversion && tx.price && (
+                          <div className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter">
+                            {formatVND(tx.price)} basis
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                        {tx.category !== 'ASSET' && <EditCashModal transaction={tx} />}
+                        {!isAssetTx && !isConversion && <EditCashModal transaction={tx} />}
                       </td>
                     </tr>
                   );

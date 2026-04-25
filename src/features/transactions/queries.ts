@@ -1,6 +1,6 @@
 import { prisma } from "@/server/db";
 
-export type ActivityType = 'BUY' | 'SELL' | 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'INTEREST';
+export type ActivityType = 'BUY' | 'SELL' | 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'INTEREST' | 'CONVERSION';
 
 export interface UnifiedActivity {
   id: string;
@@ -13,7 +13,15 @@ export interface UnifiedActivity {
   assetSymbol?: string;
   description?: string;
   referenceId?: string;
-  category: 'CASH' | 'ASSET' | 'INCOME';
+  category: 'CASH' | 'ASSET' | 'INCOME' | 'CONVERSION';
+  metadata?: any;
+  // Conversion specific fields
+  fromAssetSymbol?: string;
+  fromAssetName?: string;
+  fromQuantity?: number;
+  toAssetSymbol?: string;
+  toAssetName?: string;
+  toQuantity?: number;
 }
 
 export async function getUnifiedActivity(userId: string): Promise<UnifiedActivity[]> {
@@ -29,10 +37,60 @@ export async function getUnifiedActivity(userId: string): Promise<UnifiedActivit
     })
   ]);
 
-  // Create a map of cash transaction IDs already handled by asset transactions to avoid double counting
+  // Create a map of cash transaction IDs already handled by asset transactions
   const handledCashTxIds = new Set(assetTxs.map(tx => tx.cashTransactionId).filter(Boolean));
 
-  const normalizedAssetTxs: UnifiedActivity[] = assetTxs.map(tx => ({
+  // Group asset transactions by conversionId
+  const conversions = new Map<string, typeof assetTxs>();
+  const independentAssetTxs: typeof assetTxs = [];
+
+  assetTxs.forEach(tx => {
+    if (tx.conversionId) {
+      const group = conversions.get(tx.conversionId) || [];
+      group.push(tx);
+      conversions.set(tx.conversionId, group);
+    } else {
+      independentAssetTxs.push(tx);
+    }
+  });
+
+  const normalizedConversions: UnifiedActivity[] = Array.from(conversions.entries()).map(([conversionId, group]) => {
+    const fromLeg = group.find(tx => (tx.metadata as any)?.conversionRole === 'FROM');
+    const toLeg = group.find(tx => (tx.metadata as any)?.conversionRole === 'TO');
+
+    if (!fromLeg || !toLeg) {
+      // Fallback for incomplete conversion
+      const mainLeg = fromLeg || toLeg || group[0];
+      return {
+        id: conversionId,
+        date: mainLeg.date,
+        type: 'CONVERSION',
+        amount: 0,
+        description: 'Incomplete conversion record',
+        category: 'CONVERSION',
+        metadata: mainLeg.metadata
+      };
+    }
+
+    return {
+      id: conversionId,
+      date: fromLeg.date,
+      type: 'CONVERSION',
+      amount: 0, // Internal transfer, neutral amount
+      category: 'CONVERSION',
+      fromAssetSymbol: fromLeg.asset.symbol,
+      fromAssetName: fromLeg.asset.name,
+      fromQuantity: fromLeg.quantity,
+      toAssetSymbol: toLeg.asset.symbol,
+      toAssetName: toLeg.asset.name,
+      toQuantity: toLeg.quantity,
+      description: `Converted ${fromLeg.asset.symbol} → ${toLeg.asset.symbol}`,
+      metadata: fromLeg.metadata,
+      price: Math.abs(fromLeg.grossAmount) // Use cost basis as "price" reference for the transfer
+    };
+  });
+
+  const normalizedAssetTxs: UnifiedActivity[] = independentAssetTxs.map(tx => ({
     id: tx.id,
     date: tx.date,
     type: tx.type as ActivityType,
@@ -41,7 +99,8 @@ export async function getUnifiedActivity(userId: string): Promise<UnifiedActivit
     price: tx.pricePerUnit,
     assetName: tx.asset.name,
     assetSymbol: tx.asset.symbol,
-    category: 'ASSET'
+    category: 'ASSET',
+    metadata: tx.metadata
   }));
 
   const normalizedCashTxs: UnifiedActivity[] = cashTxs
@@ -56,5 +115,6 @@ export async function getUnifiedActivity(userId: string): Promise<UnifiedActivit
       category: tx.type === 'DIVIDEND' || tx.type === 'INTEREST' ? 'INCOME' : 'CASH'
     }));
 
-  return [...normalizedAssetTxs, ...normalizedCashTxs].sort((a, b) => b.date.getTime() - a.date.getTime());
+  return [...normalizedConversions, ...normalizedAssetTxs, ...normalizedCashTxs]
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
 }

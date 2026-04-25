@@ -123,14 +123,22 @@ export function AssetTransactionTable({
                         {format(new Date(tx.date), "dd/MM/yyyy")}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={cn(
-                          "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest",
-                          tx.type === 'BUY' ? "bg-emerald-500/10 text-emerald-400" : 
-                          tx.type === 'SELL' ? "bg-red-500/10 text-red-500" : 
-                          "bg-slate-800 text-slate-400"
-                        )}>
-                          {tx.type}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={cn(
+                            "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest self-start",
+                            tx.type === 'BUY' ? "bg-emerald-500/10 text-emerald-400" : 
+                            tx.type === 'SELL' ? "bg-red-500/10 text-red-500" : 
+                            "bg-slate-800 text-slate-400"
+                          )}>
+                            {tx.type}
+                          </span>
+                          {tx.conversionId && (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter text-blue-400">
+                              <ArrowRightLeft className="h-2 w-2" />
+                              Conversion
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-slate-300 tabular-nums">
                         {tx.quantity.toLocaleString(undefined, { maximumFractionDigits: 8 })}
