@@ -4,40 +4,21 @@ import { Activity, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 interface RecentActivityProps {
-  transactions: any[];
+  activities: any[];
 }
 
-export function RecentActivity({ transactions }: RecentActivityProps) {
+export function RecentActivity({ activities }: RecentActivityProps) {
   // Show last 5
-  const recent = transactions.slice(0, 5);
+  const recent = activities.slice(0, 5);
 
   const isInflow = (type: string) => {
-    return ['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL_ASSET'].includes(type)
-  }
-
-  const formatActivityLabel = (tx: any) => {
-    // 1. If it's a trade, try to extract the action (BUY/SELL) from the description
-    const parts = tx.description?.split(' @ ') || [];
-    const mainPart = parts[0] || '';
-    
-    // 2. If the description is already high-fidelity (handled by recent backend fix), use it
-    // But check for underscores or TD_ as a sign of legacy data
-    if (!mainPart.includes('_') && !mainPart.includes('TD_')) {
-      return mainPart || tx.type.replace('_', ' ');
-    }
-
-    // 3. Evidence-based cleanup for legacy data
-    // Remove underscores and mask synthetic Term Deposit IDs
-    return mainPart
-      .replace(/_/g, ' ')
-      .replace(/TD_\d+/g, 'Term Deposit')
-      || tx.type.replace('_', ' ');
+    return ['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL'].includes(type)
   }
 
   return (
     <div className="glass-premium rounded-2xl overflow-hidden border border-white/5 shadow-xl flex flex-col h-full">
       <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between shrink-0">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recent Cash Activity</h3>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recent Activity</h3>
          <Activity className="h-3 w-3 text-slate-500" />
       </div>
       
@@ -47,7 +28,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
             <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center">
                <Activity className="h-4 w-4 text-slate-600" />
             </div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">No recent cash activity</p>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">No recent activity</p>
           </div>
         ) : (
           recent.map((tx: any) => (
@@ -57,8 +38,13 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
                     {new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                   <span className="text-xs font-black text-slate-200 truncate pr-2">
-                    {formatActivityLabel(tx)}
+                    {tx.assetSymbol || (tx.description || tx.type.replace('_', ' '))}
                   </span>
+                  {tx.assetName && (
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter truncate max-w-[140px]">
+                      {tx.assetName}
+                    </span>
+                  )}
                </div>
                <div className="flex flex-col items-end shrink-0">
                   <span className={cn(
@@ -68,7 +54,7 @@ export function RecentActivity({ transactions }: RecentActivityProps) {
                     {isInflow(tx.type) ? '+' : '-'} {formatVND(tx.amount)}
                   </span>
                   <span className="text-[9px] text-slate-500 italic truncate max-w-[120px]">
-                    {tx.description || 'No description'}
+                    {tx.category === 'ASSET' ? `${tx.type} ${tx.quantity} units` : (tx.description || 'No description')}
                   </span>
                </div>
             </div>

@@ -2,12 +2,14 @@ import { Building2, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatVND, formatAssetDisplay } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface RealEstateTableProps {
   assets: any[];
 }
 
 export function RealEstateTable({ assets }: RealEstateTableProps) {
+  const router = useRouter();
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between px-1">
@@ -34,7 +36,11 @@ export function RealEstateTable({ assets }: RealEstateTableProps) {
             </thead>
             <tbody className="divide-y divide-white/5">
               {assets.map((holding: any) => (
-                <tr key={holding.id} className="hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => window.location.href = `/holdings/${holding.id}`}>
+                <tr 
+                  key={holding.id} 
+                  className="hover:bg-white/5 transition-colors group cursor-pointer" 
+                  onClick={() => router.push(`/holdings/${holding.id}`)}
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-white/5 group-hover:bg-purple-500/10 transition-colors">

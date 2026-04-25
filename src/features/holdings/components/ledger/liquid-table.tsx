@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatVND, formatQuantity, formatAssetDisplay } from "@/lib/utils/format";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface LiquidTableProps {
   assets: any[];
@@ -19,6 +20,8 @@ export function LiquidTable({
   totalPages,
   onPageChange
 }: LiquidTableProps) {
+  const router = useRouter();
+
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between px-1">
@@ -45,7 +48,11 @@ export function LiquidTable({
             </thead>
             <tbody className="divide-y divide-white/5">
               {paginatedAssets.map((holding: any) => (
-                <tr key={holding.id} className="hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => window.location.href = `/holdings/${holding.id}`}>
+                <tr 
+                  key={holding.id} 
+                  className="hover:bg-white/5 transition-colors group cursor-pointer" 
+                  onClick={() => router.push(`/holdings/${holding.id}`)}
+                >
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       {(() => {

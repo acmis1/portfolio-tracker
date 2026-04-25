@@ -1,12 +1,20 @@
 import { Suspense } from "react"
-import { getCashTransactions } from "@/features/cash/actions"
-import { CashLedgerTable } from "@/features/cash/components/cash-ledger-table"
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
+import { getUnifiedActivity } from "@/features/transactions/queries"
+import { ActivityLedgerTable } from "@/features/transactions/components/activity-ledger-table"
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function LedgerPage() {
-  const transactions = await getCashTransactions();
+  const { userId } = await auth();
+  
+  if (!userId) {
+    redirect("/sign-in")
+  }
+
+  const activities = await getUnifiedActivity(userId);
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 lg:p-10">
@@ -20,7 +28,7 @@ export default async function LedgerPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
-              Transaction Ledger
+              Unified Ledger
             </h1>
             <p className="text-slate-400 font-medium">
               Comprehensive record of all cash flows, asset trades, and passive income events
@@ -32,10 +40,11 @@ export default async function LedgerPage() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
-                Transaction History
+                Activity History
               </h2>
             </div>
-            <CashLedgerTable transactions={transactions} />
+            {/* We'll pass the activities to the table. We might need to update the table component to handle the new fields. */}
+            <CashLedgerTable transactions={activities as any} />
           </div>
         </Suspense>
       </div>

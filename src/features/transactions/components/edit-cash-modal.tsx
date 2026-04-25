@@ -16,8 +16,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
-import { cashTransactionSchema, type CashTransactionFormValues } from "../validations"
-import { updateCashTransaction, deleteCashTransaction } from "../actions"
+import { cashTransactionSchema, type CashTransactionFormValues } from "@/features/cash/validations"
+import { updateCashTransaction, deleteCashTransaction } from "@/features/cash/actions"
 import { cn } from "@/lib/utils"
 
 interface EditCashModalProps {

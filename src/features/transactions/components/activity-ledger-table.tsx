@@ -6,47 +6,48 @@ import { cn } from '@/lib/utils'
 import { EditCashModal } from './edit-cash-modal'
 import { Search, Filter, ArrowUpRight, ArrowDownLeft, Wallet, Landmark, TrendingUp, CircleDollarSign } from 'lucide-react'
 
-interface CashLedgerTableProps {
-  transactions: any[];
+interface ActivityLedgerTableProps {
+  activities: any[];
 }
 
-type TxType = 'ALL' | 'DEPOSIT' | 'WITHDRAWAL' | 'BUY_ASSET' | 'SELL_ASSET' | 'DIVIDEND' | 'INTEREST';
+type TxType = 'ALL' | 'DEPOSIT' | 'WITHDRAWAL' | 'BUY' | 'SELL' | 'DIVIDEND' | 'INTEREST';
 
-export function CashLedgerTable({ transactions }: CashLedgerTableProps) {
+export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeType, setActiveType] = useState<TxType>('ALL')
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(tx => {
+    return activities.filter(tx => {
       const matchesSearch = 
         tx.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.transaction?.asset?.symbol?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.transaction?.asset?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+        tx.assetSymbol?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tx.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tx.type?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesType = activeType === 'ALL' || tx.type === activeType;
       
       return matchesSearch && matchesType;
     })
-  }, [transactions, searchQuery, activeType])
+  }, [activities, searchQuery, activeType])
 
-  if (transactions.length === 0) {
+  if (activities.length === 0) {
     return (
       <div className="glass-premium rounded-2xl p-12 text-center">
-        <p className="text-sm text-slate-500 font-medium">No transactions recorded in the ledger</p>
+        <p className="text-sm text-slate-500 font-medium">No activity recorded in the ledger</p>
       </div>
     )
   }
 
   const isInflow = (type: string) => {
-    return ['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL_ASSET'].includes(type)
+    return ['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL'].includes(type)
   }
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'DEPOSIT': return <ArrowDownLeft className="h-3 w-3 text-emerald-400" />
       case 'WITHDRAWAL': return <ArrowUpRight className="h-3 w-3 text-rose-400" />
-      case 'BUY_ASSET': return <CircleDollarSign className="h-3 w-3 text-blue-400" />
-      case 'SELL_ASSET': return <TrendingUp className="h-3 w-3 text-emerald-400" />
+      case 'BUY': return <CircleDollarSign className="h-3 w-3 text-blue-400" />
+      case 'SELL': return <TrendingUp className="h-3 w-3 text-emerald-400" />
       case 'DIVIDEND': return <Wallet className="h-3 w-3 text-amber-400" />
       case 'INTEREST': return <Landmark className="h-3 w-3 text-indigo-400" />
       default: return null
@@ -69,7 +70,7 @@ export function CashLedgerTable({ transactions }: CashLedgerTableProps) {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
-          {(['ALL', 'DEPOSIT', 'WITHDRAWAL', 'BUY_ASSET', 'SELL_ASSET', 'DIVIDEND', 'INTEREST'] as TxType[]).map((type) => (
+          {(['ALL', 'DEPOSIT', 'WITHDRAWAL', 'BUY', 'SELL', 'DIVIDEND', 'INTEREST'] as TxType[]).map((type) => (
             <button
               key={type}
               onClick={() => setActiveType(type)}
@@ -102,8 +103,7 @@ export function CashLedgerTable({ transactions }: CashLedgerTableProps) {
             <tbody className="divide-y divide-white/5">
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map((tx: any) => {
-                  const asset = tx.transaction?.asset;
-                  const isAssetTx = !!tx.transaction;
+                  const isAssetTx = tx.category === 'ASSET';
 
                   return (
                     <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
@@ -129,23 +129,23 @@ export function CashLedgerTable({ transactions }: CashLedgerTableProps) {
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
                           <span className="text-xs font-black text-slate-200">
-                            {asset ? asset.symbol : (tx.description || tx.type.replace('_', ' '))}
+                            {tx.assetSymbol || (tx.description || tx.type.replace('_', ' '))}
                           </span>
-                          {asset && (
+                          {tx.assetName && (
                             <span className="text-[10px] text-slate-500 font-medium truncate max-w-[200px]">
-                              {asset.name}
+                              {tx.assetName}
                             </span>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        {tx.transaction ? (
+                        {isAssetTx ? (
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-slate-400">
-                              {tx.transaction.quantity > 0 ? `${tx.transaction.quantity.toLocaleString()} units` : '-'}
+                              {tx.quantity > 0 ? `${tx.quantity.toLocaleString()} units` : '-'}
                             </span>
                             <span className="text-[10px] text-slate-500">
-                              @ {formatVND(tx.transaction.pricePerUnit)}
+                              @ {formatVND(tx.price)}
                             </span>
                           </div>
                         ) : (
@@ -161,7 +161,7 @@ export function CashLedgerTable({ transactions }: CashLedgerTableProps) {
                         {isInflow(tx.type) ? '+' : '-'} {formatVND(tx.amount)}
                       </td>
                       <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                        <EditCashModal transaction={tx} />
+                        {tx.category !== 'ASSET' && <EditCashModal transaction={tx} />}
                       </td>
                     </tr>
                   );

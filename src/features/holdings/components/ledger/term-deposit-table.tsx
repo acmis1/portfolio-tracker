@@ -2,12 +2,14 @@ import { Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatVND, formatAssetDisplay } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface TermDepositTableProps {
   assets: any[];
 }
 
 export function TermDepositTable({ assets }: TermDepositTableProps) {
+  const router = useRouter();
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between px-1">
@@ -35,7 +37,11 @@ export function TermDepositTable({ assets }: TermDepositTableProps) {
             </thead>
             <tbody className="divide-y divide-white/5">
               {assets.map((holding: any) => (
-                <tr key={holding.id} className="hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => window.location.href = `/holdings/${holding.id}`}>
+                <tr 
+                  key={holding.id} 
+                  className="hover:bg-white/5 transition-colors group cursor-pointer" 
+                  onClick={() => router.push(`/holdings/${holding.id}`)}
+                >
                   <td className="px-6 py-4">
                     {(() => {
                       const labels = formatAssetDisplay(holding.symbol, holding.name);
