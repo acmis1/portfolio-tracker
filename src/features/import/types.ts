@@ -13,14 +13,20 @@ export interface RawImportRow {
 
 export interface ImportPreviewRow extends RawImportRow {
   id: string;
-  status: 'PENDING' | 'VALID' | 'INVALID' | 'DUPLICATE';
+  status: 'PENDING' | 'VALID' | 'INVALID' | 'DUPLICATE' | 'MAPPED';
   errors?: string[];
   matchedAssetId?: string;
+  matchedAssetName?: string;
+  isNewAsset?: boolean;
+  suggestedSymbol?: string;
 }
 
 export interface ImportSummary {
   totalRows: number;
   validRows: number;
   invalidRows: number;
-  duplicates: number;
+  duplicateRows: number;
+  newAssets: number;
+  matchedAssets: number;
+  totalAmount: number;
 }

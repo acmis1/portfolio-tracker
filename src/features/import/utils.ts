@@ -1,35 +1,50 @@
 import { RawImportRow, ImportCategory } from "./types";
 
 export function parseCSV(csvText: string): RawImportRow[] {
-  const lines = csvText.split(/\r?\n/);
+  const lines = csvText.split(/\r?\n/).filter(line => line.trim());
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+  // Robust CSV splitting regex to handle quoted commas
+  const splitLine = (text: string) => {
+    const result = [];
+    let cur = "";
+    let inQuote = false;
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === '"') {
+        inQuote = !inQuote;
+      } else if (char === ',' && !inQuote) {
+        result.push(cur.trim());
+        cur = "";
+      } else {
+        cur += char;
+      }
+    }
+    result.push(cur.trim());
+    return result;
+  };
+
+  const headers = splitLine(lines[0]).map(h => h.toLowerCase());
   const rows: RawImportRow[] = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    // Basic CSV split (doesn't handle quoted commas yet)
-    const values = line.split(',').map(v => v.trim());
+    const values = splitLine(lines[i]);
     const row: any = {};
 
     headers.forEach((header, index) => {
-      const value = values[index];
+      const value = values[index] || "";
       if (header === 'date') row.date = value;
       else if (header === 'type') row.type = value.toUpperCase();
-      else if (header === 'symbol') row.symbol = value;
-      else if (header === 'quantity') row.quantity = parseFloat(value);
-      else if (header === 'price') row.price = parseFloat(value);
-      else if (header === 'amount') row.amount = parseFloat(value);
+      else if (header === 'symbol') row.symbol = value.toUpperCase();
+      else if (header === 'quantity') row.quantity = parseFloat(value.replace(/,/g, '')) || 0;
+      else if (header === 'price') row.price = parseFloat(value.replace(/,/g, '')) || 0;
+      else if (header === 'amount') row.amount = parseFloat(value.replace(/,/g, '')) || 0;
       else if (header === 'description') row.description = value;
       else if (header === 'category') row.category = value.toUpperCase() as ImportCategory;
     });
 
-    // Auto-detect category if missing
     if (!row.category) {
-      row.category = row.symbol ? 'ASSET' : 'CASH';
+      row.category = (row.symbol || row.quantity) ? 'ASSET' : 'CASH';
     }
 
     rows.push(row as RawImportRow);
