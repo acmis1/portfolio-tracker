@@ -61,8 +61,13 @@ model Transaction {
   realizedPnL  Float?
   cashTransactionId String?    @unique
   cashTransaction   CashTransaction? @relation(fields: [cashTransactionId], references: [id])
+  
+  // Crypto & Conversion fields
+  conversionId String?
+  metadata     Json?
 
   @@index([userId])
+  @@index([conversionId])
 }
 
 model CashTransaction {
