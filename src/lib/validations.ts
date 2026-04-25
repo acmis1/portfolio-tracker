@@ -55,3 +55,32 @@ export const transactionSchema = z.object({
 });
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>
+
+export const assetConversionSchema = z.object({
+  fromAssetId: z.string().min(1, "Source asset is required"),
+  toAsset: z.object({
+    id: z.string().optional(),
+    symbol: z.string().min(1, "Symbol is required"),
+    name: z.string().min(1, "Name is required"),
+    assetClass: z.enum(ASSET_CLASSES),
+    currency: z.enum(['VND', 'USD']).default('VND'),
+  }).optional(),
+  date: z.string().min(1, "Date is required"),
+  fromQuantity: z.number().positive("Source quantity must be positive"),
+  toQuantity: z.number().positive("Target quantity must be positive"),
+  feeAmount: z.number().min(0, "Fees cannot be negative").optional(),
+  feeCurrency: z.string().optional(),
+  venue: z.string().optional(),
+  originalPairPrice: z.number().positive("Price must be positive").optional(),
+  note: z.string().optional(),
+}).refine((data) => {
+  if (data.toAsset?.id && data.fromAssetId === data.toAsset.id) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Source and target assets must be different",
+  path: ["toAsset"],
+});
+
+export type AssetConversionValues = z.infer<typeof assetConversionSchema>

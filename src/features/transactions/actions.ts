@@ -3,6 +3,7 @@
 import { addTransaction as _addTransaction } from "./commands/add-transaction"
 import { deleteTransaction as _deleteTransaction } from "./commands/delete-transaction"
 import { editTransaction as _editTransaction } from "./commands/edit-transaction"
+import { convertAsset as _convertAsset } from "./commands/convert-asset"
 import { getUserAssets as _getUserAssets } from "./services/asset-lookup"
 
 export async function addTransaction(...args: Parameters<typeof _addTransaction>) {
@@ -15,6 +16,10 @@ export async function deleteTransaction(...args: Parameters<typeof _deleteTransa
 
 export async function editTransaction(...args: Parameters<typeof _editTransaction>) {
   return _editTransaction(...args)
+}
+
+export async function convertAsset(...args: Parameters<typeof _convertAsset>) {
+  return _convertAsset(...args)
 }
 
 export async function getUserAssets(...args: Parameters<typeof _getUserAssets>) {
