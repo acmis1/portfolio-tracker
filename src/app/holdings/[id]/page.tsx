@@ -17,16 +17,17 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 interface AssetDetailPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function AssetDetailPage({ params }: AssetDetailPageProps) {
   const { userId } = await auth()
   if (!userId) redirect("/sign-in")
 
-  const data = await getAssetDetail(params.id)
+  const { id } = await params
+  const data = await getAssetDetail(id)
   if (!data) notFound()
 
   const { asset, holding, transactions } = data
