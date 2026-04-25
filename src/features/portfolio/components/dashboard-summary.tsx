@@ -1,10 +1,9 @@
-import { DollarSign, Activity, PieChart, TrendingUp, PiggyBank, Landmark, ShieldCheck, Wallet } from 'lucide-react'
+import { DollarSign, Activity, TrendingUp, ShieldCheck } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { type PortfolioSummary } from '../utils'
 import { formatPercentage } from '@/lib/formatters'
 import { formatVND } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
-import Link from 'next/link'
 
 interface DashboardSummaryProps {
   summary: PortfolioSummary;
@@ -17,14 +16,9 @@ interface DashboardSummaryProps {
 export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
   const { 
     portfolioValue, 
-    cashBalance, 
-    netWorth, 
     xirr, 
     totalRealizedPnL,
-    totalInvested,
-    totalContributions,
-    totalWithdrawals,
-    netCashFlow
+    totalInvested
   } = summary
 
   const totalCapitalGain = portfolioValue - totalInvested;
@@ -142,26 +136,14 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
       </div>
 
       {/* Secondary Compact Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-1">
+      <div className="px-1 flex items-center gap-6">
         <div className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1">
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Net Invested</span>
-          <span className="text-sm font-black text-slate-200 tabular-nums">{formatVND(totalInvested)}</span>
-        </div>
-        
-        <div className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Net Deposits</span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-black text-slate-200 tabular-nums">{formatVND(netCashFlow)}</span>
-            <span className="text-[9px] text-slate-500 font-bold">({formatVND(totalContributions)} In)</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-sm font-black text-slate-200 tabular-nums">{formatVND(totalInvested)}</span>
+            <span className="text-[9px] text-slate-500 font-bold italic">Cost basis of active tracked positions</span>
           </div>
         </div>
- 
-        {summary.totalPassiveIncome > 0 && (
-          <div className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Passive Income</span>
-            <span className="text-sm font-black text-emerald-400 tabular-nums">{formatVND(summary.totalPassiveIncome)}</span>
-          </div>
-        )}
       </div>
     </div>
   )
