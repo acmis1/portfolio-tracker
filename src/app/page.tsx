@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { Skeleton } from "@/components/ui/skeleton"
 import { DashboardSummary } from '@/features/portfolio/components/dashboard-summary'
 import { GrowthChart } from '@/features/portfolio/components/growth-chart'
 import { AllocationChart } from '@/features/portfolio/components/allocation-chart'
@@ -12,16 +13,66 @@ import { getUnifiedActivity } from '@/features/transactions/queries'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
+async function SummarySection() {
+  const [summary, macro] = await Promise.all([
+    getPortfolioSummary(),
+    getVietnamMacro()
+  ]);
+  return <DashboardSummary summary={summary} macro={macro} />;
+}
+
+async function ChartsSection() {
+  const [historyData, summary] = await Promise.all([
+    getPortfolioSnapshots(),
+    getPortfolioSummary()
+  ]);
+  
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-2 space-y-4">
+        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
+          Performance Analytics
+        </h2>
+        <GrowthChart data={historyData} />
+      </div>
+
+      <div className="lg:col-span-1 space-y-4">
+        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
+          Asset Allocation
+        </h2>
+        <AllocationChart holdings={summary.holdings} />
+      </div>
+    </div>
+  );
+}
+
+async function TopHoldingsSection() {
+  const summary = await getPortfolioSummary();
+  return (
+    <div className="space-y-4">
+      <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
+        Top Assets
+      </h2>
+      <TopHoldings holdings={summary.holdings} />
+    </div>
+  );
+}
+
+async function RecentActivitySection({ userId }: { userId: string }) {
+  const activities = await getUnifiedActivity(userId);
+  return (
+    <div className="space-y-4">
+      <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
+        Recent Activity
+      </h2>
+      <RecentActivity activities={activities} />
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
-
-  const [historyData, summary, macro, activities] = await Promise.all([
-    getPortfolioSnapshots(),
-    getPortfolioSummary(),
-    getVietnamMacro(),
-    getUnifiedActivity(userId)
-  ]);
 
   return (
     <main className="min-h-screen bg-slate-950 p-6 lg:p-10">
@@ -45,49 +96,65 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
-            <DashboardSummary summary={summary} macro={macro} />
+          <Suspense fallback={<SummarySectionSkeleton />}>
+            <SummarySection />
           </Suspense>
         </div>
 
-        {/* 2. Analytics Grid (Growth + Allocation) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
-              Performance Analytics
-            </h2>
-            <GrowthChart data={historyData} />
-          </div>
+        {/* 2. Analytics Grid */}
+        <Suspense fallback={<ChartsSectionSkeleton />}>
+          <ChartsSection />
+        </Suspense>
 
-          <div className="lg:col-span-1 space-y-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
-              Asset Allocation
-            </h2>
-            <AllocationChart holdings={summary.holdings} />
+        {/* 3. Operational Grid */}
+        <Suspense fallback={<ListSectionSkeleton />}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <TopHoldingsSection />
+            </div>
+            
+            <div className="lg:col-span-2">
+              <RecentActivitySection userId={userId} />
+            </div>
           </div>
-        </div>
-
-        {/* 3. Operational Grid (Top Holdings + Recent Activity) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
-              Top Assets
-            </h2>
-            <Suspense fallback={<div className="h-full min-h-[400px] w-full animate-pulse rounded-2xl glass-premium" />}>
-              <TopHoldings holdings={summary.holdings} />
-            </Suspense>
-          </div>
-          
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
-              Recent Activity
-            </h2>
-            <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
-              <RecentActivity activities={activities} />
-            </Suspense>
-          </div>
-        </div>
+        </Suspense>
       </div>
     </main>
+  )
+}
+
+function SummarySectionSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <Skeleton key={i} className="h-32 w-full rounded-3xl" />
+      ))}
+    </div>
+  )
+}
+
+function ChartsSectionSkeleton() {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-2">
+        <Skeleton className="h-[400px] w-full rounded-3xl" />
+      </div>
+      <div className="lg:col-span-1">
+        <Skeleton className="h-[400px] w-full rounded-3xl" />
+      </div>
+    </div>
+  )
+}
+
+function ListSectionSkeleton() {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-1">
+        <Skeleton className="h-[500px] w-full rounded-3xl" />
+      </div>
+      <div className="lg:col-span-2">
+        <Skeleton className="h-[500px] w-full rounded-3xl" />
+      </div>
+    </div>
   )
 }

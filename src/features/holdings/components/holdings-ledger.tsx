@@ -42,13 +42,11 @@ export function HoldingsLedger({ summary, fxRate }: HoldingsLedgerProps) {
     });
 
     return result.sort((a, b) => {
-      const aVal = a as any;
-      const bVal = b as any;
       switch (sortBy) {
         case "VALUE_DESC": return b.marketValue - a.marketValue;
         case "VALUE_ASC": return a.marketValue - b.marketValue;
-        case "ROI_DESC": return (bVal.unrealizedPnLPctg ?? -Infinity) - (aVal.unrealizedPnLPctg ?? -Infinity);
-        case "ROI_ASC": return (aVal.unrealizedPnLPctg ?? Infinity) - (bVal.unrealizedPnLPctg ?? Infinity);
+        case "ROI_DESC": return (b.unrealizedPnLPctg ?? -Infinity) - (a.unrealizedPnLPctg ?? -Infinity);
+        case "ROI_ASC": return (a.unrealizedPnLPctg ?? Infinity) - (b.unrealizedPnLPctg ?? Infinity);
         case "NAME_ASC": return a.name.localeCompare(b.name);
         default: return 0;
       }

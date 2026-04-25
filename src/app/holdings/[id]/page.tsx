@@ -171,7 +171,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
                     {formatVND(tx.grossAmount)}
                   </td>
                   <td className="px-6 py-4 text-right font-black text-white tabular-nums">
-                    {formatVND(tx.netAmount)}
+                    {formatVND(tx.grossAmount)}
                   </td>
                 </tr>
               ))}

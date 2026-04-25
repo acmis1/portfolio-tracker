@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { getUnifiedActivity } from "@/features/transactions/queries"
-import { ActivityLedgerTable } from "@/features/transactions/components/activity-ledger-table"
+import { ActivityLedgerTable, ActivityLedgerSkeleton } from "@/features/transactions/components/activity-ledger-table"
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -36,7 +36,7 @@ export default async function LedgerPage() {
           </div>
         </div>
 
-        <Suspense fallback={<div className="h-64 w-full animate-pulse rounded-2xl glass-premium" />}>
+        <Suspense fallback={<ActivityLedgerSkeleton />}>
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 px-1">
@@ -44,7 +44,7 @@ export default async function LedgerPage() {
               </h2>
             </div>
             {/* We'll pass the activities to the table. We might need to update the table component to handle the new fields. */}
-            <CashLedgerTable transactions={activities as any} />
+            <ActivityLedgerTable activities={activities} />
           </div>
         </Suspense>
       </div>

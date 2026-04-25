@@ -5,6 +5,7 @@ import { formatVND } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { EditCashModal } from './edit-cash-modal'
 import { Search, Filter, ArrowUpRight, ArrowDownLeft, Wallet, Landmark, TrendingUp, CircleDollarSign } from 'lucide-react'
+import { ImportWizard } from '@/features/import/components/import-wizard'
 
 interface ActivityLedgerTableProps {
   activities: any[];
@@ -58,15 +59,18 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
     <div className="space-y-6">
       {/* Search & Filter Bar */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-96 group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
-          <input
-            type="text"
-            placeholder="Search assets, activities, descriptions..."
-            className="w-full bg-slate-900/50 border border-white/5 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="relative w-full md:w-96 flex gap-2">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search assets, activities, descriptions..."
+              className="w-full bg-slate-900/50 border border-white/5 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <ImportWizard />
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
@@ -175,6 +179,34 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+  )
+}
+export function ActivityLedgerSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="h-10 w-full md:w-96 bg-white/5 rounded-xl border border-white/5" />
+        <div className="flex gap-2 w-full md:w-auto">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="h-7 w-20 bg-white/5 rounded-lg" />
+          ))}
+        </div>
+      </div>
+      <div className="glass-premium rounded-2xl border border-white/5 overflow-hidden">
+        <div className="border-b border-white/5 bg-white/5 p-4">
+          <div className="grid grid-cols-6 gap-4">
+            {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-3 bg-white/10 rounded" />)}
+          </div>
+        </div>
+        <div className="p-4 space-y-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            <div key={i} className="grid grid-cols-6 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(j => <div key={j} className="h-4 bg-white/5 rounded" />)}
+            </div>
+          ))}
         </div>
       </div>
     </div>

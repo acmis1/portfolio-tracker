@@ -1,5 +1,5 @@
 import { xirr } from "@finprecise/cashflow";
-import { AssetHolding } from "../types";
+import { AssetHolding, InvestmentHolding, CashHolding } from "../types";
 
 export interface PortfolioSummaryResult {
   portfolioValue: number;
@@ -14,8 +14,8 @@ export interface PortfolioSummaryResult {
   totalWithdrawals: number;
   totalPassiveIncome: number;
   netCashFlow: number;
-  holdings: AssetHolding[];
-  cashHolding: AssetHolding | null;
+  holdings: InvestmentHolding[];
+  cashHolding: CashHolding | null;
 }
 
 export function calculatePortfolioSummary(
@@ -85,7 +85,9 @@ export function calculatePortfolioSummary(
         currency: asset.currency,
         assetClass: asset.assetClass,
         weight: 0,
-        status: 'Active'
+        status: 'Active',
+        quantity: currentQty,
+        avgCost: runningAvgCost
       };
       
       let assetValue = 0;
@@ -100,6 +102,8 @@ export function calculatePortfolioSummary(
           ...baseData,
           type: 'TERM_DEPOSIT',
           marketValue: assetValue,
+          quantity: 1,
+          avgCost: td.principal,
           principal: td.principal,
           interestRate: td.interestRate,
           startDate: td.startDate,
@@ -109,7 +113,7 @@ export function calculatePortfolioSummary(
           unrealizedPnL: accruedInterest,
           unrealizedPnLPctg: td.interestRate,
           status: daysToMaturity <= 0 ? 'Matured' : `Matures in ${daysToMaturity}d`,
-        } as any);
+        });
       } else if (asset.assetClass === 'REAL_ESTATE') {
         const livePrice = asset.prices[0]?.closePrice ?? runningAvgCost;
         assetValue = currentQty * livePrice;
@@ -121,6 +125,8 @@ export function calculatePortfolioSummary(
           ...baseData,
           type: 'REAL_ESTATE',
           marketValue: assetValue,
+          quantity: 1,
+          avgCost: runningAvgCost,
           purchasePrice: runningAvgCost,
           currentValuation: livePrice,
           valuationDate: asset.prices[0]?.date ?? null,
@@ -128,7 +134,7 @@ export function calculatePortfolioSummary(
           unrealizedPnL: livePrice - runningAvgCost,
           unrealizedPnLPctg: runningAvgCost > 0 ? ((livePrice - runningAvgCost) / runningAvgCost) * 100 : 0,
           status: appraisalAgeDays !== null ? `Appraisal ${appraisalAgeDays}d old` : 'Manual Valuation',
-        } as any);
+        });
       } else {
         const livePrice = asset.prices[0]?.closePrice ?? null;
         assetValue = livePrice !== null ? currentQty * livePrice : currentQty * runningAvgCost;
@@ -141,8 +147,6 @@ export function calculatePortfolioSummary(
           holdings.push({
             ...baseData,
             type: 'GOLD',
-            quantity: currentQty,
-            avgCost: runningAvgCost,
             livePrice,
             marketValue: assetValue,
             unrealizedPnL,
@@ -154,8 +158,6 @@ export function calculatePortfolioSummary(
           holdings.push({
             ...baseData,
             type: 'LIQUID',
-            quantity: currentQty,
-            avgCost: runningAvgCost,
             livePrice,
             marketValue: assetValue,
             unrealizedPnL,
@@ -225,7 +227,7 @@ export function calculatePortfolioSummary(
     totalWithdrawals,
     totalPassiveIncome,
     netCashFlow: totalContributions - totalWithdrawals,
-    holdings: holdingsWithWeights as AssetHolding[],
-    cashHolding: cashHolding as AssetHolding | null
+    holdings: holdingsWithWeights as InvestmentHolding[],
+    cashHolding: cashHolding as CashHolding | null
   };
 }

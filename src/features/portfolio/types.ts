@@ -7,15 +7,15 @@ export interface BaseHolding {
   marketValue: number;
   weight: number;
   status: string;
+  quantity: number;
+  avgCost: number;
+  unrealizedPnL: number | null;
+  unrealizedPnLPctg: number | null;
 }
 
 export interface LiquidHolding extends BaseHolding {
   type: 'LIQUID';
-  quantity: number;
-  avgCost: number;
   livePrice: number | null;
-  unrealizedPnL: number | null;
-  unrealizedPnLPctg: number | null;
 }
 
 export interface TermDepositHolding extends BaseHolding {
@@ -26,8 +26,6 @@ export interface TermDepositHolding extends BaseHolding {
   maturityDate: Date;
   accruedInterest: number;
   daysToMaturity: number;
-  unrealizedPnL: number;
-  unrealizedPnLPctg: number;
 }
 
 export interface RealEstateHolding extends BaseHolding {
@@ -36,29 +34,23 @@ export interface RealEstateHolding extends BaseHolding {
   currentValuation: number;
   valuationDate: Date | null;
   appraisalAgeDays: number | null;
-  unrealizedPnL: number;
-  unrealizedPnLPctg: number;
 }
 
 export interface GoldHolding extends BaseHolding {
   type: 'GOLD';
-  quantity: number;
-  avgCost: number;
   livePrice: number | null;
-  unrealizedPnL: number | null;
-  unrealizedPnLPctg: number | null;
   unit: string;
 }
 
-export interface CashHolding extends BaseHolding {
+export interface CashHolding extends Omit<BaseHolding, 'avgCost' | 'unrealizedPnL' | 'unrealizedPnLPctg'> {
   type: 'CASH';
   balance: number;
-  quantity: number;
 }
 
-export type AssetHolding = 
+export type InvestmentHolding = 
   | LiquidHolding 
   | TermDepositHolding 
   | RealEstateHolding 
-  | GoldHolding 
-  | CashHolding;
+  | GoldHolding;
+
+export type AssetHolding = InvestmentHolding | CashHolding;
