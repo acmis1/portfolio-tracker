@@ -32,12 +32,20 @@ interface TradePair {
 export function ManualTradePlan({ nodes, totalAum }: ManualTradePlanProps) {
   const [copied, setCopied] = useState(false)
 
-  // 1. Separate sells and buys
-  const sells = nodes
+  // 1. Separate sells and buys with a 5% threshold
+  const DRIFT_THRESHOLD = 0.05;
+
+  const filteredNodes = nodes.filter(n => {
+    const currentWeight = n.currentValue / totalAum;
+    const targetWeight = n.targetValue / totalAum;
+    return Math.abs(currentWeight - targetWeight) >= DRIFT_THRESHOLD;
+  });
+
+  const sells = filteredNodes
     .filter(n => n.deltaCash < -1000)
     .sort((a, b) => a.deltaCash - b.deltaCash) // Largest negative first
 
-  const buys = nodes
+  const buys = filteredNodes
     .filter(n => n.deltaCash > 1000)
     .sort((a, b) => b.deltaCash - a.deltaCash) // Largest positive first
 
@@ -172,16 +180,16 @@ export function ManualTradePlan({ nodes, totalAum }: ManualTradePlanProps) {
             {pairs.length > 0 ? (
               pairs.map((p, i) => (
                 <div key={i} className="flex items-center gap-3 bg-white/2 rounded-xl p-3 border border-white/5">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter mb-1">From</div>
-                    <div className="text-xs font-black text-white truncate">{p.from}</div>
+                    <div className="text-xs font-black text-white truncate" title={p.from}>{p.from}</div>
                   </div>
                   <ArrowRight className="h-3 w-3 text-slate-600 shrink-0" />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter mb-1">To</div>
-                    <div className="text-xs font-black text-white truncate">{p.to}</div>
+                    <div className="text-xs font-black text-white truncate" title={p.to}>{p.to}</div>
                   </div>
-                  <div className="text-right pl-2 border-l border-white/5">
+                  <div className="text-right pl-2 border-l border-white/5 shrink-0">
                     <div className="text-xs font-black text-blue-400">{formatVND(p.amount)}</div>
                   </div>
                 </div>

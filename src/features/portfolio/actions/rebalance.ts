@@ -142,6 +142,7 @@ export async function getRebalancePlan(): Promise<EnhancedRebalancePlan | null> 
 
   targets.forEach((t: any) => {
     if (t.type === 'CLASS' && t.assetClass) {
+      if (t.assetClass === 'INDIVIDUAL_STOCK') return; // Individual stocks must be symbol-targeted
       const bucketName = getBucketName(t.assetClass);
       // We take the first ID found for a bucket if multiple exist (unlikely but safe)
       if (!classTargetsWeights.has(bucketName)) {

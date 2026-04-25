@@ -21,6 +21,9 @@ export default async function RebalancePage() {
 
   if (!plan) return <div>Unauthorized</div>;
 
+  const totalTargetWeight = targets.reduce((sum, t) => sum + (t.targetWeight || 0), 0);
+  const isStrategyValid = Math.abs(totalTargetWeight - 100) < 0.01;
+
   return (
     <main className="min-h-screen bg-[#020617] text-slate-200 selection:bg-emerald-500/30">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -63,10 +66,21 @@ export default async function RebalancePage() {
         {/* 1. Strategy health / target setup */}
         <AllocationSummary plan={plan} />
 
-        {/* 2. Manual Trade Plan (New primary actionable output) */}
-        <div className="mb-12">
-          <ManualTradePlan nodes={plan.nodes} totalAum={plan.totalAum} />
-        </div>
+        {/* 2. Manual Trade Plan (Gated by Strategy Validity) */}
+        {isStrategyValid ? (
+          <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <ManualTradePlan nodes={plan.nodes} totalAum={plan.totalAum} />
+          </div>
+        ) : (
+          <div className="mb-12 glass-premium rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
+            <Info className="h-8 w-8 text-amber-500 mx-auto mb-4" />
+            <h3 className="text-lg font-black text-white uppercase tracking-widest mb-2">Strategy Setup Required</h3>
+            <p className="text-slate-400 text-sm max-w-md mx-auto">
+              The rebalance planner is inactive because your target allocation is incomplete or does not sum to 100%. 
+              Please configure your strategy below to generate trade suggestions.
+            </p>
+          </div>
+        )}
 
         {/* 3. Existing drift table (Secondary analytical detail) */}
         <div className="space-y-4">
