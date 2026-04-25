@@ -155,24 +155,10 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
             <span className="text-[9px] text-slate-500 font-bold">({formatVND(totalContributions)} In)</span>
           </div>
         </div>
-
+ 
         <div className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Cash Balance</span>
-          <span className={cn(
-            "text-sm font-black tabular-nums",
-            cashBalance < 0 ? "text-amber-500/70" : "text-slate-200"
-          )}>
-            {formatVND(cashBalance)}
-            {cashBalance < -1000 && <span className="ml-2 text-[8px] bg-amber-500/10 text-amber-500 px-1 rounded">UNFUNDED</span>}
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-1 border-l-2 border-white/5 pl-4 py-1">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Net Worth</span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-black text-white tabular-nums">{formatVND(netWorth)}</span>
-            <span className="text-[8px] bg-blue-500/10 text-blue-400 px-1 py-0.5 rounded font-black tracking-tighter">LIQUID + CASH</span>
-          </div>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Passive Income</span>
+          <span className="text-sm font-black text-emerald-400 tabular-nums">{formatVND(summary.totalPassiveIncome)}</span>
         </div>
       </div>
     </div>

@@ -108,7 +108,7 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
   const modes: { label: string; value: ChartMode }[] = [
     { label: 'Value', value: 'VALUE' },
     { label: 'P&L', value: 'PNL' },
-    { label: 'Return %', value: 'RETURN' }
+    { label: 'Simple ROI', value: 'RETURN' }
   ]
 
   return (
@@ -122,7 +122,7 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
           <div>
             <h3 className="text-xl font-black text-white tracking-tight">Performance History</h3>
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.15em] mt-1">
-              {mode === 'VALUE' ? 'Asset Valuation vs Cost Basis' : mode === 'PNL' ? 'Net Profit & Loss' : 'Money-Weighted Return'}
+              {mode === 'VALUE' ? 'Asset Valuation vs Cost Basis' : mode === 'PNL' ? 'Net Profit & Loss' : 'Simple ROI % (Excl. Cash)'}
             </p>
           </div>
 
@@ -175,7 +175,9 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Net Change</span>
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                {mode === 'VALUE' ? 'Value Change' : mode === 'PNL' ? 'P&L Change' : 'ROI Change'}
+              </span>
               <div className={cn(
                 "flex items-center gap-1 text-sm font-black",
                 summary.absChange >= 0 ? "text-emerald-400" : "text-rose-400"
@@ -262,7 +264,7 @@ export function GrowthChart({ data = [] }: GrowthChartProps) {
                         <div className="space-y-3">
                           <div className="flex items-center justify-between gap-4">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                              {mode === 'VALUE' ? 'Portfolio Value' : mode === 'PNL' ? 'Net P&L' : 'Return %'}
+                              {mode === 'VALUE' ? 'Portfolio Value' : mode === 'PNL' ? 'Net P&L' : 'ROI %'}
                             </span>
                             <span className="text-sm font-black text-white">
                               {mode === 'RETURN' ? `${val.toFixed(2)}%` : formatVND(val)}
