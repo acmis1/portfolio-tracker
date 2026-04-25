@@ -12,10 +12,26 @@ export async function deleteTransaction(id: string) {
   try {
     const transaction = await prisma.transaction.findFirst({
       where: { id, userId },
-      include: { cashTransaction: true }
+      include: { 
+        cashTransaction: true,
+        asset: {
+          include: {
+            termDeposits: true
+          }
+        }
+      }
     })
 
     if (!transaction) return { success: false, error: "Transaction not found" }
+
+    // Task F: Block deleting transactions for resolved Term Deposits
+    const isResolvedTD = transaction.asset.termDeposits.some(td => td.resolvedAt !== null)
+    if (isResolvedTD) {
+      return { 
+        success: false, 
+        error: "Resolved term deposit transactions cannot be deleted yet. Use a dedicated reversal workflow." 
+      }
+    }
 
     const assetId = transaction.assetId
     const date = transaction.date
@@ -36,8 +52,13 @@ export async function deleteTransaction(id: string) {
     await recalculateHistoricalSnapshots(date, userId)
 
     revalidatePath('/')
+    revalidatePath('/holdings')
+    revalidatePath(`/holdings/${assetId}`)
+    revalidatePath('/ledger')
+    revalidatePath('/rebalance')
+    
     return { success: true }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to delete transaction:", error)
     return { success: false, error: "Deletion failed" }
   }

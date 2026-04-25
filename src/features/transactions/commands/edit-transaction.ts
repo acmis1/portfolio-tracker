@@ -40,10 +40,26 @@ export async function editTransaction(id: string, formData: TransactionFormValue
   try {
     const existing = await prisma.transaction.findFirst({
       where: { id, userId },
-      include: { cashTransaction: true }
+      include: { 
+        cashTransaction: true,
+        asset: {
+          include: {
+            termDeposits: true
+          }
+        }
+      }
     })
 
     if (!existing) return { success: false, error: "Transaction not found" }
+
+    // Task G: Block editing transactions for resolved Term Deposits
+    const isResolvedTD = existing.asset.termDeposits.some(td => td.resolvedAt !== null)
+    if (isResolvedTD) {
+      return { 
+        success: false, 
+        error: "Resolved term deposit transactions cannot be edited yet. Use a dedicated reversal workflow." 
+      }
+    }
 
     const earliestDate = existing.date < dateObj ? existing.date : dateObj
 
@@ -90,8 +106,13 @@ export async function editTransaction(id: string, formData: TransactionFormValue
     await recalculateHistoricalSnapshots(earliestDate, userId)
 
     revalidatePath('/')
+    revalidatePath('/holdings')
+    revalidatePath(`/holdings/${existing.assetId}`)
+    revalidatePath('/ledger')
+    revalidatePath('/rebalance')
+
     return { success: true }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to edit transaction:", error)
     return { success: false, error: "Update failed" }
   }

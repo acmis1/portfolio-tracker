@@ -76,3 +76,24 @@ export function formatAssetDisplay(symbol: string, name: string): { primary: str
   // Rule 3: For real tickers, show both if they differ
   return { primary: symbol, secondary: name };
 }
+
+/**
+ * Formats a raw asset class constant into a human-readable label.
+ */
+export function formatAssetClass(assetClass: string): string {
+  const mapping: Record<string, string> = {
+    'STOCK_FUND': 'Stock Fund',
+    'BOND_FUND': 'Bond Fund',
+    'TERM_DEPOSIT': 'Term Deposit',
+    'REAL_ESTATE': 'Real Estate',
+    'INDIVIDUAL_STOCK': 'Individual Stock',
+    'CRYPTOCURRENCY': 'Cryptocurrency',
+    'ETF': 'ETF',
+    'GOLD': 'Gold',
+    'CASH': 'Cash'
+  };
+
+  return mapping[assetClass] || assetClass.split('_').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+}

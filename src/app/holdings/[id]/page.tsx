@@ -1,20 +1,20 @@
 import { notFound, redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
 import { getAssetDetail } from "@/features/holdings/queries"
-import { formatVND, formatQuantity, formatAssetDisplay } from "@/lib/utils/format"
+import { formatVND, formatQuantity, formatAssetDisplay, formatAssetClass } from "@/lib/utils/format"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { 
   ArrowLeft, 
   TrendingUp, 
   TrendingDown, 
-  Calendar, 
-  Layers, 
-  History,
   Info
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { PriceUpdateModal } from "@/features/holdings/components/price-update-modal"
+import { AssetTransactionTable } from "@/features/holdings/components/asset-transaction-table"
+import { getLiveExchangeRate } from "@/lib/fx"
 
 interface AssetDetailPageProps {
   params: Promise<{
@@ -32,11 +32,12 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
 
   const { asset, holding, transactions } = data
   const labels = formatAssetDisplay(asset.symbol, asset.name)
+  const fxRate = await getLiveExchangeRate()
 
   const isPositive = (holding?.unrealizedPnLPctg ?? 0) >= 0
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="mx-auto max-w-7xl px-6 pt-8 md:px-8 md:pt-10 space-y-8 pb-20">
       {/* Header / Breadcrumbs */}
       <div className="flex items-center gap-4">
         <Link href="/holdings">
@@ -48,7 +49,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Holdings</span>
             <span className="text-[10px] text-slate-700">/</span>
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">{asset.assetClass}</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">{formatAssetClass(asset.assetClass)}</span>
           </div>
           <h1 className="text-2xl font-black tracking-tight text-white">{labels.primary}</h1>
         </div>
@@ -113,7 +114,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Class</span>
-              <span className="text-xs font-bold text-slate-200">{asset.assetClass}</span>
+              <span className="text-xs font-bold text-slate-200">{formatAssetClass(asset.assetClass)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Currency</span>
@@ -122,64 +123,28 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
           </div>
 
           <div className="pt-6 border-t border-white/5">
-            <Button variant="outline" className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest h-10">
-              Refresh Price Data
-            </Button>
+            <PriceUpdateModal 
+              initialSymbol={asset.symbol} 
+              initialCurrency={asset.currency}
+              trigger={
+                <Button variant="outline" className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest h-10">
+                  Update Price Point
+                </Button>
+              }
+            />
           </div>
         </div>
       </div>
 
       {/* Transaction History */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 px-1">
-          <History className="h-4 w-4 text-slate-400" />
-          <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">Transaction History</h2>
-        </div>
-        
-        <div className="glass-premium rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/5 bg-white/5">
-                <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-500 text-[10px]">Date</th>
-                <th className="px-6 py-4 font-black uppercase tracking-wider text-slate-500 text-[10px]">Type</th>
-                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-500 text-[10px]">Qty</th>
-                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-500 text-[10px]">Price</th>
-                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-500 text-[10px]">Gross Amount</th>
-                <th className="px-6 py-4 text-right font-black uppercase tracking-wider text-slate-500 text-[10px]">Net Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4 text-[11px] font-medium text-slate-400 tabular-nums">
-                    {new Date(tx.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge variant="outline" className={cn(
-                      "border-0 text-[9px] uppercase font-black px-2",
-                      tx.type === 'BUY' ? "bg-blue-500/10 text-blue-400" : "bg-emerald-500/10 text-emerald-400"
-                    )}>
-                      {tx.type}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-300 tabular-nums">
-                    {formatQuantity(tx.quantity)}
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-500 tabular-nums text-xs">
-                    {formatVND(tx.pricePerUnit)}
-                  </td>
-                  <td className="px-6 py-4 text-right font-bold text-slate-300 tabular-nums">
-                    {formatVND(tx.grossAmount)}
-                  </td>
-                  <td className="px-6 py-4 text-right font-black text-white tabular-nums">
-                    {formatVND(tx.grossAmount)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <AssetTransactionTable 
+        transactions={transactions}
+        symbol={asset.symbol}
+        assetName={asset.name}
+        assetClass={asset.assetClass}
+        assetCurrency={asset.currency}
+        fxRate={fxRate}
+      />
     </div>
   )
 }

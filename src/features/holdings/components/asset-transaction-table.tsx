@@ -6,11 +6,15 @@ import { formatCurrency } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
 import { EditTransactionModal } from "@/features/transactions/components/edit-transaction-modal"
 import { TransactionModal } from "@/features/transactions/components/transaction-modal"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { deleteTransaction } from "@/features/transactions/actions"
+import { useRouter } from "next/navigation"
+import { Transaction } from "@prisma/client"
+import { ASSET_CLASSES } from "@/lib/validations"
 
 export interface AssetTransactionTableProps {
-  transactions: any[];
+  transactions: Transaction[];
   symbol: string;
   assetName: string;
   assetClass: string;
@@ -27,6 +31,24 @@ export function AssetTransactionTable({
   fxRate 
 }: AssetTransactionTableProps) {
   const isUSD = assetCurrency === 'USD';
+  const router = useRouter();
+  const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this transaction? This will also update your cash balance if linked.")) {
+      return;
+    }
+
+    setIsDeleting(id);
+    const result = await deleteTransaction(id);
+    setIsDeleting(null);
+
+    if (result.success) {
+      router.refresh();
+    } else {
+      alert(result.error || "Failed to delete transaction");
+    }
+  };
 
   // Stable trigger for the "Log Transaction" modal to avoid hydration mismatches
   const addTransactionTrigger = (
@@ -70,7 +92,7 @@ export function AssetTransactionTable({
                   </td>
                 </tr>
               ) : (
-                transactions.map((tx: any) => {
+                transactions.map((tx) => {
                   const theoreticalValueVnd = Math.abs(tx.quantity * tx.pricePerUnit);
                   const actualValueVnd = Math.abs(tx.grossAmount);
                   const derivedFeeVnd = tx.type === 'BUY' 
@@ -110,16 +132,27 @@ export function AssetTransactionTable({
                         {formatCurrency(displayTotal, 'VND')}
                       </td>
                       <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                        <EditTransactionModal 
-                          transaction={tx} 
-                          asset={{
-                            symbol: symbol,
-                            name: assetName,
-                            assetClass: assetClass as any,
-                            currency: assetCurrency as any
-                          }}
-                          fxRate={fxRate}
-                        />
+                        <div className="flex items-center justify-end gap-1">
+                          <EditTransactionModal 
+                            transaction={tx} 
+                            asset={{
+                              symbol: symbol,
+                              name: assetName,
+                              assetClass: assetClass as typeof ASSET_CLASSES[number],
+                              currency: assetCurrency as 'VND' | 'USD'
+                            }}
+                            fxRate={fxRate}
+                          />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-slate-500 hover:text-red-400 hover:bg-red-400/10"
+                            onClick={() => handleDelete(tx.id)}
+                            disabled={isDeleting === tx.id}
+                          >
+                            <Trash2 className={cn("h-4 w-4", isDeleting === tx.id && "animate-pulse")} />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
