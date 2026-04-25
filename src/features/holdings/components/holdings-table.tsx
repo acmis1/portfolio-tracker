@@ -1,6 +1,6 @@
 import { getHoldingsLedger } from "@/features/portfolio/utils";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
-import { formatNumberDots } from "@/lib/utils/format";
+import { formatNumberDots, formatAssetDisplay } from "@/lib/utils/format";
 import { TrendingUp, TrendingDown, Info, Plus } from "lucide-react";
 import { TransactionModal } from "@/features/transactions/components/transaction-modal";
 import { Button } from "@/components/ui/button";
@@ -58,14 +58,18 @@ export async function HoldingsTable({ fxRate }: HoldingsTableProps) {
               const displayMarketValue = holding.marketValue;
               const displayPnL = holding.unrealizedPnL;
 
+              const labels = formatAssetDisplay(holding.symbol, holding.name);
+
               return (
                 <tr key={holding.id} className="hover:bg-white/5 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <Link href={`/holdings/${holding.id}`} className="font-bold text-white hover:text-emerald-400 transition-colors">
-                        {holding.symbol}
+                        {labels.primary}
                       </Link>
-                      <span className="text-xs text-slate-500">{holding.name}</span>
+                      {labels.secondary && (
+                        <span className="text-xs text-slate-500">{labels.secondary}</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">

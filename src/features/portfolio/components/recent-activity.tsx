@@ -1,4 +1,4 @@
-import { formatVND } from '@/lib/utils/format'
+import { formatVND, formatAssetDisplay } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { Activity, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
@@ -31,21 +31,26 @@ export function RecentActivity({ activities }: RecentActivityProps) {
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">No recent activity</p>
           </div>
         ) : (
-          recent.map((tx: any) => (
-            <div key={tx.id} className="p-3 px-5 flex items-center justify-between hover:bg-white/5 transition-colors group">
-               <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
-                    {new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                  </span>
-                  <span className="text-xs font-black text-slate-200 truncate pr-2">
-                    {tx.assetSymbol || (tx.description || tx.type.replace('_', ' '))}
-                  </span>
-                  {tx.assetName && (
-                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter truncate max-w-[140px]">
-                      {tx.assetName}
+          recent.map((tx: any) => {
+            const { primary, secondary } = tx.assetSymbol 
+              ? formatAssetDisplay(tx.assetSymbol, tx.assetName || '') 
+              : { primary: tx.description || tx.type.replace('_', ' '), secondary: undefined };
+
+            return (
+              <div key={tx.id} className="p-3 px-5 flex items-center justify-between hover:bg-white/5 transition-colors group">
+                 <div className="flex flex-col min-w-0">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
+                      {new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </span>
-                  )}
-               </div>
+                    <span className="text-xs font-black text-slate-200 truncate pr-2">
+                      {primary}
+                    </span>
+                    {secondary && (
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter truncate max-w-[140px]">
+                        {secondary}
+                      </span>
+                    )}
+                 </div>
                <div className="flex flex-col items-end shrink-0">
                   <span className={cn(
                     "text-xs font-black tabular-nums transition-transform group-hover:scale-105",
@@ -57,8 +62,9 @@ export function RecentActivity({ activities }: RecentActivityProps) {
                     {tx.category === 'ASSET' ? `${tx.type} ${tx.quantity} units` : (tx.description || 'No description')}
                   </span>
                </div>
-            </div>
-          ))
+              </div>
+            );
+          })
         )}
       </div>
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { formatVND } from '@/lib/utils/format'
+import { formatVND, formatAssetDisplay } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { EditCashModal } from './edit-cash-modal'
 import { Search, Filter, ArrowUpRight, ArrowDownLeft, Wallet, Landmark, TrendingUp, CircleDollarSign } from 'lucide-react'
@@ -19,10 +19,12 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
 
   const filteredTransactions = useMemo(() => {
     return activities.filter(tx => {
+      const { primary, secondary } = tx.assetSymbol ? formatAssetDisplay(tx.assetSymbol, tx.assetName || '') : { primary: '', secondary: '' };
+      
       const matchesSearch = 
         tx.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.assetSymbol?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.assetName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        primary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (secondary?.toLowerCase().includes(searchQuery.toLowerCase())) ||
         tx.type?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesType = activeType === 'ALL' || tx.type === activeType;
@@ -132,12 +134,21 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="text-xs font-black text-slate-200">
-                            {tx.assetSymbol || (tx.description || tx.type.replace('_', ' '))}
-                          </span>
-                          {tx.assetName && (
-                            <span className="text-[10px] text-slate-500 font-medium truncate max-w-[200px]">
-                              {tx.assetName}
+                          {tx.assetSymbol ? (() => {
+                            const { primary, secondary } = formatAssetDisplay(tx.assetSymbol, tx.assetName || '');
+                            return (
+                              <>
+                                <span className="text-xs font-black text-slate-200">{primary}</span>
+                                {secondary && (
+                                  <span className="text-[10px] text-slate-500 font-medium truncate max-w-[200px]">
+                                    {secondary}
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })() : (
+                            <span className="text-xs font-black text-slate-200">
+                              {tx.description || tx.type.replace('_', ' ')}
                             </span>
                           )}
                         </div>
