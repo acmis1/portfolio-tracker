@@ -1,12 +1,11 @@
-import { formatCurrency, formatPercentage } from "@/lib/formatters";
 import { AssetHeader } from "./asset-header";
 import { AssetTransactionTable } from "./asset-transaction-table";
 import { AssetPriceChart } from "./asset-price-chart";
 import { BenchmarkCards } from "./benchmark-cards";
 import { Clock, TrendingUp, ShieldCheck, Landmark } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface AssetDetailViewProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   assetData: any;
   fxRate: number;
   macro: { riskFreeRate: number; marketBaseline: number };
@@ -80,6 +79,7 @@ export function AssetDetailView({ assetData, fxRate, macro }: AssetDetailViewPro
 
       <AssetTransactionTable 
         transactions={assetData.transactions} 
+        assetId={assetData.id}
         symbol={assetData.symbol}
         assetName={assetData.name}
         assetClass={assetData.assetClass}

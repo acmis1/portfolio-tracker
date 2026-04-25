@@ -10,9 +10,11 @@ export async function getUserAssets() {
   return prisma.asset.findMany({
     where: { userId },
     select: {
+      id: true,
       symbol: true,
       name: true,
       assetClass: true,
+      currency: true,
     }
   })
 }

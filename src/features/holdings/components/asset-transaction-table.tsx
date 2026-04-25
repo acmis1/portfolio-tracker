@@ -6,7 +6,8 @@ import { formatCurrency } from "@/lib/formatters"
 import { cn } from "@/lib/utils"
 import { EditTransactionModal } from "@/features/transactions/components/edit-transaction-modal"
 import { TransactionModal } from "@/features/transactions/components/transaction-modal"
-import { PlusCircle, Trash2 } from "lucide-react"
+import { AssetConversionModal } from "@/features/transactions/components/asset-conversion-modal"
+import { PlusCircle, Trash2, ArrowRightLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { deleteTransaction } from "@/features/transactions/actions"
 import { useRouter } from "next/navigation"
@@ -15,6 +16,7 @@ import { ASSET_CLASSES } from "@/lib/validations"
 
 export interface AssetTransactionTableProps {
   transactions: Transaction[];
+  assetId: string;
   symbol: string;
   assetName: string;
   assetClass: string;
@@ -24,6 +26,7 @@ export interface AssetTransactionTableProps {
 
 export function AssetTransactionTable({ 
   transactions, 
+  assetId,
   symbol, 
   assetName, 
   assetClass, 
@@ -61,14 +64,24 @@ export function AssetTransactionTable({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">Recent Transactions</h3>
-        <TransactionModal 
-          initialSymbol={symbol} 
-          initialName={assetName}
-          initialAssetClass={assetClass}
-          initialCurrency={assetCurrency}
-          fxRate={fxRate}
-          trigger={addTransactionTrigger}
-        />
+        <div className="flex items-center gap-2">
+          <AssetConversionModal 
+            initialFromAssetId={assetId}
+            trigger={
+              <Button variant="outline" size="sm" className="glass-premium border-white/10 text-slate-400 hover:text-white">
+                <ArrowRightLeft className="mr-2 h-4 w-4" /> Convert Asset
+              </Button>
+            }
+          />
+          <TransactionModal 
+            initialSymbol={symbol} 
+            initialName={assetName}
+            initialAssetClass={assetClass}
+            initialCurrency={assetCurrency}
+            fxRate={fxRate}
+            trigger={addTransactionTrigger}
+          />
+        </div>
       </div>
       <div className="glass-premium overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
         <div className="overflow-x-auto">

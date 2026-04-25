@@ -173,6 +173,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
       {/* Transaction History */}
       <AssetTransactionTable 
         transactions={transactions}
+        assetId={asset.id}
         symbol={asset.symbol}
         assetName={asset.name}
         assetClass={asset.assetClass}
