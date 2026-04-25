@@ -19,7 +19,9 @@ export interface PortfolioSummaryResult {
 }
 
 export function calculatePortfolioSummary(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   assets: any[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cashTransactions: any[],
   latestPriceDate: Date | null
 ): PortfolioSummaryResult {
@@ -27,7 +29,8 @@ export function calculatePortfolioSummary(
   let totalWithdrawals = 0;
   let totalPassiveIncome = 0;
   
-  const cashBalance = cashTransactions.reduce((acc: number, tx: any) => {
+  const cashBalance = cashTransactions.reduce((acc: number, // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tx: any) => {
     if (tx.type === 'DEPOSIT') totalContributions += tx.amount;
     if (tx.type === 'WITHDRAWAL') totalWithdrawals += tx.amount;
     if (['DIVIDEND', 'INTEREST'].includes(tx.type)) totalPassiveIncome += tx.amount;
@@ -61,7 +64,9 @@ export function calculatePortfolioSummary(
         if (currentQty === 0) runningAvgCost = 0;
       }
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((tx as any).realizedPnL) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         totalRealizedPnL += (tx as any).realizedPnL;
       }
 
@@ -106,6 +111,7 @@ export function calculatePortfolioSummary(
           quantity: 1,
           avgCost: td.principal,
           principal: td.principal,
+          termDepositId: td.id,
           interestRate: td.interestRate,
           startDate: td.startDate,
           maturityDate: td.maturityDate,
@@ -155,6 +161,7 @@ export function calculatePortfolioSummary(
             unrealizedPnLPctg,
             unit: 'Tael',
             status: livePrice !== null ? 'Live' : 'Last Purchase',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any);
         } else {
           holdings.push({
@@ -165,6 +172,7 @@ export function calculatePortfolioSummary(
             unrealizedPnL,
             unrealizedPnLPctg,
             status: livePrice !== null ? 'Live' : 'Avg Cost Fallback',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any);
         }
       }
@@ -190,6 +198,7 @@ export function calculatePortfolioSummary(
       if (result.ok) {
         portfolioXirr = result.value.toNumber() * 100;
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("XIRR calculation failed:", error);
     }

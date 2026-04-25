@@ -82,14 +82,23 @@ model CashTransaction {
 }
 
 model TermDeposit {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   assetId      String
   bankName     String
   principal    Float
   startDate    DateTime
   maturityDate DateTime
   interestRate Float
-  asset        Asset    @relation(fields: [assetId], references: [id])
+  asset        Asset     @relation(fields: [assetId], references: [id])
+
+  // Resolution metadata
+  resolvedAt     DateTime?
+  resolutionType String?
+  resolvedAmount Float?
+  resolutionNote String?
+
+  @@index([maturityDate])
+  @@index([resolvedAt])
 }
 
 model PortfolioSnapshot {

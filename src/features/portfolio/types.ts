@@ -20,6 +20,7 @@ export interface LiquidHolding extends BaseHolding {
 
 export interface TermDepositHolding extends BaseHolding {
   type: 'TERM_DEPOSIT';
+  termDepositId: string;
   principal: number;
   interestRate: number;
   startDate: Date;

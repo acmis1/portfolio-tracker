@@ -3,15 +3,40 @@ import { Badge } from "@/components/ui/badge";
 import { formatVND, formatAssetDisplay } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { ResolveMaturityWizard } from "./resolve-maturity-wizard";
+import { TermDepositHolding } from "@/features/portfolio/types";
 
 interface TermDepositTableProps {
-  assets: any[];
+  assets: TermDepositHolding[];
 }
 
 export function TermDepositTable({ assets }: TermDepositTableProps) {
   const router = useRouter();
+  const [resolvingTd, setResolvingTd] = useState<TermDepositHolding | null>(null);
+
   return (
     <section className="space-y-4">
+      {/* Wizard Instance */}
+      {resolvingTd && (
+        <ResolveMaturityWizard
+          open={!!resolvingTd}
+          onOpenChange={(open) => !open && setResolvingTd(null)}
+          td={{
+            id: resolvingTd.termDepositId,
+            symbol: resolvingTd.symbol,
+            name: resolvingTd.name,
+            principal: resolvingTd.principal,
+            interestRate: resolvingTd.interestRate,
+            startDate: resolvingTd.startDate,
+            maturityDate: resolvingTd.maturityDate,
+            accruedInterest: resolvingTd.accruedInterest,
+            marketValue: resolvingTd.marketValue,
+          }}
+        />
+      )}
+
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-blue-400" />
@@ -36,7 +61,7 @@ export function TermDepositTable({ assets }: TermDepositTableProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {assets.map((holding: any) => (
+              {assets.map((holding) => (
                 <tr 
                   key={holding.id} 
                   className="hover:bg-white/5 transition-colors group cursor-pointer" 
@@ -70,19 +95,34 @@ export function TermDepositTable({ assets }: TermDepositTableProps) {
                     {holding.daysToMaturity > 0 ? (
                       <div className="text-[9px] text-slate-500 font-bold uppercase">{holding.daysToMaturity} days left</div>
                     ) : (
-                      <div className="text-[9px] text-rose-500 font-bold uppercase">Matured</div>
+                      <div className="text-[9px] text-rose-500 font-bold uppercase">Awaiting manual action</div>
                     )}
                   </td>
                   <td className="px-6 py-4 text-right font-black text-white tabular-nums">
                     {formatVND(holding.marketValue)}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Badge variant="outline" className={cn(
-                      "border-0 text-[9px] uppercase font-black px-2",
-                      holding.daysToMaturity <= 0 ? "bg-rose-500/20 text-rose-400" : "bg-blue-500/10 text-blue-400"
-                    )}>
-                      {holding.status}
-                    </Badge>
+                    <div className="flex items-center justify-end gap-3">
+                      <Badge variant="outline" className={cn(
+                        "border-0 text-[9px] uppercase font-black px-2 whitespace-nowrap",
+                        holding.daysToMaturity <= 0 ? "bg-rose-500/20 text-rose-400" : "bg-blue-500/10 text-blue-400"
+                      )}>
+                        {holding.status}
+                      </Badge>
+                      {holding.daysToMaturity <= 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[10px] font-black uppercase tracking-widest border-rose-500/20 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setResolvingTd(holding);
+                          }}
+                        >
+                          Resolve
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

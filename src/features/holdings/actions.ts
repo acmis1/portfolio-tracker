@@ -4,6 +4,11 @@ import { prisma } from "@/lib/db";
 import { xirr } from "@finprecise/cashflow";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
+import { resolveTermDepositMaturity as _resolveTermDepositMaturity } from "./commands/resolve-term-deposit";
+
+export async function resolveTermDepositMaturity(...args: Parameters<typeof _resolveTermDepositMaturity>) {
+  return _resolveTermDepositMaturity(...args);
+}
 
 export async function getAssetDetails(id: string) {
   const { userId } = await auth()
@@ -30,7 +35,7 @@ export async function getAssetDetails(id: string) {
   let currentQty = 0;
   let avgCost = 0;
   
-  const chronTransactions = [...asset.transactions].sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
+  const chronTransactions = [...asset.transactions].sort((a, b) => a.date.getTime() - b.date.getTime());
 
   for (const tx of chronTransactions) {
     if (tx.type === 'BUY') {
@@ -74,7 +79,7 @@ export async function getAssetDetails(id: string) {
     }
   }
 
-  const cashflows: { amount: string; date: string }[] = asset.transactions.map((tx: any) => ({
+  const cashflows: { amount: string; date: string }[] = asset.transactions.map((tx) => ({
     amount: tx.grossAmount.toString(), // BUY is negative, SELL is positive
     date: tx.date.toISOString().split('T')[0]
   }));
@@ -96,7 +101,7 @@ export async function getAssetDetails(id: string) {
       if (result.ok) {
         assetXirr = result.value.toNumber() * 100;
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(`XIRR calculation failed for asset ${id}:`, error);
     }
   }
@@ -158,8 +163,8 @@ export async function addPriceUpdate(data: { symbol: string; date: string; price
 
     revalidatePath('/');
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to update price:", error);
-    return { success: false, error: "Database operation failed" };
+    return { success: false, error: error instanceof Error ? error.message : "Database operation failed" };
   }
 }
