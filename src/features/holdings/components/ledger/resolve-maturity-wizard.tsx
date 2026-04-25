@@ -4,12 +4,12 @@ import * as React from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { 
-  Loader2, 
-  ArrowRight, 
-  LogOut, 
-  Wallet, 
-  TrendingUp, 
+import {
+  Loader2,
+  ArrowRight,
+  LogOut,
+  Wallet,
+  TrendingUp,
   Building2,
   ChevronRight,
   ChevronLeft,
@@ -18,11 +18,11 @@ import {
   Banknote
 } from "lucide-react"
 import { NumericFormat } from 'react-number-format'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -44,7 +44,7 @@ const wizardSchema = z.object({
     'INVEST_TRACKED_ASSET'
   ]),
   resolutionNote: z.string().optional().nullable(),
-  
+
   // Reinvest Path
   bankName: z.string().optional(),
   principal: z.number().optional(),
@@ -84,6 +84,8 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
   const [error, setError] = React.useState<string | null>(null)
   const [success, setSuccess] = React.useState(false)
 
+  const selectOnFocus = (event: React.FocusEvent<HTMLInputElement>) => event.target.select()
+
   const form = useForm<WizardFormValues>({
     resolver: zodResolver(wizardSchema),
     defaultValues: {
@@ -118,7 +120,7 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
         const dateObj = new Date(actionDate)
         const maturityDateObj = new Date(td.maturityDate)
         maturityDateObj.setHours(0, 0, 0, 0)
-        
+
         if (dateObj < maturityDateObj) {
           setError(`Resolution date cannot be before maturity date (${new Date(td.maturityDate).toLocaleDateString('vi-VN')})`)
           return
@@ -275,8 +277,8 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
                         }}
                         className={cn(
                           "flex flex-col items-start p-4 rounded-2xl border transition-all text-left group relative overflow-hidden",
-                          resolutionType === choice.id 
-                            ? "bg-white/10 border-white/20 ring-1 ring-white/20" 
+                          resolutionType === choice.id
+                            ? "bg-white/10 border-white/20 ring-1 ring-white/20"
                             : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10"
                         )}
                       >
@@ -313,20 +315,22 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="actionDate" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Resolution Date</Label>
-                      <Input 
-                        id="actionDate" 
-                        type="date" 
+                      <Input
+                        id="actionDate"
+                        type="date"
                         className="bg-white/5 border-white/10 h-10"
-                        {...form.register("actionDate")} 
+                        onFocus={selectOnFocus}
+                        {...form.register("actionDate")}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="resolutionNote" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Notes (Optional)</Label>
-                      <Input 
-                        id="resolutionNote" 
+                      <Input
+                        id="resolutionNote"
                         placeholder="Reference or reason..."
                         className="bg-white/5 border-white/10 h-10"
-                        {...form.register("resolutionNote")} 
+                        onFocus={selectOnFocus}
+                        {...form.register("resolutionNote")}
                       />
                     </div>
                   </div>
@@ -337,7 +341,11 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2 col-span-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Institution Name</Label>
-                            <Input {...form.register("bankName")} className="bg-white/5 border-white/10 h-10" />
+                            <Input
+                              {...form.register("bankName")}
+                              onFocus={selectOnFocus}
+                              className="bg-white/5 border-white/10 h-10"
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Principal Amount</Label>
@@ -349,6 +357,7 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
                                   className="bg-white/5 border-white/10 h-10 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                   thousandSeparator="."
                                   decimalSeparator=","
+                                  onFocus={selectOnFocus}
                                   value={field.value}
                                   onValueChange={(v) => field.onChange(v.floatValue)}
                                 />
@@ -357,16 +366,22 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Interest Rate (%)</Label>
-                            <Input 
-                              type="number" 
-                              step="0.01" 
-                              {...form.register("interestRate", { valueAsNumber: true })} 
-                              className="bg-white/5 border-white/10 h-10" 
+                            <Input
+                              type="number"
+                              step="0.01"
+                               onFocus={selectOnFocus}
+                              {...form.register("interestRate", { valueAsNumber: true })}
+                              className="bg-white/5 border-white/10 h-10"
                             />
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">New Maturity Date</Label>
-                            <Input type="date" {...form.register("maturityDate")} className="bg-white/5 border-white/10 h-10" />
+                            <Input
+                              type="date"
+                              onFocus={selectOnFocus}
+                              {...form.register("maturityDate")}
+                              className="bg-white/5 border-white/10 h-10"
+                            />
                           </div>
                         </div>
                       </div>
@@ -385,15 +400,31 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Symbol (Optional)</Label>
-                            <Input {...form.register("symbol")} className="bg-white/5 border-white/10 h-10" placeholder="SJC_GOLD, BTC..." />
+                            <Input
+                              onFocus={selectOnFocus}
+                              {...form.register("symbol")}
+                              className="bg-white/5 border-white/10 h-10"
+                              placeholder="SJC_GOLD, BTC..."
+                            />
                           </div>
                           <div className="space-y-2 col-span-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Asset Name</Label>
-                            <Input {...form.register("name")} className="bg-white/5 border-white/10 h-10" placeholder="e.g. SJC Gold Bar" />
+                            <Input
+                              onFocus={selectOnFocus}
+                              {...form.register("name")}
+                              className="bg-white/5 border-white/10 h-10"
+                              placeholder="e.g. SJC Gold Bar"
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quantity</Label>
-                            <Input type="number" step="any" {...form.register("quantity", { valueAsNumber: true })} className="bg-white/5 border-white/10 h-10" />
+                            <Input
+                              type="number"
+                              step="any"
+                              onFocus={selectOnFocus}
+                              {...form.register("quantity", { valueAsNumber: true })}
+                              className="bg-white/5 border-white/10 h-10"
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Purchase Price</Label>
@@ -405,6 +436,7 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
                                   className="bg-white/5 border-white/10 h-10 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                   thousandSeparator="."
                                   decimalSeparator=","
+                                  onFocus={selectOnFocus}
                                   value={field.value}
                                   onValueChange={(v) => field.onChange(v.floatValue)}
                                 />
@@ -431,7 +463,7 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
               {step === "CONFIRM" && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                   <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Step 3: Final Confirmation</div>
-                  
+
                   <div className="glass-premium border-white/5 p-5 rounded-2xl space-y-4">
                     <div className="flex justify-between items-start border-b border-white/5 pb-4">
                       <div>
@@ -453,7 +485,7 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
                         <span className="text-slate-400 font-bold uppercase tracking-tight">Realized Proceeds</span>
                         <span className="text-emerald-400 font-black tabular-nums">{formatVND(td.marketValue)}</span>
                       </div>
-                      
+
                       {resolutionType === 'REINVEST_TERM_DEPOSIT' && (
                         <div className="pt-2 border-t border-white/5 space-y-2">
                            <div className="flex justify-between items-center text-xs">
@@ -509,34 +541,34 @@ export function ResolveMaturityWizard({ td, open, onOpenChange }: ResolveMaturit
             {/* Footer Actions */}
             <div className="mt-8 flex items-center justify-between gap-3 border-t border-white/5 pt-6">
               {step !== "CHOICE" ? (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handleBack}
                   className="border-white/10 text-slate-400 hover:text-white"
                 >
                   <ChevronLeft className="h-4 w-4 mr-2" /> Back
                 </Button>
               ) : (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => onOpenChange(false)}
                   className="border-white/10 text-slate-400 hover:text-white"
                 >
                   Cancel
                 </Button>
               )}
-              
+
               {step !== "CONFIRM" ? (
-                <Button 
-                  variant="premium" 
+                <Button
+                  variant="premium"
                   onClick={handleNext}
                   disabled={step === "CHOICE"}
                 >
                   Continue <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
               ) : (
-                <Button 
-                  variant="premium" 
+                <Button
+                  variant="premium"
                   onClick={form.handleSubmit(onSubmit)}
                   disabled={isSubmitting}
                   className={cn(isSubmitting && "opacity-80")}

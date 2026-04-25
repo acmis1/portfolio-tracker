@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "dev:create-matured-td": "tsx scripts/dev/create-matured-td-fixture.ts",
+    "dev:cleanup-qa-fixtures": "tsx scripts/dev/cleanup-qa-fixtures.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
