@@ -164,6 +164,7 @@ export async function recalculateHistoricalSnapshotsService(startDate: Date, use
     const dayCash = cashByDate.get(dateKey);
     if (dayCash) {
       for (const ctx of dayCash) {
+        // Explicitly check known types to avoid hidden balance leaks
         const type = ctx.type as string;
         if (['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL_ASSET'].includes(type)) {
           runningCash += ctx.amount;

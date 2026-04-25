@@ -25,26 +25,31 @@ async function main() {
 
   console.log("🔍 Starting Recalculation Parity Audit (Phase 2)...");
 
-  // 1. Find a target user (pick the first one with snapshots)
-  const targetSnapshot = await prisma.portfolioSnapshot.findFirst({
-    orderBy: { date: 'desc' }
-  });
+  const auditDays = parseInt(process.env.RECALC_AUDIT_DAYS || "30");
+  const auditUserId = process.env.RECALC_AUDIT_USER_ID;
 
-  if (!targetSnapshot) {
-    console.log("⚠️ No snapshots found in DB. Nothing to audit.");
-    return;
+  // 1. Find a target user
+  let userId = auditUserId;
+  if (!userId) {
+    const targetSnapshot = await prisma.portfolioSnapshot.findFirst({
+      orderBy: { date: 'desc' }
+    });
+    if (!targetSnapshot) {
+      console.log("⚠️ No snapshots found in DB. Nothing to audit.");
+      return;
+    }
+    userId = targetSnapshot.userId;
   }
 
-  const userId = targetSnapshot.userId;
   console.log(`👤 Auditing User: ${userId}`);
 
-  // 2. Define audit window (last 30 days for better benchmarking)
+  // 2. Define audit window
   const endDate = new Date();
   const startDate = new Date();
-  startDate.setDate(endDate.getDate() - 30);
+  startDate.setDate(endDate.getDate() - auditDays);
   startDate.setHours(0, 0, 0, 0);
 
-  console.log(`📅 Window: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+  console.log(`📅 Window: ${startDate.toISOString()} to ${endDate.toISOString()} (${auditDays} days)`);
 
   // 3. Fetch existing snapshots for comparison
   const existingSnapshots = await prisma.portfolioSnapshot.findMany({
@@ -58,7 +63,7 @@ async function main() {
     orderBy: { date: 'asc' }
   });
 
-  console.log(`📊 Found ${existingSnapshots.length} existing snapshots in DB.`);
+  console.log(`📊 Found ${existingSnapshots.length} existing snapshots in DB for comparison.`);
 
   // 4. Run the optimized service
   console.log("🚀 Running Optimized recalculateHistoricalSnapshotsService...");
@@ -85,10 +90,10 @@ async function main() {
 
   console.log("\n--- Comparison Results ---");
   for (const updated of postSnapshots) {
-    const old = existingSnapshots.find(s => s.date.getTime() === updated.date.getTime());
+    const old = existingSnapshots.find(s => s.date.toISOString().split('T')[0] === updated.date.toISOString().split('T')[0]);
 
     if (!old) {
-      console.log(`🆕 New snapshot generated for ${updated.date.toISOString()} (was missing in DB)`);
+      console.log(`🆕 New snapshot generated for ${updated.date.toISOString().split('T')[0]} (was missing in DB)`);
       continue;
     }
 
@@ -98,7 +103,7 @@ async function main() {
     for (const field of fields) {
       const delta = Math.abs(old[field] - updated[field]);
       if (delta > 0.01) {
-        diffs.push(`${field}: ${old[field].toFixed(2)} -> ${updated[field].toFixed(2)} (Δ ${delta.toFixed(4)})`);
+        diffs.push(`${field}: ${old[field].toLocaleString()} -> ${updated[field].toLocaleString()} (Δ ${delta.toFixed(4)})`);
         if (delta > maxDiff) maxDiff = delta;
       }
     }
@@ -113,7 +118,10 @@ async function main() {
 
   const days = postSnapshots.length;
   console.log("\n--- Audit Summary ---");
-  console.log(`📊 Snapshots Processed: ${days}`);
+  console.log(`👤 User ID: ${userId}`);
+  console.log(`📅 Range: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
+  console.log(`📊 Snapshots in DB: ${existingSnapshots.length}`);
+  console.log(`📊 Snapshots Recalculated: ${days}`);
   console.log(`✅ Matches: ${matchCount}`);
   console.log(`❌ Mismatches: ${diffCount}`);
   console.log(`📏 Max Absolute Difference: ${maxDiff.toFixed(4)} VND`);
