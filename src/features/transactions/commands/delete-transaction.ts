@@ -33,6 +33,13 @@ export async function deleteTransaction(id: string) {
       }
     }
 
+    if (transaction.conversionId) {
+      return {
+        success: false,
+        error: "Conversion transactions cannot be deleted individually yet. Use a dedicated conversion reversal workflow."
+      }
+    }
+
     const assetId = transaction.assetId
     const date = transaction.date
 

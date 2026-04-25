@@ -61,6 +61,13 @@ export async function editTransaction(id: string, formData: TransactionFormValue
       }
     }
 
+    if (existing.conversionId) {
+      return {
+        success: false,
+        error: "Conversion transactions cannot be edited individually yet. Use a dedicated conversion reversal workflow."
+      }
+    }
+
     const earliestDate = existing.date < dateObj ? existing.date : dateObj
 
     await prisma.$transaction(async (tx) => {

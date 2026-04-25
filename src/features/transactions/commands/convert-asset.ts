@@ -6,18 +6,24 @@ import { revalidatePath } from "next/cache"
 import { assetConversionSchema, AssetConversionValues } from "@/lib/validations"
 import { recalculateAssetPnL, recalculateHistoricalSnapshots } from "../../portfolio/actions/recalculate"
 
+import { Prisma } from "@prisma/client"
+
 /**
  * Helper to calculate the source asset's weighted average VND cost basis 
  * and available quantity as of a specific date.
  */
 async function getAssetCostBasisAsOf(assetId: string, userId: string, date: Date) {
+  // Use pricePerUnit + fees (derived from absolute grossAmount) for BUY basis
   const transactions = await prisma.transaction.findMany({
     where: { 
       assetId, 
       userId,
       date: { lte: date }
     },
-    orderBy: { date: 'asc' }
+    orderBy: [
+      { date: 'asc' },
+      { id: 'asc' } // Deterministic sort for same-day transactions
+    ]
   })
 
   let currentQty = 0
@@ -27,7 +33,9 @@ async function getAssetCostBasisAsOf(assetId: string, userId: string, date: Date
     if (tx.type === 'BUY') {
       const newQty = currentQty + tx.quantity
       if (newQty > 0) {
-        currentAvgCost = (currentQty * currentAvgCost + tx.quantity * tx.pricePerUnit) / newQty
+        // Use Math.abs(tx.grossAmount) to include fees in the cost basis
+        const totalCostVnd = Math.abs(Number(tx.grossAmount))
+        currentAvgCost = (currentQty * currentAvgCost + totalCostVnd) / newQty
       }
       currentQty = newQty
     } else if (tx.type === 'SELL') {
@@ -50,7 +58,7 @@ export async function convertAsset(input: AssetConversionValues) {
 
   const result = assetConversionSchema.safeParse(input)
   if (!result.success) {
-    return { success: false, error: "Invalid conversion data" }
+    return { success: false, error: result.error.issues[0]?.message || "Invalid conversion data" }
   }
 
   const {
@@ -69,14 +77,19 @@ export async function convertAsset(input: AssetConversionValues) {
   const dateObj = new Date(date)
 
   try {
-    const result = await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Verify Source Asset
       const sourceAsset = await tx.asset.findUnique({
-        where: { id: fromAssetId }
+        where: { id: fromAssetId },
+        include: { termDeposits: true }
       })
 
       if (!sourceAsset || sourceAsset.userId !== userId) {
         throw new Error("Source asset not found or access denied")
+      }
+
+      if (sourceAsset.assetClass === 'TERM_DEPOSIT') {
+        throw new Error("Cannot convert from a Term Deposit asset. Resolve it via the maturity wizard.")
       }
 
       // 2. Resolve Target Asset
@@ -88,11 +101,19 @@ export async function convertAsset(input: AssetConversionValues) {
         if (!asset || asset.userId !== userId) {
           throw new Error("Target asset not found or access denied")
         }
+        if (asset.assetClass === 'TERM_DEPOSIT') {
+          throw new Error("Cannot convert into a Term Deposit asset.")
+        }
         targetSymbol = asset.symbol
       } else if (toAsset) {
+        const normalizedSymbol = toAsset.symbol.toUpperCase().trim()
+        if (toAsset.assetClass === 'TERM_DEPOSIT') {
+          throw new Error("Cannot create a Term Deposit asset via conversion.")
+        }
+
         // Find by symbol or create
         const existingAsset = await tx.asset.findFirst({
-          where: { symbol: toAsset.symbol, userId }
+          where: { symbol: normalizedSymbol, userId }
         })
 
         if (existingAsset) {
@@ -101,8 +122,8 @@ export async function convertAsset(input: AssetConversionValues) {
         } else {
           const newAsset = await tx.asset.create({
             data: {
-              symbol: toAsset.symbol,
-              name: toAsset.name,
+              symbol: normalizedSymbol,
+              name: toAsset.name.trim(),
               assetClass: toAsset.assetClass,
               currency: toAsset.currency,
               userId
@@ -124,7 +145,7 @@ export async function convertAsset(input: AssetConversionValues) {
 
       // Dust tolerance check (1e-10)
       if (fromQuantity > availableQuantity + 1e-10) {
-        throw new Error(`Insufficient quantity. Available: ${availableQuantity}, Requested: ${fromQuantity}`)
+        throw new Error(`Insufficient quantity. Available: ${availableQuantity.toFixed(8)}, Requested: ${fromQuantity}`)
       }
 
       const transferValueVnd = fromQuantity * avgCostVnd
@@ -135,8 +156,12 @@ export async function convertAsset(input: AssetConversionValues) {
       if (feeCurrency === targetSymbol) {
         netToQuantity = toQuantity - feeAmount
       }
+
+      if (netToQuantity <= 0) {
+        throw new Error("Net received quantity must be positive after fees.")
+      }
       
-      const buyPricePerUnit = netToQuantity > 0 ? transferValueVnd / netToQuantity : 0
+      const buyPricePerUnit = transferValueVnd / netToQuantity
 
       // 4. Create Linked Transactions
       const conversionId = crypto.randomUUID()
@@ -221,8 +246,9 @@ export async function convertAsset(input: AssetConversionValues) {
       toTransactionId: result.toTransactionId,
       transferValueVnd: result.transferValueVnd
     }
-  } catch (error: any) {
-    console.error("Asset conversion failed:", error)
-    return { success: false, error: error.message || "Database operation failed" }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Database operation failed"
+    console.error("Asset conversion failed:", message)
+    return { success: false, error: message }
   }
 }
