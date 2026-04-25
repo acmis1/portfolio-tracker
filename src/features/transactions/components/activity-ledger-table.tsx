@@ -173,7 +173,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                         "px-6 py-4 text-right text-xs font-black tabular-nums",
                         isInflow(tx.type) ? "text-emerald-400" : "text-slate-300"
                       )}>
-                        {isInflow(tx.type) ? '+' : '-'} {formatVND(tx.amount)}
+                        {isInflow(tx.type) ? '+' : '-'} {formatVND(Math.abs(tx.amount))}
                       </td>
                       <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
                         {tx.category !== 'ASSET' && <EditCashModal transaction={tx} />}

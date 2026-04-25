@@ -56,7 +56,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
                     "text-xs font-black tabular-nums transition-transform group-hover:scale-105",
                     isInflow(tx.type) ? "text-emerald-400" : "text-slate-400"
                   )}>
-                    {isInflow(tx.type) ? '+' : '-'} {formatVND(tx.amount)}
+                    {isInflow(tx.type) ? '+' : '-'} {formatVND(Math.abs(tx.amount))}
                   </span>
                   <span className="text-[9px] text-slate-500 italic truncate max-w-[120px]">
                     {tx.category === 'ASSET' ? `${tx.type} ${tx.quantity} units` : (tx.description || 'No description')}
