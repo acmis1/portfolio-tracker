@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus, Loader2, Info } from "lucide-react"
+import { Plus, Info } from "lucide-react"
 import { NumericFormat } from 'react-number-format'
 import { 
   Dialog, 
@@ -48,6 +48,7 @@ export function TransactionModal({
   const [open, setOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [assets, setAssets] = React.useState<any[]>([])
 
   const form = useForm<TransactionFormValues>({
@@ -55,12 +56,12 @@ export function TransactionModal({
     defaultValues: {
       symbol: initialSymbol,
       name: initialName,
-      assetClass: initialAssetClass as any,
+      assetClass: initialAssetClass as TransactionFormValues["assetClass"],
       type: "BUY",
       quantity: 1,
       price: 0,
       fees: 0,
-      currency: initialCurrency as any,
+      currency: initialCurrency as TransactionFormValues["currency"],
       date: new Date().toISOString().split('T')[0],
     },
   })
@@ -87,6 +88,7 @@ export function TransactionModal({
     const match = assets.find(a => a.symbol.toLowerCase() === symbol.toLowerCase())
     if (match) {
       form.setValue("name", match.name, { shouldValidate: true })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       form.setValue("assetClass", match.assetClass as any, { shouldValidate: true })
     }
   }, [symbol, assets, form])
@@ -114,7 +116,7 @@ export function TransactionModal({
       } else {
         setError(result.error || "Something went wrong")
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(error)
       setError("Failed to submit transaction")
     } finally {

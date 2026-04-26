@@ -3,8 +3,7 @@
 import * as React from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { TrendingUp, Loader2 } from "lucide-react"
-import { NumericFormat } from 'react-number-format'
+import { TrendingUp } from "lucide-react"
 import { 
   Dialog, 
   DialogContent, 
@@ -57,7 +56,7 @@ export function PriceUpdateModal({
       symbol: initialSymbol,
       date: new Date().toISOString().split('T')[0],
       price: 0,
-      currency: initialCurrency as any,
+      currency: initialCurrency as PriceUpdateFormValues["currency"],
     },
   })
 
@@ -72,7 +71,7 @@ export function PriceUpdateModal({
       } else {
         setError(result.error || "Something went wrong")
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(error)
       setError("Failed to update price")
     } finally {

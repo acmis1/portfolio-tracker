@@ -4,7 +4,6 @@ import * as React from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Pencil, Loader2, Trash2 } from "lucide-react"
-import { NumericFormat } from 'react-number-format'
 import { 
   Dialog, 
   DialogContent, 
@@ -18,7 +17,6 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { cashTransactionSchema, type CashTransactionFormValues } from "@/features/cash/validations"
 import { updateCashTransaction, deleteCashTransaction } from "@/features/cash/actions"
-import { cn } from "@/lib/utils"
 
 import { FormErrorBanner } from "@/components/forms/form-error-banner"
 import { LoadingSubmitButton } from "@/components/forms/loading-submit-button"
@@ -26,7 +24,14 @@ import { MoneyInput } from "@/components/forms/money-input"
 import { FormSection } from "@/components/forms/form-section"
 
 interface EditCashModalProps {
-  transaction: any;
+  transaction: {
+    id: string;
+    amount: number;
+    date: Date | string;
+    type: string;
+    description?: string;
+    referenceId?: string;
+  };
 }
 
 export function EditCashModal({ transaction }: EditCashModalProps) {
@@ -40,7 +45,7 @@ export function EditCashModal({ transaction }: EditCashModalProps) {
     defaultValues: {
       amount: transaction.amount,
       date: new Date(transaction.date).toISOString().split('T')[0],
-      type: transaction.type,
+      type: transaction.type as CashTransactionFormValues["type"],
       description: transaction.description || "",
       referenceId: transaction.referenceId || "",
     },
@@ -56,7 +61,7 @@ export function EditCashModal({ transaction }: EditCashModalProps) {
       } else {
         setError(result.error || "Update failed")
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(error)
       setError("Failed to update transaction")
     } finally {
@@ -76,7 +81,7 @@ export function EditCashModal({ transaction }: EditCashModalProps) {
       } else {
         setError(result.error || "Deletion failed")
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(error)
       setError("Failed to delete transaction")
     } finally {
