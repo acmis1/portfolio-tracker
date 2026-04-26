@@ -178,9 +178,17 @@ export function AssetTransactionTable({
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-slate-500 hover:text-red-400 hover:bg-red-400/10"
-                            onClick={() => handleDelete(tx.id)}
-                            disabled={isDeleting === tx.id}
+                            className={cn(
+                              "h-8 w-8 transition-colors",
+                              (tx.conversionId || termDeposit?.resolvedAt)
+                                ? "text-slate-700 cursor-not-allowed opacity-50"
+                                : "text-slate-500 hover:text-red-400 hover:bg-red-400/10"
+                            )}
+                            onClick={() => !tx.conversionId && !termDeposit?.resolvedAt && handleDelete(tx.id)}
+                            disabled={isDeleting === tx.id || !!tx.conversionId || !!termDeposit?.resolvedAt}
+                            title={tx.conversionId ? "Conversion transactions cannot be deleted" :
+                                   termDeposit?.resolvedAt ? "Resolved term deposit transactions are locked" :
+                                   "Delete transaction"}
                           >
                             <Trash2 className={cn("h-4 w-4", isDeleting === tx.id && "animate-pulse")} />
                           </Button>
