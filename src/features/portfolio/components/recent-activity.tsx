@@ -1,19 +1,20 @@
-import { formatVND, formatAssetDisplay } from '@/lib/utils/format'
+import { formatAssetDisplay } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { Activity, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { UnifiedActivity } from '@/features/transactions/queries'
+import { 
+  getSignedAmountDisplay, 
+  getConversionLabel 
+} from '@/features/transactions/services/display-utils'
 
 interface RecentActivityProps {
-  activities: any[];
+  activities: UnifiedActivity[];
 }
 
 export function RecentActivity({ activities }: RecentActivityProps) {
   // Show last 5
   const recent = activities.slice(0, 5);
-
-  const isInflow = (type: string) => {
-    return ['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL'].includes(type)
-  }
 
   return (
     <div className="glass-premium rounded-2xl overflow-hidden border border-white/5 shadow-xl flex flex-col h-full">
@@ -31,10 +32,18 @@ export function RecentActivity({ activities }: RecentActivityProps) {
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">No recent activity</p>
           </div>
         ) : (
-          recent.map((tx: any) => {
+          recent.map((tx) => {
             const isConversion = tx.category === 'CONVERSION';
+            const { text: amountDisplay, tone: amountTone } = getSignedAmountDisplay({
+              type: tx.type,
+              amount: tx.amount
+            });
+
             const { primary, secondary } = isConversion
-              ? { primary: `Converted ${tx.fromAssetSymbol} → ${tx.toAssetSymbol}`, secondary: 'Internal Conversion' }
+              ? { 
+                  primary: getConversionLabel({ fromSymbol: tx.fromAssetSymbol, toSymbol: tx.toAssetSymbol }), 
+                  secondary: 'Internal Conversion' 
+                }
               : tx.assetSymbol 
                 ? formatAssetDisplay(tx.assetSymbol, tx.assetName || '') 
                 : { primary: tx.description || tx.type.replace('_', ' '), secondary: undefined };
@@ -57,10 +66,9 @@ export function RecentActivity({ activities }: RecentActivityProps) {
                <div className="flex flex-col items-end shrink-0">
                   <span className={cn(
                     "text-xs font-black tabular-nums transition-transform group-hover:scale-105",
-                    isConversion ? "text-slate-400" :
-                    isInflow(tx.type) ? "text-emerald-400" : "text-slate-400"
+                    amountTone === 'positive' ? "text-emerald-400" : "text-slate-400"
                   )}>
-                    {isConversion ? 'Neutral' : (isInflow(tx.type) ? '+' : '-') + ' ' + formatVND(Math.abs(tx.amount))}
+                    {isConversion ? 'Neutral' : amountDisplay}
                   </span>
                   <span className="text-[9px] text-slate-500 italic truncate max-w-[120px]">
                     {isConversion 
@@ -73,6 +81,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
           })
         )}
       </div>
+
 
       <div className="p-3 border-t border-white/5 bg-white/5 shrink-0">
         <Link 

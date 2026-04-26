@@ -1,13 +1,19 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { formatVND, formatAssetDisplay, formatActivityType } from '@/lib/utils/format'
+import { formatVND, formatAssetDisplay } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { EditCashModal } from './edit-cash-modal'
 import { Search, Filter, ArrowUpRight, ArrowDownLeft, Wallet, Landmark, TrendingUp, CircleDollarSign, ArrowRightLeft, Tag } from 'lucide-react'
 import { ImportWizard } from '@/features/import/components/import-wizard'
 import { Select } from '@/components/ui/select'
 import { UnifiedActivity } from '@/features/transactions/queries'
+import { 
+  getSignedAmountDisplay, 
+  getActivityTypeLabel,
+  getConversionLabel,
+  isInflowActivity
+} from '../services/display-utils'
 
 interface ActivityLedgerTableProps {
   activities: UnifiedActivity[];
@@ -69,10 +75,6 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
     )
   }
 
-  const isInflow = (type: string) => {
-    return ['DEPOSIT', 'DIVIDEND', 'INTEREST', 'SELL'].includes(type)
-  }
-
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'DEPOSIT': return <ArrowDownLeft className="h-3 w-3 text-emerald-400" />
@@ -85,6 +87,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
       default: return null
     }
   }
+
 
   return (
     <div className="space-y-6">
@@ -166,7 +169,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                           <div className={cn(
                             "p-1.5 rounded-lg",
                             isConversion ? "bg-blue-500/10" :
-                            isInflow(tx.type) ? "bg-emerald-500/10" : "bg-rose-500/10"
+                            isInflowActivity(tx.type) ? "bg-emerald-500/10" : "bg-rose-500/10"
                           )}>
                             {getTypeIcon(tx.type)}
                           </div>
@@ -175,7 +178,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                             isConversion ? "text-blue-400" :
                             isAssetTx ? "text-blue-400" : "text-slate-400"
                           )}>
-                            {formatActivityType(tx.type)}
+                            {getActivityTypeLabel(tx.type)}
                           </span>
                         </div>
                       </td>
@@ -184,7 +187,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                           {isConversion ? (
                             <>
                               <span className="text-xs font-black text-slate-200">
-                                {tx.fromAssetSymbol} → {tx.toAssetSymbol}
+                                {getConversionLabel({ fromSymbol: tx.fromAssetSymbol, toSymbol: tx.toAssetSymbol })}
                               </span>
                               <span className="text-[10px] text-slate-500 font-medium">
                                 Internal Conversion
@@ -204,7 +207,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                             );
                           })() : (
                             <span className="text-xs font-black text-slate-200">
-                              {tx.description || formatActivityType(tx.type)}
+                              {tx.description || getActivityTypeLabel(tx.type)}
                             </span>
                           )}
                         </div>
@@ -239,13 +242,14 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                       <td className={cn(
                         "px-6 py-4 text-right text-xs font-black tabular-nums",
                         isConversion ? "text-slate-400" :
-                        isInflow(tx.type) ? "text-emerald-400" : "text-slate-300"
+                        isInflowActivity(tx.type) ? "text-emerald-400" : "text-slate-300"
                       )}>
                         {isConversion ? (
                           <span className="text-[10px] text-slate-500 italic">Neutral</span>
-                        ) : (
-                          <>{isInflow(tx.type) ? '+' : '-'} {formatVND(Math.abs(tx.amount))}</>
-                        )}
+                        ) : (() => {
+                          const { text } = getSignedAmountDisplay({ type: tx.type, amount: tx.amount });
+                          return text;
+                        })()}
                         {isConversion && tx.price && (
                           <div className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter">
                             {formatVND(tx.price)} basis

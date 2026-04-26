@@ -13,6 +13,10 @@ import { deleteTransaction } from "@/features/transactions/actions"
 import { useRouter } from "next/navigation"
 import { Transaction } from "@prisma/client"
 import { ASSET_CLASSES } from "@/lib/validations"
+import { 
+  getActivityTypeLabel, 
+  getActivityTone 
+} from "@/features/transactions/services/display-utils"
 
 export interface AssetTransactionTableProps {
   transactions: Transaction[];
@@ -126,11 +130,11 @@ export function AssetTransactionTable({
                         <div className="flex flex-col gap-1">
                           <span className={cn(
                             "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest self-start",
-                            tx.type === 'BUY' ? "bg-emerald-500/10 text-emerald-400" : 
-                            tx.type === 'SELL' ? "bg-red-500/10 text-red-500" : 
+                            getActivityTone(tx.type) === 'positive' ? "bg-emerald-500/10 text-emerald-400" : 
+                            getActivityTone(tx.type) === 'negative' ? "bg-red-500/10 text-red-500" : 
                             "bg-slate-800 text-slate-400"
                           )}>
-                            {tx.type}
+                            {getActivityTypeLabel(tx.type)}
                           </span>
                           {tx.conversionId && (
                             <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter text-blue-400">
