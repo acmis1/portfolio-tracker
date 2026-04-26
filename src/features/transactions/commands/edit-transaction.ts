@@ -82,6 +82,7 @@ export async function editTransaction(id: string, formData: TransactionFormValue
           where: { assetId: existing.assetId },
           data: {
             bankName: name,
+            principal: price,
             interestRate: interestRate,
             maturityDate: maturityDate ? new Date(maturityDate) : undefined,
           }
