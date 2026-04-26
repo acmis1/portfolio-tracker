@@ -1,5 +1,6 @@
 import { DollarSign, Activity, TrendingUp, ShieldCheck } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
+import { CardContent, CardDescription, CardHeader } from '@/components/ui/card'
+import { GlassCard } from '@/components/ui/glass-card'
 import { type PortfolioSummary } from '../utils'
 import { formatPercentage } from '@/lib/formatters'
 import { formatVND } from '@/lib/utils/format'
@@ -29,7 +30,7 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
       {/* Primary KPI Row */}
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
         {/* 1. Portfolio Market Value */}
-        <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/10">
+        <GlassCard hoverLift padding="none" className="relative overflow-hidden border-white/10">
           <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-emerald-500/10 blur-3xl" />
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -48,10 +49,10 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
               Asset Valuation
             </div>
           </CardContent>
-        </Card>
+        </GlassCard>
 
         {/* 2. Total Return (Combined) */}
-        <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/10">
+        <GlassCard hoverLift padding="none" className="relative overflow-hidden border-white/10">
           <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-500/10 blur-3xl" />
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -76,10 +77,10 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
               <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tight ml-1">Overall ROI</span>
             </div>
           </CardContent>
-        </Card>
+        </GlassCard>
 
         {/* 3. Realized PnL */}
-        <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/10">
+        <GlassCard hoverLift padding="none" className="relative overflow-hidden border-white/10">
           <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-indigo-500/10 blur-3xl" />
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -100,10 +101,10 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
               Actual Profit Taken
             </div>
           </CardContent>
-        </Card>
+        </GlassCard>
 
         {/* 4. Portfolio XIRR */}
-        <Card className="glass-premium hover-lift relative overflow-hidden transition-all duration-300 border-white/10">
+        <GlassCard hoverLift padding="none" className="relative overflow-hidden border-white/10">
           <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-violet-500/10 blur-3xl" />
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -132,7 +133,7 @@ export function DashboardSummary({ summary, macro }: DashboardSummaryProps) {
               )}
             </div>
           </CardContent>
-        </Card>
+        </GlassCard>
       </div>
 
       {/* Secondary Compact Strip */}

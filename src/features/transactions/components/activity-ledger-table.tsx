@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { formatVND, formatAssetDisplay } from '@/lib/utils/format'
+import { GlassCard } from '@/components/ui/glass-card'
 import { cn } from '@/lib/utils'
 import { EditCashModal } from './edit-cash-modal'
 import { Search, Filter, ArrowUpRight, ArrowDownLeft, Wallet, Landmark, TrendingUp, CircleDollarSign, ArrowRightLeft, Tag } from 'lucide-react'
@@ -92,7 +93,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
   return (
     <div className="space-y-6">
       {/* Search & Filter Bar */}
-      <div className="flex flex-col xl:flex-row gap-3 items-stretch xl:items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5">
+      <GlassCard variant="subtle" padding="sm" className="flex flex-col xl:flex-row gap-3 items-stretch xl:items-center justify-between">
         <div className="flex flex-col md:flex-row gap-3 flex-1">
           <div className="relative flex-1 group min-w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
@@ -138,9 +139,9 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
         <div className="flex items-center justify-end">
           <ImportWizard />
         </div>
-      </div>
+      </GlassCard>
 
-      <div className="glass-premium overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
+      <GlassCard variant="elevated" padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
@@ -272,10 +273,11 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
             </tbody>
           </table>
         </div>
-      </div>
+      </GlassCard>
     </div>
   )
 }
+
 export function ActivityLedgerSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">

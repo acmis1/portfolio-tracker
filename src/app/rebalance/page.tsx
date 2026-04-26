@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getTargetAllocations } from "@/features/portfolio/actions/allocations";
 import { PageShell } from "@/components/layout/page-shell";
+import { GlassCard } from "@/components/ui/glass-card";
 
 export const metadata = {
   title: "Manual Rebalance Plan | Aegis Ledger",
@@ -49,7 +50,7 @@ export default async function RebalancePage() {
         </div>
 
         <div className="flex shrink-0">
-          <div className="glass-premium rounded-xl border border-white/5 p-4 flex items-center gap-3">
+          <GlassCard radius="xl" padding="sm" className="flex items-center gap-3">
             <div className="bg-emerald-500/10 p-2 rounded-lg">
               <Info className="h-5 w-5 text-emerald-400" />
             </div>
@@ -57,7 +58,7 @@ export default async function RebalancePage() {
               <div className="text-[10px] uppercase font-black tracking-widest text-slate-500">Mode</div>
               <div className="text-sm font-bold text-white">Advisory Only</div>
             </div>
-          </div>
+          </GlassCard>
         </div>
       </div>
 
@@ -70,14 +71,14 @@ export default async function RebalancePage() {
           <ManualTradePlan nodes={plan.nodes} totalAum={plan.totalAum} />
         </div>
       ) : (
-        <div className="mb-12 glass-premium rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
+        <GlassCard variant="warning" padding="lg" className="mb-12 text-center">
           <Info className="h-8 w-8 text-amber-500 mx-auto mb-4" />
           <h3 className="text-lg font-black text-white uppercase tracking-widest mb-2">Strategy Setup Required</h3>
           <p className="text-slate-400 text-sm max-w-md mx-auto">
             The rebalance planner is inactive because your target allocation is incomplete or does not sum to 100%. 
             Please configure your strategy below to generate trade suggestions.
           </p>
-        </div>
+        </GlassCard>
       )}
 
       {/* 3. Existing drift table (Secondary analytical detail) */}

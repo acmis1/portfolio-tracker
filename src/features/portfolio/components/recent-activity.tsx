@@ -1,4 +1,5 @@
 import { formatAssetDisplay } from '@/lib/utils/format'
+import { GlassCard } from "@/components/ui/glass-card"
 import { cn } from '@/lib/utils'
 import { Activity, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
@@ -17,7 +18,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
   const recent = activities.slice(0, 5);
 
   return (
-    <div className="glass-premium rounded-2xl overflow-hidden border border-white/5 shadow-xl flex flex-col h-full">
+    <GlassCard variant="elevated" radius="2xl" padding="none" className="overflow-hidden flex flex-col h-full">
       <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between shrink-0">
           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Recent Activity</h3>
          <Activity className="h-3 w-3 text-slate-500" />
@@ -92,6 +93,6 @@ export function RecentActivity({ activities }: RecentActivityProps) {
           <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
-    </div>
+    </GlassCard>
   )
 }
