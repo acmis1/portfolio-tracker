@@ -26,6 +26,11 @@ export interface AssetTransactionTableProps {
   assetClass: string;
   assetCurrency: string;
   fxRate: number;
+  termDeposit?: {
+    interestRate: number;
+    maturityDate: Date | string;
+    resolvedAt?: Date | string | null;
+  };
 }
 
 export function AssetTransactionTable({ 
@@ -35,7 +40,8 @@ export function AssetTransactionTable({
   assetName, 
   assetClass, 
   assetCurrency, 
-  fxRate 
+  fxRate,
+  termDeposit
 }: AssetTransactionTableProps) {
   const isUSD = assetCurrency === 'USD';
   const router = useRouter();
@@ -164,7 +170,8 @@ export function AssetTransactionTable({
                               symbol: symbol,
                               name: assetName,
                               assetClass: assetClass as typeof ASSET_CLASSES[number],
-                              currency: assetCurrency as 'VND' | 'USD'
+                              currency: assetCurrency as 'VND' | 'USD',
+                              termDeposit: termDeposit
                             }}
                             fxRate={fxRate}
                           />

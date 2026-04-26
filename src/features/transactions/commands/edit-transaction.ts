@@ -18,7 +18,7 @@ export async function editTransaction(id: string, formData: TransactionFormValue
   const { 
     symbol, name, assetClass, type, quantity, 
     price: rawPrice, fees: rawFees, date, currency, 
-    maturityDate 
+    maturityDate, interestRate 
   } = result.data
   
   const dateObj = new Date(date)
@@ -75,6 +75,18 @@ export async function editTransaction(id: string, formData: TransactionFormValue
         where: { id: existing.assetId },
         data: { name, assetClass }
       })
+
+      // If it's a Term Deposit, update the associated metadata
+      if (assetClass === 'TERM_DEPOSIT' && existing.asset.termDeposits.length > 0) {
+        await tx.termDeposit.updateMany({
+          where: { assetId: existing.assetId },
+          data: {
+            bankName: name,
+            interestRate: interestRate,
+            maturityDate: maturityDate ? new Date(maturityDate) : undefined,
+          }
+        })
+      }
 
       if (existing.cashTransactionId) {
         const locale = currency === 'VND' ? 'vi-VN' : 'en-US'

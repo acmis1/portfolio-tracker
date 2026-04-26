@@ -180,6 +180,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
         assetClass={asset.assetClass}
         assetCurrency={asset.currency}
         fxRate={fxRate}
+        termDeposit={asset.termDeposits[0]}
       />
     </PageShell>
   )

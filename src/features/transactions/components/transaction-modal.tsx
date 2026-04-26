@@ -1,10 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus, Info } from "lucide-react"
-import { NumericFormat } from 'react-number-format'
+import { Plus } from "lucide-react"
 import { 
   Dialog, 
   DialogContent, 
@@ -13,18 +12,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/select"
-import { transactionSchema, type TransactionFormValues, ASSET_CLASSES } from "@/lib/validations"
+import { transactionSchema, type TransactionFormValues } from "@/lib/validations"
 import { addTransaction, getUserAssets } from "@/features/transactions/actions"
-import { cn } from "@/lib/utils"
-import { formatVND } from "@/lib/utils/format"
-import { formatAssetClass } from "@/lib/formatters"
+import { AssetTransactionForm } from "./asset-transaction-form"
 
 interface TransactionModalProps {
   trigger?: React.ReactElement;
-  fxRate?: number; // Optional live rate for conversion preview
+  fxRate?: number;
   initialSymbol?: string;
   initialAssetClass?: string;
   initialName?: string;
@@ -32,10 +26,6 @@ interface TransactionModalProps {
 }
 
 const TICKER_CLASSES = ['INDIVIDUAL_STOCK', 'ETF', 'STOCK_FUND', 'BOND_FUND', 'CRYPTO']
-
-import { FormErrorBanner } from "@/components/forms/form-error-banner"
-import { LoadingSubmitButton } from "@/components/forms/loading-submit-button"
-import { FormSection } from "@/components/forms/form-section"
 
 export function TransactionModal({ 
   trigger, 
@@ -48,8 +38,7 @@ export function TransactionModal({
   const [open, setOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [assets, setAssets] = React.useState<any[]>([])
+  const [assets, setAssets] = React.useState<{ symbol: string; name: string; assetClass: string }[]>([])
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -77,28 +66,15 @@ export function TransactionModal({
   const assetClass = form.watch("assetClass")
   const isTickerAsset = TICKER_CLASSES.includes(assetClass)
 
-  // Class-specific flags
-  const isTermDeposit = assetClass === 'TERM_DEPOSIT'
-  const isRealEstate = assetClass === 'REAL_ESTATE'
-  const isGold = assetClass === 'GOLD'
-
   // Smart Autofill logic
   React.useEffect(() => {
     if (!symbol || symbol.length < 2) return
     const match = assets.find(a => a.symbol.toLowerCase() === symbol.toLowerCase())
     if (match) {
       form.setValue("name", match.name, { shouldValidate: true })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      form.setValue("assetClass", match.assetClass as any, { shouldValidate: true })
+      form.setValue("assetClass", match.assetClass as TransactionFormValues["assetClass"], { shouldValidate: true })
     }
   }, [symbol, assets, form])
-
-  // Background values for unconventional assets
-  React.useEffect(() => {
-    if (isTermDeposit || isRealEstate) {
-      form.setValue("quantity", 1)
-    }
-  }, [assetClass, isTermDeposit, isRealEstate, form])
 
   async function onSubmit(data: TransactionFormValues) {
     setIsSubmitting(true)
@@ -124,24 +100,6 @@ export function TransactionModal({
     }
   }
 
-  const errors = form.formState.errors
-  const selectedCurrency = form.watch("currency")
-  const inputPrice = form.watch("price")
-  const isUSD = selectedCurrency === 'USD'
-
-  const getNameLabel = () => {
-    if (isGold) return "Asset Name (e.g. SJC Gold Bar)"
-    if (isTermDeposit) return "Bank & Term (e.g. VCB 6-Month)"
-    if (isRealEstate) return "Property Name"
-    return "Full Name"
-  }
-
-  const getPriceLabel = () => {
-    if (isTermDeposit) return `Principal Amount (${selectedCurrency})`
-    if (isRealEstate) return `Total Purchase Price (${selectedCurrency})`
-    return `Price per Unit (${selectedCurrency})`
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -155,250 +113,14 @@ export function TransactionModal({
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-white">New Transaction</DialogTitle>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
-          <FormErrorBanner message={error} />
-          
-          <FormSection title="Asset Specification">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="assetClass">Asset Class</Label>
-                <Controller
-                  name="assetClass"
-                  control={form.control}
-                  render={({ field }) => (
-                    <Select 
-                      id="assetClass" 
-                      className={cn(errors.assetClass && "border-red-500/50")}
-                      {...field}
-                    >
-                      {ASSET_CLASSES.map((ac) => (
-                        <option key={ac} value={ac}>
-                          {formatAssetClass(ac)}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
-                <Input 
-                  id="date" 
-                  type="date" 
-                  className={cn(errors.date && "border-red-500/50")}
-                  {...form.register("date")} 
-                />
-                {errors.date && (
-                  <p className="text-[10px] font-medium text-red-400">{errors.date.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {isTickerAsset && (
-                <div className="space-y-2 transition-all">
-                  <Label htmlFor="symbol">Symbol</Label>
-                  <Input 
-                    id="symbol" 
-                    placeholder="BTC, AAPL..." 
-                    className={cn(errors.symbol && "border-red-500/50 focus-visible:ring-red-500/20")}
-                    {...form.register("symbol")}
-                  />
-                  {errors.symbol && (
-                    <p className="text-[10px] font-medium text-red-400">{errors.symbol.message}</p>
-                  )}
-                </div>
-              )}
-              
-              <div className={cn("space-y-2", isTickerAsset ? "" : "col-span-2")}>
-                <Label htmlFor="name">{getNameLabel()}</Label>
-                <Input 
-                  id="name" 
-                  placeholder={isTickerAsset ? "Bitcoin, Apple Inc..." : "Description..."} 
-                  className={cn(errors.name && "border-red-500/50")}
-                  {...form.register("name")}
-                />
-                {errors.name && (
-                  <p className="text-[10px] font-medium text-red-400">{errors.name.message}</p>
-                )}
-              </div>
-            </div>
-          </FormSection>
-
-          <FormSection title="Transaction Values">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="type">Transaction Type</Label>
-                <Controller
-                  name="type"
-                  control={form.control}
-                  render={({ field }) => (
-                    <Select 
-                      id="type" 
-                      className={cn(errors.type && "border-red-500/50")}
-                      {...field}
-                    >
-                      <option value="BUY">Buy/Deposit</option>
-                      <option value="SELL">Sell/Withdraw</option>
-                      <option value="DIVIDEND">Dividend</option>
-                      <option value="INTEREST">Interest</option>
-                    </Select>
-                  )}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="currency">Currency</Label>
-                <Controller
-                  name="currency"
-                  control={form.control}
-                  render={({ field }) => (
-                    <Select 
-                      id="currency" 
-                      {...field}
-                    >
-                      <option value="VND">VND</option>
-                      <option value="USD">USD</option>
-                    </Select>
-                  )}
-                />
-              </div>
-            </div>
-
-            {isTermDeposit && (
-              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
-                 <div className="space-y-2">
-                  <Label htmlFor="interestRate">Interest Rate (%)</Label>
-                  <Controller
-                    name="interestRate"
-                    control={form.control}
-                    render={({ field }) => (
-                      <NumericFormat
-                        id="interestRate"
-                        className={cn(errors.interestRate && "border-red-500/50")}
-                        customInput={Input}
-                        thousandSeparator="."
-                        decimalSeparator=","
-                        placeholder="8.5"
-                        value={field.value}
-                        onValueChange={(values) => {
-                          field.onChange(values.floatValue || 0);
-                        }}
-                      />
-                    )}
-                  />
-                  {errors.interestRate && (
-                    <p className="text-[10px] font-medium text-red-400">{errors.interestRate.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maturityDate">Maturity Date</Label>
-                  <Input 
-                    id="maturityDate" 
-                    type="date" 
-                    className={cn(errors.maturityDate && "border-red-500/50")}
-                    {...form.register("maturityDate")} 
-                  />
-                  {errors.maturityDate && (
-                    <p className="text-[10px] font-medium text-red-400">{errors.maturityDate.message}</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              {!isTermDeposit && !isRealEstate && (
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantity</Label>
-                  <Controller
-                    name="quantity"
-                    control={form.control}
-                    render={({ field }) => (
-                      <NumericFormat
-                        id="quantity"
-                        className={cn(errors.quantity && "border-red-500/50")}
-                        customInput={Input}
-                        thousandSeparator="."
-                        decimalSeparator=","
-                        value={field.value}
-                        onValueChange={(values) => {
-                          field.onChange(values.floatValue || 0);
-                        }}
-                      />
-                    )}
-                  />
-                  {errors.quantity && (
-                    <p className="text-[10px] font-medium text-red-400">{errors.quantity.message}</p>
-                  )}
-                </div>
-              )}
-              
-              <div className={cn("space-y-2 relative", (isTermDeposit || isRealEstate) ? "col-span-2" : "")}>
-                <Label htmlFor="price">{getPriceLabel()}</Label>
-                <Controller
-                  name="price"
-                  control={form.control}
-                  render={({ field }) => (
-                    <NumericFormat
-                      id="price"
-                      className={cn(errors.price && "border-red-500/50")}
-                      customInput={Input}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      value={field.value}
-                      onValueChange={(values) => {
-                        field.onChange(values.floatValue || 0);
-                      }}
-                    />
-                  )}
-                />
-                {isUSD && inputPrice > 0 && (
-                  <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-emerald-500/80 animate-in fade-in slide-in-from-top-1">
-                    <Info className="h-2.5 w-2.5" />
-                    Est. {formatVND(inputPrice * fxRate)}
-                  </div>
-                )}
-                {errors.price && (
-                  <p className="text-[10px] font-medium text-red-400">{errors.price.message}</p>
-                )}
-              </div>
-
-              {!isTermDeposit && !isGold && (
-                <div className="space-y-2">
-                  <Label htmlFor="fees">Fees ({selectedCurrency})</Label>
-                  <Controller
-                    name="fees"
-                    control={form.control}
-                    render={({ field }) => (
-                      <NumericFormat
-                        id="fees"
-                        className={cn(errors.fees && "border-red-500/50")}
-                        customInput={Input}
-                        thousandSeparator="."
-                        decimalSeparator=","
-                        value={field.value}
-                        onValueChange={(values) => {
-                          field.onChange(values.floatValue || 0);
-                        }}
-                      />
-                    )}
-                  />
-                  {errors.fees && (
-                    <p className="text-[10px] font-medium text-red-400">{errors.fees.message}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          </FormSection>
-
-          <LoadingSubmitButton 
-            isLoading={isSubmitting}
-            loadingText="Processing..."
-            variant="premium"
-          >
-            Complete Transaction
-          </LoadingSubmitButton>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="py-4">
+          <AssetTransactionForm
+            form={form}
+            mode="create"
+            error={error}
+            isSubmitting={isSubmitting}
+            fxRate={fxRate}
+          />
         </form>
       </DialogContent>
     </Dialog>
