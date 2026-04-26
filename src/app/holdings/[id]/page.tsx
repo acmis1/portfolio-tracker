@@ -16,6 +16,7 @@ import { PriceUpdateModal } from "@/features/holdings/components/price-update-mo
 import { AssetTransactionTable } from "@/features/holdings/components/asset-transaction-table"
 import { getLiveExchangeRate } from "@/lib/fx"
 import { LiquidHolding, GoldHolding, RealEstateHolding, TermDepositHolding } from "@/features/portfolio/types"
+import { PageShell } from "@/components/layout/page-shell"
 
 interface AssetDetailPageProps {
   params: Promise<{
@@ -38,7 +39,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
   const isPositive = (holding?.unrealizedPnLPctg ?? 0) >= 0
 
   return (
-    <div className="mx-auto max-w-7xl px-6 pt-8 md:px-8 md:pt-10 space-y-8 pb-20">
+    <PageShell contentClassName="space-y-8 pb-20">
       {/* Header / Breadcrumbs */}
       <div className="flex items-center gap-4">
         <Link href="/holdings">
@@ -180,6 +181,6 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
         assetCurrency={asset.currency}
         fxRate={fxRate}
       />
-    </div>
+    </PageShell>
   )
 }

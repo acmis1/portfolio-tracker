@@ -9,6 +9,7 @@ import { getPortfolioSnapshots } from '@/features/portfolio/actions/rebalance'
 import { getPortfolioSummary } from '@/features/portfolio/utils'
 import { getVietnamMacro } from '@/features/portfolio/actions/macro'
 import { getUnifiedActivity } from '@/features/transactions/queries'
+import { PageShell } from "@/components/layout/page-shell"
 
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
@@ -75,51 +76,43 @@ export default async function DashboardPage() {
   if (!userId) redirect("/sign-in");
 
   return (
-    <main className="min-h-screen bg-slate-950 p-6 lg:p-10">
-      {/* Background Atmosphere */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]" />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-7xl space-y-10">
-        {/* 1. Header & Primary KPIs */}
-        <div className="space-y-8">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between px-1">
-            <div>
-              <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
-                Wealth Management
-              </h1>
-              <p className="text-slate-400 font-medium">
-                Real-time portfolio intelligence and performance analytics
-              </p>
-            </div>
+    <PageShell contentClassName="space-y-10">
+      {/* 1. Header & Primary KPIs */}
+      <div className="space-y-8">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between px-1">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">
+              Wealth Management
+            </h1>
+            <p className="text-slate-400 font-medium">
+              Real-time portfolio intelligence and performance analytics
+            </p>
           </div>
-
-          <Suspense fallback={<SummarySectionSkeleton />}>
-            <SummarySection />
-          </Suspense>
         </div>
 
-        {/* 2. Analytics Grid */}
-        <Suspense fallback={<ChartsSectionSkeleton />}>
-          <ChartsSection />
-        </Suspense>
-
-        {/* 3. Operational Grid */}
-        <Suspense fallback={<ListSectionSkeleton />}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
-              <TopHoldingsSection />
-            </div>
-            
-            <div className="lg:col-span-2">
-              <RecentActivitySection userId={userId} />
-            </div>
-          </div>
+        <Suspense fallback={<SummarySectionSkeleton />}>
+          <SummarySection />
         </Suspense>
       </div>
-    </main>
+
+      {/* 2. Analytics Grid */}
+      <Suspense fallback={<ChartsSectionSkeleton />}>
+        <ChartsSection />
+      </Suspense>
+
+      {/* 3. Operational Grid */}
+      <Suspense fallback={<ListSectionSkeleton />}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <TopHoldingsSection />
+          </div>
+          
+          <div className="lg:col-span-2">
+            <RecentActivitySection userId={userId} />
+          </div>
+        </div>
+      </Suspense>
+    </PageShell>
   )
 }
 
