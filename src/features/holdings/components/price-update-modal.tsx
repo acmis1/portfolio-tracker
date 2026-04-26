@@ -20,6 +20,11 @@ import { z } from "zod"
 import { addPriceUpdate } from "@/features/holdings/actions"
 import { cn } from "@/lib/utils"
 
+import { FormErrorBanner } from "@/components/forms/form-error-banner"
+import { LoadingSubmitButton } from "@/components/forms/loading-submit-button"
+import { MoneyInput } from "@/components/forms/money-input"
+import { FormSection } from "@/components/forms/form-section"
+
 const priceUpdateSchema = z.object({
   symbol: z.string().min(1, "Symbol is required").toUpperCase(),
   date: z.string().min(1, "Date is required"),
@@ -44,6 +49,7 @@ export function PriceUpdateModal({
 }: PriceUpdateModalProps) {
   const [open, setOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
   const form = useForm<PriceUpdateFormValues>({
     resolver: zodResolver(priceUpdateSchema),
@@ -57,17 +63,18 @@ export function PriceUpdateModal({
 
   async function onSubmit(data: PriceUpdateFormValues) {
     setIsSubmitting(true)
+    setError(null)
     try {
       const result = await addPriceUpdate(data)
       if (result.success) {
         setOpen(false)
         form.reset()
       } else {
-        alert(result.error || "Something went wrong")
+        setError(result.error || "Something went wrong")
       }
     } catch (error: any) {
       console.error(error)
-      alert("Failed to update price")
+      setError("Failed to update price")
     } finally {
       setIsSubmitting(false)
     }
@@ -88,92 +95,87 @@ export function PriceUpdateModal({
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-white">{title}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="symbol">Symbol</Label>
-            <Input 
-              id="symbol" 
-              placeholder="BTC, AAPL, VESAF..." 
-              className={cn(errors.symbol && "border-red-500/50")}
-              {...form.register("symbol")}
-            />
-            {errors.symbol && (
-              <p className="text-[10px] font-medium text-red-400">{errors.symbol.message}</p>
-            )}
-          </div>
+        
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+          <FormErrorBanner message={error} />
 
-          <div className="grid grid-cols-2 gap-4">
+          <FormSection title="Asset Identification">
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="symbol">Symbol</Label>
               <Input 
-                id="date" 
-                type="date" 
-                className={cn(errors.date && "border-red-500/50")}
-                {...form.register("date")} 
+                id="symbol" 
+                placeholder="BTC, AAPL, VESAF..." 
+                className={cn(errors.symbol && "border-red-500/50")}
+                {...form.register("symbol")}
               />
-              {errors.date && (
-                <p className="text-[10px] font-medium text-red-400">{errors.date.message}</p>
+              {errors.symbol && (
+                <p className="text-[10px] font-medium text-red-400">{errors.symbol.message}</p>
               )}
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">Date</Label>
+                <Input 
+                  id="date" 
+                  type="date" 
+                  className={cn(errors.date && "border-red-500/50")}
+                  {...form.register("date")} 
+                />
+                {errors.date && (
+                  <p className="text-[10px] font-medium text-red-400">{errors.date.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Controller
+                  name="currency"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select 
+                      id="currency" 
+                      className={cn(errors.currency && "border-red-500/50")}
+                      {...field}
+                    >
+                      <option value="VND">VND</option>
+                      <option value="USD">USD</option>
+                    </Select>
+                  )}
+                />
+              </div>
+            </div>
+          </FormSection>
+
+          <FormSection title="Pricing Data">
             <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
+              <Label htmlFor="price">Closing Price ({form.watch("currency")})</Label>
               <Controller
-                name="currency"
+                name="price"
                 control={form.control}
                 render={({ field }) => (
-                  <Select 
-                    id="currency" 
-                    className={cn(errors.currency && "border-red-500/50")}
-                    {...field}
-                  >
-                    <option value="VND">VND</option>
-                    <option value="USD">USD</option>
-                  </Select>
+                  <MoneyInput
+                    id="price"
+                    error={!!errors.price}
+                    value={field.value}
+                    onValueChange={(values) => {
+                      field.onChange(values.floatValue || 0);
+                    }}
+                  />
                 )}
               />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="price">Closing Price ({form.watch("currency")})</Label>
-            <Controller
-              name="price"
-              control={form.control}
-              render={({ field }) => (
-                <NumericFormat
-                  id="price"
-                  className={cn(errors.price && "border-red-500/50")}
-                  customInput={Input}
-                  thousandSeparator="."
-                  decimalSeparator=","
-                  allowNegative={false}
-                  value={field.value}
-                  onValueChange={(values) => {
-                    field.onChange(values.floatValue || 0);
-                  }}
-                />
+              {errors.price && (
+                <p className="text-[10px] font-medium text-red-400">{errors.price.message}</p>
               )}
-            />
-            {errors.price && (
-              <p className="text-[10px] font-medium text-red-400">{errors.price.message}</p>
-            )}
-          </div>
+            </div>
+          </FormSection>
 
-          <Button 
-            type="submit" 
-            className="w-full mt-2" 
+          <LoadingSubmitButton 
+            isLoading={isSubmitting}
+            loadingText="Updating..."
             variant="premium"
-            disabled={isSubmitting}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              "Save Price Point"
-            )}
-          </Button>
+            Save Price Point
+          </LoadingSubmitButton>
         </form>
       </DialogContent>
     </Dialog>

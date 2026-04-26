@@ -20,6 +20,11 @@ import { cashTransactionSchema, type CashTransactionFormValues } from "@/feature
 import { updateCashTransaction, deleteCashTransaction } from "@/features/cash/actions"
 import { cn } from "@/lib/utils"
 
+import { FormErrorBanner } from "@/components/forms/form-error-banner"
+import { LoadingSubmitButton } from "@/components/forms/loading-submit-button"
+import { MoneyInput } from "@/components/forms/money-input"
+import { FormSection } from "@/components/forms/form-section"
+
 interface EditCashModalProps {
   transaction: any;
 }
@@ -28,6 +33,7 @@ export function EditCashModal({ transaction }: EditCashModalProps) {
   const [open, setOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isDeleting, setIsDeleting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
 
   const form = useForm<CashTransactionFormValues>({
     resolver: zodResolver(cashTransactionSchema),
@@ -42,16 +48,17 @@ export function EditCashModal({ transaction }: EditCashModalProps) {
 
   async function onSubmit(data: CashTransactionFormValues) {
     setIsSubmitting(true)
+    setError(null)
     try {
       const result = await updateCashTransaction(transaction.id, data)
       if (result.success) {
         setOpen(false)
       } else {
-        alert(result.error || "Update failed")
+        setError(result.error || "Update failed")
       }
     } catch (error: any) {
       console.error(error)
-      alert("Failed to update transaction")
+      setError("Failed to update transaction")
     } finally {
       setIsSubmitting(false)
     }
@@ -61,20 +68,23 @@ export function EditCashModal({ transaction }: EditCashModalProps) {
     if (!confirm("Are you sure you want to delete this cash record? Historical portfolio snapshots will be recalculated.")) return
     
     setIsDeleting(true)
+    setError(null)
     try {
       const result = await deleteCashTransaction(transaction.id)
       if (result.success) {
         setOpen(false)
       } else {
-        alert(result.error || "Deletion failed")
+        setError(result.error || "Deletion failed")
       }
     } catch (error: any) {
       console.error(error)
-      alert("Failed to delete transaction")
+      setError("Failed to delete transaction")
     } finally {
       setIsDeleting(false)
     }
   }
+
+  const errors = form.formState.errors
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -96,65 +106,63 @@ export function EditCashModal({ transaction }: EditCashModalProps) {
             {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
           </Button>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="type">Transaction Type</Label>
-            <Select id="type" {...form.register("type")}>
-              <option value="DEPOSIT">Deposit</option>
-              <option value="WITHDRAWAL">Withdrawal</option>
-              <option value="DIVIDEND">Dividend</option>
-              <option value="INTEREST">Interest</option>
-              <option value="BUY_ASSET">Buy Asset</option>
-              <option value="SELL_ASSET">Sell Asset</option>
-            </Select>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+          <FormErrorBanner message={error} />
+
+          <FormSection title="Transaction Details">
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
-              <Input id="date" type="date" {...form.register("date")} />
+              <Label htmlFor="type">Transaction Type</Label>
+              <Select id="type" {...form.register("type")}>
+                <option value="DEPOSIT">Deposit</option>
+                <option value="WITHDRAWAL">Withdrawal</option>
+                <option value="DIVIDEND">Dividend</option>
+                <option value="INTEREST">Interest</option>
+                <option value="BUY_ASSET">Buy Asset</option>
+                <option value="SELL_ASSET">Sell Asset</option>
+              </Select>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">Date</Label>
+                <Input id="date" type="date" {...form.register("date")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount (VND)</Label>
+                <Controller
+                  name="amount"
+                  control={form.control}
+                  render={({ field }) => (
+                    <MoneyInput
+                      id="amount"
+                      error={!!errors.amount}
+                      value={field.value}
+                      onValueChange={(values) => {
+                        field.onChange(values.floatValue || 0);
+                      }}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+          </FormSection>
+
+          <FormSection title="Meta Information">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount (VND)</Label>
-              <Controller
-                name="amount"
-                control={form.control}
-                render={({ field }) => (
-                  <NumericFormat
-                    id="amount"
-                    customInput={Input}
-                    thousandSeparator="."
-                    decimalSeparator=","
-                    value={field.value}
-                    onValueChange={(values) => {
-                      field.onChange(values.floatValue || 0);
-                    }}
-                  />
-                )}
-              />
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Input id="description" placeholder="e.g. Salary, Monthly DCA..." {...form.register("description")} />
             </div>
-          </div>
+          </FormSection>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description (Optional)</Label>
-            <Input id="description" placeholder="e.g. Salary, Monthly DCA..." {...form.register("description")} />
-          </div>
-
-          <Button 
-            type="submit" 
-            className="w-full mt-2" 
+          <LoadingSubmitButton 
+            isLoading={isSubmitting}
+            loadingText="Updating..."
             variant="premium"
-            disabled={isSubmitting || isDeleting}
+            disabled={isDeleting}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </Button>
+            Save Changes
+          </LoadingSubmitButton>
         </form>
       </DialogContent>
     </Dialog>

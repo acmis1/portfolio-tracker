@@ -33,6 +33,10 @@ interface TransactionModalProps {
 
 const TICKER_CLASSES = ['INDIVIDUAL_STOCK', 'ETF', 'STOCK_FUND', 'BOND_FUND', 'CRYPTO']
 
+import { FormErrorBanner } from "@/components/forms/form-error-banner"
+import { LoadingSubmitButton } from "@/components/forms/loading-submit-button"
+import { FormSection } from "@/components/forms/form-section"
+
 export function TransactionModal({ 
   trigger, 
   fxRate = 25400,
@@ -43,6 +47,7 @@ export function TransactionModal({
 }: TransactionModalProps) {
   const [open, setOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
   const [assets, setAssets] = React.useState<any[]>([])
 
   const form = useForm<TransactionFormValues>({
@@ -95,6 +100,7 @@ export function TransactionModal({
 
   async function onSubmit(data: TransactionFormValues) {
     setIsSubmitting(true)
+    setError(null)
     try {
       // Auto-generate symbol for non-ticker assets if not provided
       if (!isTickerAsset && !data.symbol) {
@@ -106,11 +112,11 @@ export function TransactionModal({
         setOpen(false)
         form.reset()
       } else {
-        alert(result.error || "Something went wrong")
+        setError(result.error || "Something went wrong")
       }
     } catch (error: any) {
       console.error(error)
-      alert("Failed to submit transaction")
+      setError("Failed to submit transaction")
     } finally {
       setIsSubmitting(false)
     }
@@ -147,220 +153,194 @@ export function TransactionModal({
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-white">New Transaction</DialogTitle>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="assetClass">Asset Class</Label>
-              <Controller
-                name="assetClass"
-                control={form.control}
-                render={({ field }) => (
-                  <Select 
-                    id="assetClass" 
-                    className={cn(errors.assetClass && "border-red-500/50")}
-                    {...field}
-                  >
-                    {ASSET_CLASSES.map((ac) => (
-                      <option key={ac} value={ac}>
-                        {formatAssetClass(ac)}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
-              <Input 
-                id="date" 
-                type="date" 
-                className={cn(errors.date && "border-red-500/50")}
-                {...form.register("date")} 
-              />
-              {errors.date && (
-                <p className="text-[10px] font-medium text-red-400">{errors.date.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {isTickerAsset && (
-              <div className="space-y-2 transition-all">
-                <Label htmlFor="symbol">Symbol</Label>
-                <Input 
-                  id="symbol" 
-                  placeholder="BTC, AAPL..." 
-                  className={cn(errors.symbol && "border-red-500/50 focus-visible:ring-red-500/20")}
-                  {...form.register("symbol")}
-                />
-                {errors.symbol && (
-                  <p className="text-[10px] font-medium text-red-400">{errors.symbol.message}</p>
-                )}
-              </div>
-            )}
-            
-            <div className={cn("space-y-2", isTickerAsset ? "" : "col-span-2")}>
-              <Label htmlFor="name">{getNameLabel()}</Label>
-              <Input 
-                id="name" 
-                placeholder={isTickerAsset ? "Bitcoin, Apple Inc..." : "Description..."} 
-                className={cn(errors.name && "border-red-500/50")}
-                {...form.register("name")}
-              />
-              {errors.name && (
-                <p className="text-[10px] font-medium text-red-400">{errors.name.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="type">Transaction Type</Label>
-              <Controller
-                name="type"
-                control={form.control}
-                render={({ field }) => (
-                  <Select 
-                    id="type" 
-                    className={cn(errors.type && "border-red-500/50")}
-                    {...field}
-                  >
-                    <option value="BUY">Buy/Deposit</option>
-                    <option value="SELL">Sell/Withdraw</option>
-                    <option value="DIVIDEND">Dividend</option>
-                    <option value="INTEREST">Interest</option>
-                  </Select>
-                )}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Controller
-                name="currency"
-                control={form.control}
-                render={({ field }) => (
-                  <Select 
-                    id="currency" 
-                    {...field}
-                  >
-                    <option value="VND">VND</option>
-                    <option value="USD">USD</option>
-                  </Select>
-                )}
-              />
-            </div>
-          </div>
-
-          {isTermDeposit && (
-            <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
-               <div className="space-y-2">
-                <Label htmlFor="interestRate">Interest Rate (%)</Label>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+          <FormErrorBanner message={error} />
+          
+          <FormSection title="Asset Specification">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="assetClass">Asset Class</Label>
                 <Controller
-                  name="interestRate"
+                  name="assetClass"
                   control={form.control}
                   render={({ field }) => (
-                    <NumericFormat
-                      id="interestRate"
-                      className={cn(errors.interestRate && "border-red-500/50")}
-                      customInput={Input}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      placeholder="8.5"
-                      value={field.value}
-                      onValueChange={(values) => {
-                        field.onChange(values.floatValue || 0);
-                      }}
-                    />
+                    <Select 
+                      id="assetClass" 
+                      className={cn(errors.assetClass && "border-red-500/50")}
+                      {...field}
+                    >
+                      {ASSET_CLASSES.map((ac) => (
+                        <option key={ac} value={ac}>
+                          {formatAssetClass(ac)}
+                        </option>
+                      ))}
+                    </Select>
                   )}
                 />
-                {errors.interestRate && (
-                  <p className="text-[10px] font-medium text-red-400">{errors.interestRate.message}</p>
-                )}
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="maturityDate">Maturity Date</Label>
+                <Label htmlFor="date">Date</Label>
                 <Input 
-                  id="maturityDate" 
+                  id="date" 
                   type="date" 
-                  className={cn(errors.maturityDate && "border-red-500/50")}
-                  {...form.register("maturityDate")} 
+                  className={cn(errors.date && "border-red-500/50")}
+                  {...form.register("date")} 
                 />
-                {errors.maturityDate && (
-                  <p className="text-[10px] font-medium text-red-400">{errors.maturityDate.message}</p>
+                {errors.date && (
+                  <p className="text-[10px] font-medium text-red-400">{errors.date.message}</p>
                 )}
               </div>
             </div>
-          )}
 
-          <div className="grid grid-cols-2 gap-4">
-            {!isTermDeposit && !isRealEstate && (
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
-                <Controller
-                  name="quantity"
-                  control={form.control}
-                  render={({ field }) => (
-                    <NumericFormat
-                      id="quantity"
-                      className={cn(errors.quantity && "border-red-500/50")}
-                      customInput={Input}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      value={field.value}
-                      onValueChange={(values) => {
-                        field.onChange(values.floatValue || 0);
-                      }}
-                    />
-                  )}
-                />
-                {errors.quantity && (
-                  <p className="text-[10px] font-medium text-red-400">{errors.quantity.message}</p>
-                )}
-              </div>
-            )}
-            
-            <div className={cn("space-y-2 relative", (isTermDeposit || isRealEstate) ? "col-span-2" : "")}>
-              <Label htmlFor="price">{getPriceLabel()}</Label>
-              <Controller
-                name="price"
-                control={form.control}
-                render={({ field }) => (
-                  <NumericFormat
-                    id="price"
-                    className={cn(errors.price && "border-red-500/50")}
-                    customInput={Input}
-                    thousandSeparator="."
-                    decimalSeparator=","
-                    value={field.value}
-                    onValueChange={(values) => {
-                      field.onChange(values.floatValue || 0);
-                    }}
+            <div className="grid grid-cols-2 gap-4">
+              {isTickerAsset && (
+                <div className="space-y-2 transition-all">
+                  <Label htmlFor="symbol">Symbol</Label>
+                  <Input 
+                    id="symbol" 
+                    placeholder="BTC, AAPL..." 
+                    className={cn(errors.symbol && "border-red-500/50 focus-visible:ring-red-500/20")}
+                    {...form.register("symbol")}
                   />
-                )}
-              />
-              {isUSD && inputPrice > 0 && (
-                <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-emerald-500/80 animate-in fade-in slide-in-from-top-1">
-                  <Info className="h-2.5 w-2.5" />
-                  Est. {formatVND(inputPrice * fxRate)}
+                  {errors.symbol && (
+                    <p className="text-[10px] font-medium text-red-400">{errors.symbol.message}</p>
+                  )}
                 </div>
               )}
-              {errors.price && (
-                <p className="text-[10px] font-medium text-red-400">{errors.price.message}</p>
-              )}
+              
+              <div className={cn("space-y-2", isTickerAsset ? "" : "col-span-2")}>
+                <Label htmlFor="name">{getNameLabel()}</Label>
+                <Input 
+                  id="name" 
+                  placeholder={isTickerAsset ? "Bitcoin, Apple Inc..." : "Description..."} 
+                  className={cn(errors.name && "border-red-500/50")}
+                  {...form.register("name")}
+                />
+                {errors.name && (
+                  <p className="text-[10px] font-medium text-red-400">{errors.name.message}</p>
+                )}
+              </div>
+            </div>
+          </FormSection>
+
+          <FormSection title="Transaction Values">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="type">Transaction Type</Label>
+                <Controller
+                  name="type"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select 
+                      id="type" 
+                      className={cn(errors.type && "border-red-500/50")}
+                      {...field}
+                    >
+                      <option value="BUY">Buy/Deposit</option>
+                      <option value="SELL">Sell/Withdraw</option>
+                      <option value="DIVIDEND">Dividend</option>
+                      <option value="INTEREST">Interest</option>
+                    </Select>
+                  )}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Controller
+                  name="currency"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select 
+                      id="currency" 
+                      {...field}
+                    >
+                      <option value="VND">VND</option>
+                      <option value="USD">USD</option>
+                    </Select>
+                  )}
+                />
+              </div>
             </div>
 
-            {!isTermDeposit && !isGold && (
-              <div className="space-y-2">
-                <Label htmlFor="fees">Fees ({selectedCurrency})</Label>
+            {isTermDeposit && (
+              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                 <div className="space-y-2">
+                  <Label htmlFor="interestRate">Interest Rate (%)</Label>
+                  <Controller
+                    name="interestRate"
+                    control={form.control}
+                    render={({ field }) => (
+                      <NumericFormat
+                        id="interestRate"
+                        className={cn(errors.interestRate && "border-red-500/50")}
+                        customInput={Input}
+                        thousandSeparator="."
+                        decimalSeparator=","
+                        placeholder="8.5"
+                        value={field.value}
+                        onValueChange={(values) => {
+                          field.onChange(values.floatValue || 0);
+                        }}
+                      />
+                    )}
+                  />
+                  {errors.interestRate && (
+                    <p className="text-[10px] font-medium text-red-400">{errors.interestRate.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maturityDate">Maturity Date</Label>
+                  <Input 
+                    id="maturityDate" 
+                    type="date" 
+                    className={cn(errors.maturityDate && "border-red-500/50")}
+                    {...form.register("maturityDate")} 
+                  />
+                  {errors.maturityDate && (
+                    <p className="text-[10px] font-medium text-red-400">{errors.maturityDate.message}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              {!isTermDeposit && !isRealEstate && (
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">Quantity</Label>
+                  <Controller
+                    name="quantity"
+                    control={form.control}
+                    render={({ field }) => (
+                      <NumericFormat
+                        id="quantity"
+                        className={cn(errors.quantity && "border-red-500/50")}
+                        customInput={Input}
+                        thousandSeparator="."
+                        decimalSeparator=","
+                        value={field.value}
+                        onValueChange={(values) => {
+                          field.onChange(values.floatValue || 0);
+                        }}
+                      />
+                    )}
+                  />
+                  {errors.quantity && (
+                    <p className="text-[10px] font-medium text-red-400">{errors.quantity.message}</p>
+                  )}
+                </div>
+              )}
+              
+              <div className={cn("space-y-2 relative", (isTermDeposit || isRealEstate) ? "col-span-2" : "")}>
+                <Label htmlFor="price">{getPriceLabel()}</Label>
                 <Controller
-                  name="fees"
+                  name="price"
                   control={form.control}
                   render={({ field }) => (
                     <NumericFormat
-                      id="fees"
-                      className={cn(errors.fees && "border-red-500/50")}
+                      id="price"
+                      className={cn(errors.price && "border-red-500/50")}
                       customInput={Input}
                       thousandSeparator="."
                       decimalSeparator=","
@@ -371,28 +351,52 @@ export function TransactionModal({
                     />
                   )}
                 />
-                {errors.fees && (
-                  <p className="text-[10px] font-medium text-red-400">{errors.fees.message}</p>
+                {isUSD && inputPrice > 0 && (
+                  <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-emerald-500/80 animate-in fade-in slide-in-from-top-1">
+                    <Info className="h-2.5 w-2.5" />
+                    Est. {formatVND(inputPrice * fxRate)}
+                  </div>
+                )}
+                {errors.price && (
+                  <p className="text-[10px] font-medium text-red-400">{errors.price.message}</p>
                 )}
               </div>
-            )}
-          </div>
 
-          <Button 
-            type="submit" 
-            className="w-full mt-2" 
+              {!isTermDeposit && !isGold && (
+                <div className="space-y-2">
+                  <Label htmlFor="fees">Fees ({selectedCurrency})</Label>
+                  <Controller
+                    name="fees"
+                    control={form.control}
+                    render={({ field }) => (
+                      <NumericFormat
+                        id="fees"
+                        className={cn(errors.fees && "border-red-500/50")}
+                        customInput={Input}
+                        thousandSeparator="."
+                        decimalSeparator=","
+                        value={field.value}
+                        onValueChange={(values) => {
+                          field.onChange(values.floatValue || 0);
+                        }}
+                      />
+                    )}
+                  />
+                  {errors.fees && (
+                    <p className="text-[10px] font-medium text-red-400">{errors.fees.message}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </FormSection>
+
+          <LoadingSubmitButton 
+            isLoading={isSubmitting}
+            loadingText="Processing..."
             variant="premium"
-            disabled={isSubmitting}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              "Complete Transaction"
-            )}
-          </Button>
+            Complete Transaction
+          </LoadingSubmitButton>
         </form>
       </DialogContent>
     </Dialog>
