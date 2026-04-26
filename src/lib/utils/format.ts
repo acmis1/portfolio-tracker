@@ -97,3 +97,22 @@ export function formatAssetClass(assetClass: string): string {
     word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
   ).join(' ');
 }
+
+/**
+ * Formats a transaction type into a human-readable label.
+ */
+export function formatActivityType(type: string): string {
+  const mapping: Record<string, string> = {
+    'BUY': 'Buy',
+    'SELL': 'Sell',
+    'DEPOSIT': 'Deposit',
+    'WITHDRAWAL': 'Withdrawal',
+    'DIVIDEND': 'Dividend',
+    'INTEREST': 'Interest',
+    'CONVERSION': 'Conversion'
+  };
+
+  return mapping[type] || type.split('_').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+}

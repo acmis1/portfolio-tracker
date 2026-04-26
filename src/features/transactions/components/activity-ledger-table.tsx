@@ -1,23 +1,50 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { formatVND, formatAssetDisplay } from '@/lib/utils/format'
+import { formatVND, formatAssetDisplay, formatActivityType } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 import { EditCashModal } from './edit-cash-modal'
-import { Search, Filter, ArrowUpRight, ArrowDownLeft, Wallet, Landmark, TrendingUp, CircleDollarSign, ArrowRightLeft } from 'lucide-react'
+import { Search, Filter, ArrowUpRight, ArrowDownLeft, Wallet, Landmark, TrendingUp, CircleDollarSign, ArrowRightLeft, Tag } from 'lucide-react'
 import { ImportWizard } from '@/features/import/components/import-wizard'
+import { Select } from '@/components/ui/select'
+import { UnifiedActivity } from '@/features/transactions/queries'
 
 interface ActivityLedgerTableProps {
-  activities: any[];
+  activities: UnifiedActivity[];
 }
 
-type TxType = 'ALL' | 'DEPOSIT' | 'WITHDRAWAL' | 'BUY' | 'SELL' | 'DIVIDEND' | 'INTEREST' | 'CONVERSION';
+const TYPE_FILTERS = [
+  { label: 'All Activities', value: 'ALL', types: [] },
+  { label: 'Trades', value: 'TRADES', types: ['BUY', 'SELL'] },
+  { label: 'Cash Movement', value: 'CASH', types: ['DEPOSIT', 'WITHDRAWAL'] },
+  { label: 'Income', value: 'INCOME', types: ['DIVIDEND', 'INTEREST'] },
+  { label: 'Internal Movement', value: 'INTERNAL', types: ['CONVERSION'] },
+  { label: 'Buy', value: 'BUY', types: ['BUY'] },
+  { label: 'Sell', value: 'SELL', types: ['SELL'] },
+  { label: 'Deposit', value: 'DEPOSIT', types: ['DEPOSIT'] },
+  { label: 'Withdrawal', value: 'WITHDRAWAL', types: ['WITHDRAWAL'] },
+  { label: 'Dividend', value: 'DIVIDEND', types: ['DIVIDEND'] },
+  { label: 'Interest', value: 'INTEREST', types: ['INTEREST'] },
+  { label: 'Conversion', value: 'CONVERSION', types: ['CONVERSION'] },
+]
 
 export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [activeType, setActiveType] = useState<TxType>('ALL')
+  const [activeFilter, setActiveFilter] = useState('ALL')
+  const [activeAsset, setActiveAsset] = useState('ALL')
+
+  const uniqueAssets = useMemo(() => {
+    const symbols = new Set<string>();
+    activities.forEach(tx => {
+      if (tx.assetSymbol) symbols.add(tx.assetSymbol);
+    });
+    return Array.from(symbols).sort();
+  }, [activities]);
 
   const filteredTransactions = useMemo(() => {
+    const filterGroup = TYPE_FILTERS.find(f => f.value === activeFilter);
+    const allowedTypes = filterGroup?.types || [];
+
     return activities.filter(tx => {
       const { primary, secondary } = tx.assetSymbol ? formatAssetDisplay(tx.assetSymbol, tx.assetName || '') : { primary: '', secondary: '' };
       
@@ -27,11 +54,12 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
         (secondary?.toLowerCase().includes(searchQuery.toLowerCase())) ||
         tx.type?.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesType = activeType === 'ALL' || tx.type === activeType;
+      const matchesType = activeFilter === 'ALL' || allowedTypes.includes(tx.type);
+      const matchesAsset = activeAsset === 'ALL' || tx.assetSymbol === activeAsset;
       
-      return matchesSearch && matchesType;
+      return matchesSearch && matchesType && matchesAsset;
     })
-  }, [activities, searchQuery, activeType])
+  }, [activities, searchQuery, activeFilter, activeAsset])
 
   if (activities.length === 0) {
     return (
@@ -61,36 +89,51 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
   return (
     <div className="space-y-6">
       {/* Search & Filter Bar */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-96 flex gap-2">
-          <div className="relative flex-1 group">
+      <div className="flex flex-col xl:flex-row gap-3 items-stretch xl:items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5">
+        <div className="flex flex-col md:flex-row gap-3 flex-1">
+          <div className="relative flex-1 group min-w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
             <input
               type="text"
-              placeholder="Search assets, activities, descriptions..."
+              placeholder="Search activity..."
               className="w-full bg-slate-900/50 border border-white/5 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <ImportWizard />
+
+          <div className="flex gap-3">
+            <div className="relative w-full md:w-48">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
+              <Select
+                value={activeFilter}
+                onChange={(e) => setActiveFilter(e.target.value)}
+                className="pl-9"
+              >
+                {TYPE_FILTERS.map(f => (
+                  <option key={f.value} value={f.value}>{f.label}</option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="relative w-full md:w-48">
+              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
+              <Select
+                value={activeAsset}
+                onChange={(e) => setActiveAsset(e.target.value)}
+                className="pl-9"
+              >
+                <option value="ALL">All Assets</option>
+                {uniqueAssets.map(asset => (
+                  <option key={asset} value={asset}>{asset}</option>
+                ))}
+              </Select>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
-          {(['ALL', 'DEPOSIT', 'WITHDRAWAL', 'BUY', 'SELL', 'DIVIDEND', 'INTEREST', 'CONVERSION'] as TxType[]).map((type) => (
-            <button
-              key={type}
-              onClick={() => setActiveType(type)}
-              className={cn(
-                "whitespace-nowrap px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border",
-                activeType === type
-                  ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
-                  : "bg-slate-900/50 border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10"
-              )}
-            >
-              {type.replace('_', ' ')}
-            </button>
-          ))}
+        <div className="flex items-center justify-end">
+          <ImportWizard />
         </div>
       </div>
 
@@ -109,7 +152,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
             </thead>
             <tbody className="divide-y divide-white/5">
               {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((tx: any) => {
+                filteredTransactions.map((tx: UnifiedActivity) => {
                   const isAssetTx = tx.category === 'ASSET';
                   const isConversion = tx.category === 'CONVERSION';
 
@@ -132,7 +175,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                             isConversion ? "text-blue-400" :
                             isAssetTx ? "text-blue-400" : "text-slate-400"
                           )}>
-                            {tx.type.replace('_', ' ')}
+                            {formatActivityType(tx.type)}
                           </span>
                         </div>
                       </td>
@@ -161,7 +204,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                             );
                           })() : (
                             <span className="text-xs font-black text-slate-200">
-                              {tx.description || tx.type.replace('_', ' ')}
+                              {tx.description || formatActivityType(tx.type)}
                             </span>
                           )}
                         </div>
@@ -181,7 +224,7 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
                         ) : isAssetTx ? (
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-slate-400">
-                              {tx.quantity > 0 ? `${tx.quantity.toLocaleString()} units` : '-'}
+                              {(tx.quantity ?? 0) > 0 ? `${tx.quantity?.toLocaleString()} units` : '-'}
                             </span>
                             <span className="text-[10px] text-slate-500">
                               @ {formatVND(tx.price)}
@@ -232,13 +275,11 @@ export function ActivityLedgerTable({ activities }: ActivityLedgerTableProps) {
 export function ActivityLedgerSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="h-10 w-full md:w-96 bg-white/5 rounded-xl border border-white/5" />
-        <div className="flex gap-2 w-full md:w-auto">
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="h-7 w-20 bg-white/5 rounded-lg" />
-          ))}
-        </div>
+      <div className="bg-white/5 p-3 rounded-2xl border border-white/5 flex flex-col md:flex-row gap-3">
+        <div className="h-10 flex-1 bg-white/5 rounded-xl" />
+        <div className="h-10 w-48 bg-white/5 rounded-xl" />
+        <div className="h-10 w-48 bg-white/5 rounded-xl" />
+        <div className="h-10 w-32 bg-white/5 rounded-xl" />
       </div>
       <div className="glass-premium rounded-2xl border border-white/5 overflow-hidden">
         <div className="border-b border-white/5 bg-white/5 p-4">
