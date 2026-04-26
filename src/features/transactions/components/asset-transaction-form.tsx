@@ -14,12 +14,13 @@ import { formatAssetClass } from "@/lib/formatters"
 import { FormErrorBanner } from "@/components/forms/form-error-banner"
 import { FormSection } from "@/components/forms/form-section"
 import { LoadingSubmitButton } from "@/components/forms/loading-submit-button"
+import { TransactionFormMode } from "../types"
 
 const TICKER_CLASSES = ['INDIVIDUAL_STOCK', 'ETF', 'STOCK_FUND', 'BOND_FUND', 'CRYPTO']
 
 interface AssetTransactionFormProps {
   form: UseFormReturn<TransactionFormValues>
-  mode: "create" | "edit"
+  mode: TransactionFormMode
   error: string | null
   isSubmitting: boolean
   submitLabel?: string

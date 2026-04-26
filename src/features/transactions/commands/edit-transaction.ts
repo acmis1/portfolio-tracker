@@ -7,8 +7,9 @@ import { auth } from "@clerk/nextjs/server"
 import { recalculateAssetPnL, recalculateHistoricalSnapshots } from "../../portfolio/actions/recalculate"
 import { getTransactionDisplayLabel } from "../services/display-labels"
 import { getLiveExchangeRate } from "@/lib/fx"
+import { ActionResult } from "../types"
 
-export async function editTransaction(id: string, formData: TransactionFormValues) {
+export async function editTransaction(id: string, formData: TransactionFormValues): Promise<ActionResult> {
   const { userId } = await auth()
   if (!userId) return { success: false, error: "Unauthorized" }
 
@@ -134,6 +135,7 @@ export async function editTransaction(id: string, formData: TransactionFormValue
     return { success: true }
   } catch (error) {
     console.error("Failed to edit transaction:", error)
-    return { success: false, error: "Update failed" }
+    const message = error instanceof Error ? error.message : "Update failed"
+    return { success: false, error: message }
   }
 }

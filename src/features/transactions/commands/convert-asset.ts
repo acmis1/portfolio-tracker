@@ -52,7 +52,14 @@ async function getAssetCostBasisAsOf(assetId: string, userId: string, date: Date
   }
 }
 
-export async function convertAsset(input: AssetConversionValues) {
+import { ActionResult } from "../types"
+
+export async function convertAsset(input: AssetConversionValues): Promise<ActionResult<{
+  conversionId: string;
+  fromTransactionId: string;
+  toTransactionId: string;
+  transferValueVnd: number;
+}>> {
   const { userId } = await auth()
   if (!userId) return { success: false, error: "Unauthorized" }
 
@@ -241,10 +248,12 @@ export async function convertAsset(input: AssetConversionValues) {
 
     return {
       success: true,
-      conversionId: result.conversionId,
-      fromTransactionId: result.fromTransactionId,
-      toTransactionId: result.toTransactionId,
-      transferValueVnd: result.transferValueVnd
+      data: {
+        conversionId: result.conversionId,
+        fromTransactionId: result.fromTransactionId,
+        toTransactionId: result.toTransactionId,
+        transferValueVnd: result.transferValueVnd
+      }
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Database operation failed"

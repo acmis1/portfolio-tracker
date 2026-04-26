@@ -1,4 +1,5 @@
 import { prisma } from "@/server/db";
+import { TransactionMetadata } from "./types";
 
 export type ActivityType = 'BUY' | 'SELL' | 'DEPOSIT' | 'WITHDRAWAL' | 'DIVIDEND' | 'INTEREST' | 'CONVERSION';
 
@@ -14,7 +15,7 @@ export interface UnifiedActivity {
   description?: string;
   referenceId?: string;
   category: 'CASH' | 'ASSET' | 'INCOME' | 'CONVERSION';
-  metadata?: any;
+  metadata?: TransactionMetadata | null;
   // Conversion specific fields
   fromAssetSymbol?: string;
   fromAssetName?: string;
@@ -55,8 +56,8 @@ export async function getUnifiedActivity(userId: string): Promise<UnifiedActivit
   });
 
   const normalizedConversions: UnifiedActivity[] = Array.from(conversions.entries()).map(([conversionId, group]) => {
-    const fromLeg = group.find(tx => (tx.metadata as any)?.conversionRole === 'FROM');
-    const toLeg = group.find(tx => (tx.metadata as any)?.conversionRole === 'TO');
+    const fromLeg = group.find(tx => (tx.metadata as TransactionMetadata | null)?.conversionRole === 'FROM');
+    const toLeg = group.find(tx => (tx.metadata as TransactionMetadata | null)?.conversionRole === 'TO');
 
     if (!fromLeg || !toLeg) {
       // Fallback for incomplete conversion
@@ -68,7 +69,7 @@ export async function getUnifiedActivity(userId: string): Promise<UnifiedActivit
         amount: 0,
         description: 'Incomplete conversion record',
         category: 'CONVERSION',
-        metadata: mainLeg.metadata
+        metadata: mainLeg.metadata as TransactionMetadata | null
       };
     }
 
@@ -85,7 +86,7 @@ export async function getUnifiedActivity(userId: string): Promise<UnifiedActivit
       toAssetName: toLeg.asset.name,
       toQuantity: toLeg.quantity,
       description: `Converted ${fromLeg.asset.symbol} → ${toLeg.asset.symbol}`,
-      metadata: fromLeg.metadata,
+      metadata: fromLeg.metadata as TransactionMetadata | null,
       price: Math.abs(fromLeg.grossAmount) // Use cost basis as "price" reference for the transfer
     };
   });
@@ -100,7 +101,7 @@ export async function getUnifiedActivity(userId: string): Promise<UnifiedActivit
     assetName: tx.asset.name,
     assetSymbol: tx.asset.symbol,
     category: 'ASSET',
-    metadata: tx.metadata
+    metadata: tx.metadata as TransactionMetadata | null
   }));
 
   const normalizedCashTxs: UnifiedActivity[] = cashTxs

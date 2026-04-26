@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache"
 import { auth } from "@clerk/nextjs/server"
 import { recalculateAssetPnL, recalculateHistoricalSnapshots } from "../../portfolio/actions/recalculate"
 
-export async function deleteTransaction(id: string) {
+import { ActionResult } from "../types"
+
+export async function deleteTransaction(id: string): Promise<ActionResult> {
   const { userId } = await auth()
   if (!userId) return { success: false, error: "Unauthorized" }
 
@@ -67,6 +69,7 @@ export async function deleteTransaction(id: string) {
     return { success: true }
   } catch (error) {
     console.error("Failed to delete transaction:", error)
-    return { success: false, error: "Deletion failed" }
+    const message = error instanceof Error ? error.message : "Deletion failed"
+    return { success: false, error: message }
   }
 }

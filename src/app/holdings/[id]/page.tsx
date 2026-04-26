@@ -17,6 +17,7 @@ import { AssetTransactionTable } from "@/features/holdings/components/asset-tran
 import { getLiveExchangeRate } from "@/lib/fx"
 import { LiquidHolding, GoldHolding, RealEstateHolding, TermDepositHolding } from "@/features/portfolio/types"
 import { PageShell } from "@/components/layout/page-shell"
+import { AssetClass, AssetCurrency } from "@/features/transactions/types"
 
 interface AssetDetailPageProps {
   params: Promise<{
@@ -177,8 +178,8 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
         assetId={asset.id}
         symbol={asset.symbol}
         assetName={asset.name}
-        assetClass={asset.assetClass}
-        assetCurrency={asset.currency}
+        assetClass={asset.assetClass as AssetClass}
+        assetCurrency={asset.currency as AssetCurrency}
         fxRate={fxRate}
         termDeposit={asset.termDeposits[0]}
       />

@@ -8,7 +8,9 @@ import { recalculateAssetPnL, recalculateHistoricalSnapshots } from "../../portf
 import { getTransactionDisplayLabel } from "../services/display-labels"
 import { getLiveExchangeRate } from "@/lib/fx"
 
-export async function addTransaction(formData: TransactionFormValues) {
+import { ActionResult } from "../types"
+
+export async function addTransaction(formData: TransactionFormValues): Promise<ActionResult> {
   const { userId } = await auth()
   if (!userId) return { success: false, error: "Unauthorized" }
 
@@ -45,7 +47,7 @@ export async function addTransaction(formData: TransactionFormValues) {
   }
 
   try {
-    const result = await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx) => {
       let asset = await tx.asset.findFirst({
         where: { symbol: effectiveSymbol, userId }
       })
@@ -100,7 +102,7 @@ export async function addTransaction(formData: TransactionFormValues) {
         }
       })
 
-      const transaction = await tx.transaction.create({
+      await tx.transaction.create({
         data: {
           assetId: asset.id,
           type,
@@ -113,7 +115,7 @@ export async function addTransaction(formData: TransactionFormValues) {
         }
       })
 
-      return { transaction, assetId: asset.id }
+      return { assetId: asset.id }
     })
 
     await recalculateAssetPnL(result.assetId, userId)
@@ -121,8 +123,9 @@ export async function addTransaction(formData: TransactionFormValues) {
 
     revalidatePath('/')
     return { success: true }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Failed to add transaction:", error)
-    return { success: false, error: "Database operation failed" }
+    const message = error instanceof Error ? error.message : "Database operation failed"
+    return { success: false, error: message }
   }
 }

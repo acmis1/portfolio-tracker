@@ -18,12 +18,14 @@ import { useRouter } from "next/navigation"
 import { AssetTransactionForm } from "./asset-transaction-form"
 import { Transaction } from "@prisma/client"
 
+import { AssetClass } from "../types"
+
 interface EditTransactionModalProps {
   transaction: Transaction;
   asset: {
     symbol: string;
     name: string;
-    assetClass: TransactionFormValues["assetClass"];
+    assetClass: AssetClass;
     currency: "VND" | "USD";
     termDeposit?: {
       interestRate: number;

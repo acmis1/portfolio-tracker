@@ -18,13 +18,15 @@ import {
   getActivityTone 
 } from "@/features/transactions/services/display-utils"
 
+import { AssetClass } from "@/features/transactions/types"
+
 export interface AssetTransactionTableProps {
   transactions: Transaction[];
   assetId: string;
   symbol: string;
   assetName: string;
-  assetClass: string;
-  assetCurrency: string;
+  assetClass: AssetClass;
+  assetCurrency: "VND" | "USD";
   fxRate: number;
   termDeposit?: {
     interestRate: number;

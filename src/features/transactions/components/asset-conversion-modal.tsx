@@ -22,6 +22,7 @@ import { convertAsset, getUserAssets } from "@/features/transactions/actions"
 import { cn } from "@/lib/utils"
 import { formatAssetClass } from "@/lib/formatters"
 import { useRouter } from "next/navigation"
+import { ActionResult } from "../types"
 
 interface AssetConversionModalProps {
   trigger?: React.ReactElement;
@@ -84,10 +85,14 @@ export function AssetConversionModal({
     if (!targetSymbol || targetSymbol.length < 2) return
     const match = assets.find(a => a.symbol.toUpperCase() === targetSymbol.toUpperCase().trim())
     if (match) {
-      form.setValue("toAsset.id", match.id)
-      form.setValue("toAsset.name", match.name, { shouldValidate: true })
-      form.setValue("toAsset.assetClass", match.assetClass, { shouldValidate: true })
-      form.setValue("toAsset.currency", match.currency as 'VND' | 'USD', { shouldValidate: true })
+      form.setValue("toAsset", {
+        id: match.id,
+        name: match.name,
+        symbol: targetSymbol,
+        assetClass: match.assetClass,
+        currency: match.currency as 'VND' | 'USD'
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any, { shouldValidate: true })
     } else {
       form.setValue("toAsset.id", undefined)
     }
@@ -103,7 +108,7 @@ export function AssetConversionModal({
         values.toAsset.symbol = values.toAsset.symbol.toUpperCase().trim()
       }
 
-      const result = await convertAsset(values)
+      const result = await convertAsset(values) as ActionResult
       if (result.success) {
         setOpen(false)
         form.reset()
